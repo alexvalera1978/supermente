@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Configuracion</title>
+    <link rel="stylesheet" href="/supermente/css/common.css?v=2">
+</head>
+<body>
+    <div id="configuracion" class="pantalla activa tiza">
+        <h1>⚙️ Configuracion</h1>
+        <div class="config-container">
+            <p class="config-info">Introduce tu API key para generar cuestionarios con IA.<br>Las keys se guardan localmente en tu dispositivo.</p>
+
+            <div class="config-section">
+                <h3>Proveedor de IA</h3>
+                <div class="provider-selector">
+                    <label class="provider-option">
+                        <input type="radio" name="aiProvider" value="claude" onchange="cambiarProveedor('claude')">
+                        <span class="provider-icon">🟠</span> Claude (Anthropic)
+                    </label>
+                    <label class="provider-option">
+                        <input type="radio" name="aiProvider" value="openai" onchange="cambiarProveedor('openai')">
+                        <span class="provider-icon">🟢</span> ChatGPT (OpenAI)
+                    </label>
+                    <label class="provider-option">
+                        <input type="radio" name="aiProvider" value="gemini" onchange="cambiarProveedor('gemini')">
+                        <span class="provider-icon">🔵</span> Gemini (Google)
+                    </label>
+                </div>
+            </div>
+
+            <div class="config-section">
+                <h3>API Keys</h3>
+                <div class="api-key-group">
+                    <label>Claude (Anthropic)</label>
+                    <div class="input-with-toggle">
+                        <input type="password" id="apiKeyClaude" class="input-tema" placeholder="sk-ant-api..." onchange="guardarApiKey('claude')">
+                        <button class="btn-toggle-key" onclick="toggleKeyVisibility('apiKeyClaude')">👁️</button>
+                    </div>
+                </div>
+                <div class="api-key-group">
+                    <label>ChatGPT (OpenAI)</label>
+                    <div class="input-with-toggle">
+                        <input type="password" id="apiKeyOpenAI" class="input-tema" placeholder="sk-..." onchange="guardarApiKey('openai')">
+                        <button class="btn-toggle-key" onclick="toggleKeyVisibility('apiKeyOpenAI')">👁️</button>
+                    </div>
+                </div>
+                <div class="api-key-group">
+                    <label>Gemini (Google)</label>
+                    <div class="input-with-toggle">
+                        <input type="password" id="apiKeyGemini" class="input-tema" placeholder="AIza..." onchange="guardarApiKey('gemini')">
+                        <button class="btn-toggle-key" onclick="toggleKeyVisibility('apiKeyGemini')">👁️</button>
+                    </div>
+                </div>
+                <div class="api-key-group">
+                    <label>Groq (transcripcion voz)</label>
+                    <div class="input-with-toggle">
+                        <input type="password" id="apiKeyGroq" class="input-tema" placeholder="gsk_..." onchange="guardarApiKey('groq')">
+                        <button class="btn-toggle-key" onclick="toggleKeyVisibility('apiKeyGroq')">👁️</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="config-section">
+                <div id="estadoConfig" class="estado-config"></div>
+                <button class="btn" onclick="probarConexion()">🔌 Probar conexion</button>
+            </div>
+        </div>
+        <div class="botones-control" style="margin-top:15px;">
+            <button class="btn" onclick="window.location.href='../../index.html'">← Volver</button>
+        </div>
+    </div>
+
+    <script src="/supermente/js/common.js?v=2"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', cargarConfiguracion);
+    </script>
+</body>
+</html>

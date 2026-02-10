@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <defs>
+    <linearGradient id="brainGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FF6B6B"/>
+      <stop offset="50%" style="stop-color:#9B59B6"/>
+      <stop offset="100%" style="stop-color:#3498DB"/>
+    </linearGradient>
+    <linearGradient id="glowGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FFE66D"/>
+      <stop offset="100%" style="stop-color:#FF6B6B"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Resplandor exterior -->
+  <circle cx="100" cy="100" r="95" fill="none" stroke="url(#glowGrad)" stroke-width="3" opacity="0.6"/>
+
+  <!-- Fondo circular -->
+  <circle cx="100" cy="100" r="85" fill="url(#brainGrad)"/>
+
+  <!-- Letra S estilo cerebro -->
+  <path d="M55 70
+           Q55 50, 75 50
+           Q95 50, 95 65
+           Q95 80, 75 85
+           Q55 90, 55 105
+           Q55 125, 75 125
+           Q95 125, 95 110"
+        fill="none"
+        stroke="white"
+        stroke-width="12"
+        stroke-linecap="round"
+        stroke-linejoin="round"/>
+
+  <!-- Pliegues cerebrales en S -->
+  <path d="M65 60 Q75 55, 85 60" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="3" stroke-linecap="round"/>
+  <path d="M65 115 Q75 120, 85 115" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="3" stroke-linecap="round"/>
+
+  <!-- Letra M estilo cerebro -->
+  <path d="M105 125
+           L105 55
+           Q105 50, 110 55
+           L130 95
+           Q135 105, 140 95
+           L160 55
+           Q165 50, 165 55
+           L165 125"
+        fill="none"
+        stroke="white"
+        stroke-width="12"
+        stroke-linecap="round"
+        stroke-linejoin="round"/>
+
+  <!-- Pliegues cerebrales en M -->
+  <path d="M110 70 Q120 65, 130 75" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="3" stroke-linecap="round"/>
+  <path d="M140 75 Q150 65, 160 70" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="3" stroke-linecap="round"/>
+
+  <!-- Destellos -->
+  <circle cx="45" cy="45" r="5" fill="#FFE66D"/>
+  <circle cx="160" cy="40" r="3" fill="#FFE66D"/>
+  <circle cx="155" cy="155" r="4" fill="#FFE66D"/>
+
+  <!-- Rayos de energía -->
+  <path d="M30 100 L15 100" stroke="#FFE66D" stroke-width="3" stroke-linecap="round"/>
+  <path d="M170 100 L185 100" stroke="#FFE66D" stroke-width="3" stroke-linecap="round"/>
+  <path d="M100 30 L100 15" stroke="#FFE66D" stroke-width="3" stroke-linecap="round"/>
+  <path d="M100 170 L100 185" stroke="#FFE66D" stroke-width="3" stroke-linecap="round"/>
+</svg>

@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Division</title>
+    <link href="https://fonts.googleapis.com/css2?family=Indie+Flower&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { background: #2a5a2a; color: #f0f0e8; margin: 0; padding: 0; font-family: 'Indie Flower', cursive; }
+        .oculto { display: none !important; }
+
+        #nivel { min-height: 100vh; display: flex; flex-direction: column; justify-content: flex-start; align-items: center; padding: 50px 20px 20px 20px; }
+        #nivel h1 { font-size: 2em; margin-bottom: 15px; text-shadow: 0 0 5px rgba(255,255,255,0.5); }
+        #nivel > p { font-size: 1.3em; }
+        .menu-opciones { display: flex; flex-direction: column; gap: 15px; width: 100%; max-width: 300px; }
+        .btn-menu { background: rgba(255,255,255,0.1); border: 3px solid rgba(255,255,255,0.4); color: #f0f0e8; padding: 20px; font-size: 1.5em; border-radius: 12px; font-family: 'Indie Flower', cursive; text-shadow: 0 0 5px rgba(255,255,255,0.5); cursor: pointer; }
+
+        #operacion { min-height: 100vh; padding-bottom: 140px; }
+        .pizarra-container { padding: 10px; display: flex; justify-content: center; }
+        .pizarra { background: #1e4a1e; border: 6px solid #8B4513; border-radius: 8px; padding: 15px; width: 100%; max-width: 380px; box-shadow: inset 0 0 30px rgba(0,0,0,0.3); }
+        .progreso { text-align: center; margin-bottom: 10px; font-size: 1.4em; opacity: 0.9; }
+        #contenidoPizarra { display: flex; justify-content: center; align-items: center; min-height: 180px; }
+        svg { max-width: 100%; height: auto; }
+
+        .panel-inferior {
+            position: fixed; bottom: 0; left: 0; right: 0;
+            background: #1a3a1a; padding: 10px; text-align: center;
+            border-top: 3px solid #8B4513;
+        }
+        .panel-inferior p { margin: 5px 0; }
+        #mensaje { font-size: 1.2em; min-height: 1.4em; }
+        .instruccion { font-size: 1.1em; opacity: 0.7; }
+        .btn { background: rgba(255,255,255,0.15); border: 2px solid rgba(255,255,255,0.5); color: #f0f0e8; padding: 12px 16px; border-radius: 8px; margin: 3px; font-size: 1.1em; font-family: 'Indie Flower', cursive; cursor: pointer; }
+
+        /* Ayuda mode */
+        .header-pizarra { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
+        .btn-ayuda { background: rgba(255,255,255,0.2); border: 2px solid #ffcc00; color: #ffcc00; width: 36px; height: 36px; border-radius: 50%; font-size: 1.3em; font-family: 'Indie Flower', cursive; cursor: pointer; padding: 0; line-height: 32px; }
+        .btn-ayuda.activo { background: #ffcc00; color: #1e4a1e; }
+        #panelAyuda { background: rgba(255,204,0,0.15); border: 2px solid #ffcc00; border-radius: 8px; padding: 10px; margin-top: 10px; font-size: 1.1em; line-height: 1.4; }
+        #panelAyuda .paso-titulo { color: #ffcc00; font-weight: bold; margin-bottom: 5px; }
+        #panelAyuda .paso-instruccion { color: #f0f0e8; }
+        .nav-ayuda { display: flex; justify-content: space-between; margin-top: 8px; }
+        .nav-ayuda button { background: rgba(255,204,0,0.3); border: 1px solid #ffcc00; color: #ffcc00; padding: 5px 12px; border-radius: 5px; font-family: 'Indie Flower', cursive; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div id="nivel">
+        <h1>➗ Division</h1>
+        <p style="text-align:center; opacity: 0.8; margin-bottom: 20px;">Elige el nivel</p>
+        <div class="menu-opciones">
+            <button class="btn-menu" onclick="iniciarConNivel('basico')">📖 Basico</button>
+            <button class="btn-menu" onclick="iniciarConNivel('normal')">📝 Normal</button>
+            <button class="btn-menu" onclick="window.location.href='/supermente/index.html'" style="margin-top:15px; opacity:0.7;">← Volver</button>
+        </div>
+    </div>
+
+    <div id="operacion" class="oculto">
+        <div class="pizarra-container">
+            <div class="pizarra">
+                <div class="header-pizarra">
+                    <div class="progreso" id="progreso"></div>
+                    <button class="btn-ayuda" id="btnAyuda" onclick="toggleAyuda()">?</button>
+                </div>
+                <div id="contenidoPizarra"></div>
+                <div id="panelAyuda" class="oculto"></div>
+            </div>
+        </div>
+        <div class="panel-inferior">
+            <p id="mensaje"></p>
+            <p class="instruccion">Pulsa en cada casilla para cambiar el numero</p>
+            <div>
+                <button class="btn" onclick="comprobar()">✓ Comprobar</button>
+                <button class="btn" onclick="siguienteEjercicio()">→ Siguiente</button>
+                <button class="btn" onclick="window.location.href='/supermente/index.html'">🏠 Menu</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        var operacionActual = 0;
+        var digitosActuales = 1;
+        var num1, num2, cociente, resto;
+        var nivelActual = 'normal';
+        var pasosDivision = [];
+        var modoAyuda = false;
+        var pasoAyuda = 0;
+
+        function iniciarConNivel(nivel) {
+            nivelActual = nivel;
+            operacionActual = 0;
+            digitosActuales = 1;
+            document.getElementById('nivel').classList.add('oculto');
+            document.getElementById('operacion').classList.remove('oculto');
+            generarEjercicio();
+        }
+
+        function generarNumero(digitos) {
+            if (digitos === 1) return Math.floor(Math.random() * 9) + 1;
+            var min = Math.pow(10, digitos - 1);
+            var max = Math.pow(10, digitos) - 1;
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
+
+        function generarEjercicio() {
+            document.getElementById('mensaje').textContent = '';
+            digitosActuales = Math.floor(operacionActual / 3) + 1;
+            var digDiv = Math.min(digitosActuales, 3);
+            num2 = generarNumero(Math.max(1, Math.min(digDiv, 2)));
+            cociente = generarNumero(Math.max(1, digitosActuales));
+            resto = Math.floor(Math.random() * num2);
+            num1 = num2 * cociente + resto;
+            calcularPasosDivision();
+            renderizarDivision();
+            var nivelTexto = nivelActual === 'basico' ? ' (Basico)' : '';
+            document.getElementById('progreso').textContent = 'Ejercicio ' + (operacionActual + 1) + nivelTexto;
+            if (nivelActual === 'basico') {
+                setTimeout(function() { aplicarAyudas(); }, 100);
+            }
+        }
+
+        function siguienteEjercicio() {
+            document.getElementById('mensaje').textContent = '';
+            operacionActual++;
+            generarEjercicio();
+        }
+
+        function calcularPasosDivision() {
+            pasosDivision = [];
+            var sDividendo = num1.toString();
+            var divisor = num2;
+            var parcial = 0;
+            var posicion = 0;
+
+            while (posicion < sDividendo.length) {
+                parcial = parcial * 10 + parseInt(sDividendo[posicion]);
+                posicion++;
+                if (parcial >= divisor || pasosDivision.length > 0) {
+                    var digitoCociente = Math.floor(parcial / divisor);
+                    var producto = digitoCociente * divisor;
+                    var residuo = parcial - producto;
+                    pasosDivision.push({
+                        parcial: parcial,
+                        digitoCociente: digitoCociente,
+                        producto: producto,
+                        residuo: residuo,
+                        posicionFinal: posicion - 1,
+                        bajaSiguiente: posicion < sDividendo.length ? sDividendo[posicion] : null
+                    });
+                    parcial = residuo;
+                }
+            }
+        }
+
+        function renderizarDivision() {
+            var sDividendo = num1.toString();
+            var sDivisor = num2.toString();
+            var sCociente = cociente.toString();
+            var pasos = pasosDivision;
+
+            var celW = 34, celH = 38;
+            var padX = 25, padY = 15;
+            var fontSize = 28;
+
+            var anchoDiv = sDividendo.length * celW;
+            var anchoCaja = Math.max(sDivisor.length, sCociente.length) * celW + 15;
+            var svgW = padX + anchoDiv + anchoCaja + 20;
+            var altoPasos = pasos.length * celH * 2;
+            var svgH = padY + celH + altoPasos + 30;
+
+            var xBase = padX;
+            var yDividendo = padY + celH;
+
+            var svg = '<svg viewBox="0 0 ' + svgW + ' ' + svgH + '" style="font-family: Indie Flower, cursive; font-size: ' + fontSize + 'px;">';
+
+            for (var i = 0; i < sDividendo.length; i++) {
+                var x = xBase + i * celW + celW / 2;
+                svg += '<text x="' + x + '" y="' + yDividendo + '" text-anchor="middle" fill="#f0f0e8">' + sDividendo[i] + '</text>';
+            }
+
+            var xCaja = xBase + anchoDiv + 5;
+            svg += '<line x1="' + xCaja + '" y1="' + (yDividendo - celH + 10) + '" x2="' + xCaja + '" y2="' + (yDividendo + 8) + '" stroke="#ff6666" stroke-width="3"/>';
+            svg += '<line x1="' + xCaja + '" y1="' + (yDividendo + 8) + '" x2="' + (xCaja + anchoCaja) + '" y2="' + (yDividendo + 8) + '" stroke="#ff6666" stroke-width="3"/>';
+
+            for (var i = 0; i < sDivisor.length; i++) {
+                var x = xCaja + 10 + i * celW + celW / 2;
+                svg += '<text x="' + x + '" y="' + yDividendo + '" text-anchor="middle" fill="#f0f0e8">' + sDivisor[i] + '</text>';
+            }
+
+            for (var i = 0; i < sCociente.length; i++) {
+                var x = xCaja + 10 + i * celW;
+                var y = yDividendo + 12;
+                svg += '<rect x="' + x + '" y="' + y + '" width="' + (celW - 4) + '" height="' + (celH - 6) + '" fill="rgba(255,255,255,0.1)" stroke="rgba(255,255,255,0.5)" stroke-dasharray="4" rx="4" style="cursor:pointer;" onclick="clickCelda(\'cociente\', ' + i + ', null)"/>';
+                svg += '<text x="' + (x + celW/2 - 2) + '" y="' + (y + celH - 12) + '" text-anchor="middle" fill="#90EE90" id="cociente_' + i + '" style="pointer-events:none;"></text>';
+            }
+
+            var yActual = yDividendo + celH;
+
+            for (var p = 0; p < pasos.length; p++) {
+                var paso = pasos[p];
+                var sProducto = paso.producto.toString();
+                var sResiduo = paso.residuo.toString();
+
+                var xFinParcial = xBase + (paso.posicionFinal + 1) * celW;
+                var xProducto = xFinParcial - sProducto.length * celW;
+
+                svg += '<text x="' + (xProducto - 15) + '" y="' + yActual + '" text-anchor="middle" fill="#ff9999" font-size="22">−</text>';
+
+                for (var i = 0; i < sProducto.length; i++) {
+                    var x = xProducto + i * celW;
+                    svg += '<rect x="' + x + '" y="' + (yActual - celH + 6) + '" width="' + (celW - 4) + '" height="' + (celH - 6) + '" fill="rgba(255,255,255,0.1)" stroke="rgba(255,255,255,0.5)" stroke-dasharray="4" rx="4" style="cursor:pointer;" onclick="clickCelda(\'producto\', ' + i + ', ' + p + ')"/>';
+                    svg += '<text x="' + (x + celW/2 - 2) + '" y="' + yActual + '" text-anchor="middle" fill="#f0f0e8" id="producto_' + p + '_' + i + '" style="pointer-events:none;"></text>';
+                }
+
+                svg += '<line x1="' + xProducto + '" y1="' + (yActual + 4) + '" x2="' + xFinParcial + '" y2="' + (yActual + 4) + '" stroke="#f0f0e8" stroke-width="2"/>';
+
+                yActual += celH;
+
+                var esUltimo = p === pasos.length - 1;
+                var xResiduo = xFinParcial - sResiduo.length * celW;
+
+                if (esUltimo) {
+                    for (var i = 0; i < sResiduo.length; i++) {
+                        var x = xResiduo + i * celW;
+                        svg += '<rect x="' + x + '" y="' + (yActual - celH + 6) + '" width="' + (celW - 4) + '" height="' + (celH - 6) + '" fill="rgba(255,255,255,0.1)" stroke="rgba(255,255,255,0.5)" stroke-dasharray="4" rx="4" style="cursor:pointer;" onclick="clickCelda(\'resto\', ' + i + ', null)"/>';
+                        svg += '<text x="' + (x + celW/2 - 2) + '" y="' + yActual + '" text-anchor="middle" fill="#ffcc66" id="resto_' + i + '" style="pointer-events:none;"></text>';
+                    }
+                } else {
+                    for (var i = 0; i < sResiduo.length; i++) {
+                        var x = xResiduo + i * celW;
+                        svg += '<rect x="' + x + '" y="' + (yActual - celH + 6) + '" width="' + (celW - 4) + '" height="' + (celH - 6) + '" fill="rgba(255,255,255,0.1)" stroke="rgba(255,255,255,0.5)" stroke-dasharray="4" rx="4" style="cursor:pointer;" onclick="clickCelda(\'residuo\', ' + i + ', ' + p + ')"/>';
+                        svg += '<text x="' + (x + celW/2 - 2) + '" y="' + yActual + '" text-anchor="middle" fill="#f0f0e8" id="residuo_' + p + '_' + i + '" style="pointer-events:none;"></text>';
+                    }
+
+                    if (paso.bajaSiguiente !== null) {
+                        var xBaja = xFinParcial;
+                        svg += '<rect x="' + xBaja + '" y="' + (yActual - celH + 6) + '" width="' + (celW - 4) + '" height="' + (celH - 6) + '" fill="rgba(255,255,255,0.1)" stroke="rgba(135,206,235,0.6)" stroke-dasharray="4" rx="4" style="cursor:pointer;" onclick="clickCelda(\'baja\', 0, ' + p + ')"/>';
+                        svg += '<text x="' + (xBaja + celW/2 - 2) + '" y="' + yActual + '" text-anchor="middle" fill="#87CEEB" id="baja_' + p + '_0" style="pointer-events:none;"></text>';
+                    }
+                }
+                yActual += celH;
+            }
+
+            svg += '</svg>';
+            document.getElementById('contenidoPizarra').innerHTML = svg;
+        }
+
+        function clickCelda(tipo, col, paso) {
+            var id;
+            if (paso === null) {
+                id = tipo + '_' + col;
+            } else {
+                id = tipo + '_' + paso + '_' + col;
+            }
+            var el = document.getElementById(id);
+            if (el) {
+                var v = el.textContent;
+                if (v === '') v = '0';
+                else {
+                    v = parseInt(v);
+                    v = v === 9 ? '' : (v + 1).toString();
+                }
+                el.textContent = v;
+            }
+        }
+
+        function aplicarAyudas() {
+            var sCociente = cociente.toString();
+            if (sCociente.length <= 1) return;
+            if (Math.random() < 0.4) {
+                var idx = Math.floor(Math.random() * sCociente.length);
+                var el = document.getElementById('cociente_' + idx);
+                if (el) { el.textContent = sCociente[idx]; el.style.opacity = '0.5'; }
+            }
+        }
+
+        function comprobar() {
+            var ok = true;
+
+            var sCociente = cociente.toString();
+            for (var i = 0; i < sCociente.length; i++) {
+                var el = document.getElementById('cociente_' + i);
+                var rect = document.querySelector('rect[onclick="clickCelda(\'cociente\', ' + i + ', null)"]');
+                if (el && rect) {
+                    if (el.textContent === sCociente[i]) {
+                        rect.setAttribute('fill', 'rgba(0,255,0,0.3)');
+                        rect.setAttribute('stroke', 'lightgreen');
+                    } else {
+                        rect.setAttribute('fill', 'rgba(255,0,0,0.3)');
+                        rect.setAttribute('stroke', '#ff6666');
+                        el.textContent = sCociente[i];
+                        el.setAttribute('fill', '#ff6666');
+                        ok = false;
+                    }
+                }
+            }
+
+            for (var p = 0; p < pasosDivision.length; p++) {
+                var sProd = pasosDivision[p].producto.toString();
+                for (var i = 0; i < sProd.length; i++) {
+                    var el = document.getElementById('producto_' + p + '_' + i);
+                    var rect = document.querySelector('rect[onclick="clickCelda(\'producto\', ' + i + ', ' + p + ')"]');
+                    if (el && rect) {
+                        if (el.textContent === sProd[i]) {
+                            rect.setAttribute('fill', 'rgba(0,255,0,0.3)');
+                            rect.setAttribute('stroke', 'lightgreen');
+                        } else {
+                            rect.setAttribute('fill', 'rgba(255,0,0,0.3)');
+                            rect.setAttribute('stroke', '#ff6666');
+                            el.textContent = sProd[i];
+                            el.setAttribute('fill', '#ff6666');
+                            ok = false;
+                        }
+                    }
+                }
+
+                if (p < pasosDivision.length - 1) {
+                    var sRes = pasosDivision[p].residuo.toString();
+                    for (var i = 0; i < sRes.length; i++) {
+                        var el = document.getElementById('residuo_' + p + '_' + i);
+                        var rect = document.querySelector('rect[onclick="clickCelda(\'residuo\', ' + i + ', ' + p + ')"]');
+                        if (el && rect) {
+                            if (el.textContent === sRes[i]) {
+                                rect.setAttribute('fill', 'rgba(0,255,0,0.3)');
+                                rect.setAttribute('stroke', 'lightgreen');
+                            } else {
+                                rect.setAttribute('fill', 'rgba(255,0,0,0.3)');
+                                rect.setAttribute('stroke', '#ff6666');
+                                el.textContent = sRes[i];
+                                el.setAttribute('fill', '#ff6666');
+                                ok = false;
+                            }
+                        }
+                    }
+
+                    if (pasosDivision[p].bajaSiguiente !== null) {
+                        var el = document.getElementById('baja_' + p + '_0');
+                        var rect = document.querySelector('rect[onclick="clickCelda(\'baja\', 0, ' + p + ')"]');
+                        if (el && rect) {
+                            if (el.textContent === pasosDivision[p].bajaSiguiente) {
+                                rect.setAttribute('fill', 'rgba(0,255,0,0.3)');
+                                rect.setAttribute('stroke', 'lightgreen');
+                            } else {
+                                rect.setAttribute('fill', 'rgba(255,0,0,0.3)');
+                                rect.setAttribute('stroke', '#ff6666');
+                                el.textContent = pasosDivision[p].bajaSiguiente;
+                                el.setAttribute('fill', '#ff6666');
+                                ok = false;
+                            }
+                        }
+                    }
+                }
+            }
+
+            var sResto = resto.toString();
+            for (var i = 0; i < sResto.length; i++) {
+                var el = document.getElementById('resto_' + i);
+                var rect = document.querySelector('rect[onclick="clickCelda(\'resto\', ' + i + ', null)"]');
+                if (el && rect) {
+                    if (el.textContent === sResto[i]) {
+                        rect.setAttribute('fill', 'rgba(0,255,0,0.3)');
+                        rect.setAttribute('stroke', 'lightgreen');
+                    } else {
+                        rect.setAttribute('fill', 'rgba(255,0,0,0.3)');
+                        rect.setAttribute('stroke', '#ff6666');
+                        el.textContent = sResto[i];
+                        el.setAttribute('fill', '#ff6666');
+                        ok = false;
+                    }
+                }
+            }
+
+            var msg = document.getElementById('mensaje');
+            if (ok) {
+                msg.textContent = '¡Muy bien! 🎉';
+                msg.style.color = '#90EE90';
+                setTimeout(function() { operacionActual++; generarEjercicio(); }, 1200);
+            } else {
+                msg.textContent = 'Revisa los errores';
+                msg.style.color = '#ff9999';
+            }
+        }
+
+        function toggleAyuda() {
+            modoAyuda = !modoAyuda;
+            var btn = document.getElementById('btnAyuda');
+            var panel = document.getElementById('panelAyuda');
+            if (modoAyuda) {
+                btn.classList.add('activo');
+                panel.classList.remove('oculto');
+                pasoAyuda = 0;
+                mostrarPasoAyuda();
+            } else {
+                btn.classList.remove('activo');
+                panel.classList.add('oculto');
+            }
+        }
+
+        function mostrarPasoAyuda() {
+            var pasos = generarPasosAyuda();
+            if (pasoAyuda >= pasos.length) pasoAyuda = pasos.length - 1;
+            if (pasoAyuda < 0) pasoAyuda = 0;
+
+            var panel = document.getElementById('panelAyuda');
+            var html = '<div class="paso-titulo">Paso ' + (pasoAyuda + 1) + ' de ' + pasos.length + '</div>';
+            html += '<div class="paso-instruccion">' + pasos[pasoAyuda] + '</div>';
+            html += '<div class="nav-ayuda">';
+            html += '<button onclick="pasoAyuda--; mostrarPasoAyuda();"' + (pasoAyuda === 0 ? ' disabled' : '') + '>← Anterior</button>';
+            html += '<button onclick="pasoAyuda++; mostrarPasoAyuda();"' + (pasoAyuda >= pasos.length - 1 ? ' disabled' : '') + '>Siguiente →</button>';
+            html += '</div>';
+            panel.innerHTML = html;
+        }
+
+        function generarPasosAyuda() {
+            var pasos = [];
+            var sDivisor = num2.toString();
+            var primerDigDivisor = parseInt(sDivisor[0]);
+            var divisorEsGrande = num2 >= 10;
+
+            pasos.push('Vamos a dividir ' + num1 + ' entre ' + num2 + '. Cogemos digitos del dividendo hasta tener un numero >= ' + num2 + '.');
+
+            for (var i = 0; i < pasosDivision.length; i++) {
+                var paso = pasosDivision[i];
+                var sParcial = paso.parcial.toString();
+
+                if (i === 0) {
+                    pasos.push('Cogemos digitos: ' + paso.parcial + '. ¿Es >= ' + num2 + '? Si!');
+                } else {
+                    pasos.push('Bajamos el ' + pasosDivision[i-1].bajaSiguiente + ' y tenemos ' + paso.parcial + '.');
+                }
+
+                if (divisorEsGrande) {
+                    var digParaTabla = sParcial.length > 1 ? parseInt(sParcial.substring(0, sParcial.length - 1)) : parseInt(sParcial[0]);
+                    if (sParcial.length === sDivisor.length) {
+                        digParaTabla = parseInt(sParcial[0]);
+                    }
+
+                    pasos.push('Truco: Como ' + num2 + ' es grande, usamos solo su primera cifra: ' + primerDigDivisor);
+
+                    var digitosDividendo = sParcial.length >= sDivisor.length ? sParcial.substring(0, sDivisor.length) : sParcial;
+                    var primerDigsDividendo = parseInt(digitosDividendo[0]);
+                    if (digitosDividendo.length > 1 && sParcial.length === sDivisor.length) {
+                        primerDigsDividendo = parseInt(digitosDividendo.substring(0, digitosDividendo.length > 1 ? 2 : 1));
+                    } else if (sParcial.length > sDivisor.length) {
+                        primerDigsDividendo = parseInt(sParcial.substring(0, 2));
+                    }
+
+                    pasos.push('Miramos: ¿cuantas veces cabe ' + primerDigDivisor + ' en ' + primerDigsDividendo + '? Tabla del ' + primerDigDivisor + '!');
+
+                    var estimacion = Math.floor(primerDigsDividendo / primerDigDivisor);
+                    if (estimacion > 9) estimacion = 9;
+
+                    pasos.push(primerDigDivisor + ' x ' + estimacion + ' = ' + (primerDigDivisor * estimacion) + '. Probamos ' + estimacion + ' con el divisor completo.');
+
+                    var pruebaEstimacion = estimacion * num2;
+                    if (pruebaEstimacion > paso.parcial && estimacion > 1) {
+                        pasos.push(num2 + ' x ' + estimacion + ' = ' + pruebaEstimacion + '... Se pasa de ' + paso.parcial + '! Probamos con ' + (estimacion - 1) + '.');
+                    }
+                } else {
+                    pasos.push('Tabla del ' + num2 + ': ¿cuantas veces cabe ' + num2 + ' en ' + paso.parcial + '?');
+                }
+
+                pasos.push('Comprobamos: ' + num2 + ' x ' + paso.digitoCociente + ' = ' + paso.producto + '. ¿Cabe en ' + paso.parcial + '? Si!');
+
+                var siguienteIntento = paso.digitoCociente + 1;
+                if (siguienteIntento <= 9) {
+                    pasos.push('¿Y ' + num2 + ' x ' + siguienteIntento + ' = ' + (num2 * siguienteIntento) + '? Se pasa! Entonces es ' + paso.digitoCociente + '.');
+                }
+
+                pasos.push('Escribe ' + paso.digitoCociente + ' en el cociente.');
+
+                pasos.push('Resta: ' + paso.parcial + ' - ' + paso.producto + ' = ' + paso.residuo + '.');
+
+                if (paso.bajaSiguiente !== null) {
+                    pasos.push('Baja el siguiente digito (' + paso.bajaSiguiente + ').');
+                }
+            }
+
+            if (resto === 0) {
+                pasos.push('Resto = 0. La division es exacta! Resultado: ' + cociente);
+            } else {
+                pasos.push('No quedan mas digitos. Cociente = ' + cociente + ', Resto = ' + resto);
+            }
+
+            pasos.push('Completa todas las casillas y pulsa "Comprobar".');
+            return pasos;
+        }
+    </script>
+</body>
+</html>

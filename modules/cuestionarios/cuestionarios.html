@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Cuestionarios</title>
+    <link href="https://fonts.googleapis.com/css2?family=Indie+Flower&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { background: #2a5a2a; color: #f0f0e8; margin: 0; padding: 0; font-family: 'Indie Flower', cursive; min-height: 100vh; }
+        .oculto { display: none !important; }
+
+        .menu-container { padding: 50px 20px 20px 20px; }
+        h1, h2 { text-align: center; margin: 10px 0 20px 0; font-size: 1.8em; text-shadow: 0 0 5px rgba(255,255,255,0.5); }
+
+        .menu-opciones { display: flex; flex-direction: column; gap: 15px; max-width: 350px; margin: 0 auto; }
+        .opcion-menu {
+            background: rgba(255,255,255,0.1); border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 15px; padding: 20px; cursor: pointer; text-align: center;
+        }
+        .opcion-menu .icono { font-size: 3em; margin-bottom: 10px; }
+        .opcion-menu h3 { margin: 0 0 8px 0; font-size: 1.4em; }
+        .opcion-menu p { margin: 0; opacity: 0.7; font-size: 1em; }
+
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 8px; font-size: 1.2em; }
+        .form-input {
+            width: 100%; padding: 14px; font-size: 1.2em;
+            background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 8px; color: #f0f0e8; font-family: 'Indie Flower', cursive;
+        }
+        .form-input::placeholder { color: rgba(255,255,255,0.5); }
+
+        .btn-menu {
+            background: rgba(255,255,255,0.1); border: 3px solid rgba(255,255,255,0.4);
+            color: #f0f0e8; padding: 15px 20px; font-size: 1.3em; border-radius: 12px;
+            font-family: 'Indie Flower', cursive; cursor: pointer; width: 100%;
+        }
+        .btn {
+            background: rgba(255,255,255,0.15); border: 2px solid rgba(255,255,255,0.5);
+            color: #f0f0e8; padding: 12px 20px; border-radius: 8px; font-size: 1.1em;
+            font-family: 'Indie Flower', cursive; cursor: pointer; margin: 5px;
+        }
+        .botones-control { text-align: center; margin-top: 20px; }
+
+        .upload-zona {
+            border: 3px dashed rgba(255,255,255,0.4); border-radius: 15px;
+            padding: 30px 20px; text-align: center; cursor: pointer; max-width: 400px; margin: 20px auto;
+        }
+        .upload-zona .icono { font-size: 4em; margin-bottom: 15px; }
+        .previsualizacion { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 15px; }
+        .preview-foto { width: 80px; height: 80px; object-fit: cover; border-radius: 8px; border: 2px solid rgba(255,255,255,0.3); }
+
+        .tema-item {
+            background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 12px; padding: 15px; margin: 10px 0; cursor: pointer;
+        }
+        .tema-item h3 { margin: 0 0 5px 0; }
+        .tema-item small { opacity: 0.7; }
+        .no-temas { text-align: center; padding: 40px; opacity: 0.7; }
+
+        .detalle-container { max-width: 400px; margin: 0 auto; }
+        .detalle-opciones { display: flex; flex-direction: column; gap: 12px; }
+        .detalle-opcion {
+            background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 10px; padding: 15px; cursor: pointer; display: flex; align-items: center; gap: 15px;
+        }
+        .detalle-opcion .icono { font-size: 2em; }
+        .detalle-opcion span { font-size: 1.2em; }
+
+        .cuestionario-container { max-width: 500px; margin: 0 auto; padding: 15px; }
+        .pregunta-card { background: rgba(255,255,255,0.1); border-radius: 15px; padding: 20px; }
+        .pregunta-texto { font-size: 1.3em; margin-bottom: 20px; line-height: 1.4; }
+        .opciones { display: flex; flex-direction: column; gap: 10px; }
+        .opcion {
+            background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 10px; padding: 15px; cursor: pointer; display: flex; align-items: center; gap: 12px;
+        }
+        .opcion-letra {
+            background: rgba(255,255,255,0.2); width: 32px; height: 32px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center; font-weight: bold;
+        }
+        .opcion.correcta { background: rgba(0,255,0,0.3); border-color: lightgreen; }
+        .opcion.incorrecta { background: rgba(255,0,0,0.3); border-color: #ff6666; }
+
+        .progreso-cuest { text-align: center; margin-bottom: 15px; font-size: 1.2em; opacity: 0.8; }
+        .mensaje-cuest { text-align: center; margin-top: 15px; font-size: 1.2em; min-height: 30px; }
+        .mensaje-ok { color: #90EE90; }
+        .mensaje-error { color: #ff6666; }
+
+        .juego-container { max-width: 500px; margin: 0 auto; padding: 15px; }
+        .juego-titulo { text-align: center; font-size: 1.5em; margin-bottom: 10px; }
+        .juego-instrucciones { text-align: center; opacity: 0.8; margin-bottom: 20px; }
+        .relacionar-container { display: flex; gap: 15px; justify-content: center; }
+        .relacionar-columna { display: flex; flex-direction: column; gap: 10px; flex: 1; }
+        .relacionar-item {
+            background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 8px; padding: 12px; text-align: center; cursor: pointer; font-size: 0.95em;
+        }
+        .relacionar-item.seleccionado { border-color: #00c9ff; background: rgba(0,201,255,0.2); }
+        .relacionar-item.emparejado { border-color: lightgreen; background: rgba(0,255,0,0.2); }
+        .relacionar-item.error { border-color: #ff6666; background: rgba(255,0,0,0.2); }
+
+        .ordenar-lista { display: flex; flex-direction: column; gap: 8px; }
+        .ordenar-item {
+            background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 8px; padding: 12px; display: flex; align-items: center; gap: 12px; cursor: grab;
+        }
+        .ordenar-item.arrastrando { opacity: 0.5; }
+        .ordenar-item.sobre { border-color: #00c9ff; }
+        .ordenar-item.correcto { border-color: lightgreen; background: rgba(0,255,0,0.2); }
+        .ordenar-item.incorrecto { border-color: #ff6666; background: rgba(255,0,0,0.2); }
+        .ordenar-numero { background: rgba(255,255,255,0.2); width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+
+        .mensaje-juego { text-align: center; margin-top: 15px; font-size: 1.2em; min-height: 30px; }
+        .estado-generacion { text-align: center; margin-top: 15px; font-size: 1.1em; }
+    </style>
+</head>
+<body>
+    <div id="menuCuestionarios">
+        <div class="menu-container">
+            <h1>❓ Cuestionarios</h1>
+            <div class="menu-opciones">
+                <div class="opcion-menu" onclick="nuevoCuestionario()">
+                    <div class="icono">📸</div>
+                    <h3>Nuevo Tema</h3>
+                    <p>Sube fotos de tu libro para crear cuestionarios</p>
+                </div>
+                <div class="opcion-menu" onclick="listarCuestionarios()">
+                    <div class="icono">📚</div>
+                    <h3>Mis Temas</h3>
+                    <p>Ver temas guardados</p>
+                </div>
+            </div>
+            <div class="botones-control">
+                <button class="btn" onclick="window.location.href='/supermente/index.html'">← Volver al Menu</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="nuevoCuestionario" class="oculto">
+        <div class="menu-container">
+            <h2>📸 Nuevo Tema</h2>
+            <div style="max-width: 400px; margin: 0 auto;">
+                <div class="form-group">
+                    <label>Nombre del tema:</label>
+                    <input type="text" id="nombreTema" class="form-input" placeholder="Ej: Ciencias Naturales..." oninput="actualizarBotonGenerar()">
+                </div>
+                <div class="upload-zona" onclick="document.getElementById('inputFotos').click()">
+                    <div class="icono">📷</div>
+                    <p>Haz clic para subir fotos de tu libro</p>
+                    <input type="file" id="inputFotos" accept="image/*" multiple style="display:none;" onchange="procesarFotos(event)">
+                </div>
+                <button class="btn" onclick="abrirCamara()" style="width:100%; margin-bottom:15px;">📱 Usar Camara</button>
+                <div class="previsualizacion" id="previsualizacion"></div>
+                <button class="btn-menu" id="btnGenerar" onclick="generarContenido()" style="display:none;">✨ Generar Cuestionario</button>
+                <div class="estado-generacion" id="estadoGeneracion"></div>
+            </div>
+            <div class="botones-control">
+                <button class="btn" onclick="mostrarPantalla('menuCuestionarios')">← Volver</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="listaCuestionarios" class="oculto">
+        <div class="menu-container">
+            <h2>📚 Mis Temas</h2>
+            <div id="listaTemas" style="max-width: 400px; margin: 0 auto;"></div>
+            <div class="botones-control">
+                <button class="btn" onclick="limpiarTemas()">🗑️ Borrar Todo</button>
+                <button class="btn" onclick="mostrarPantalla('menuCuestionarios')">← Volver</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="detalleTema" class="oculto">
+        <div class="menu-container">
+            <h2 id="tituloTema"></h2>
+            <div class="detalle-container">
+                <div class="detalle-opciones">
+                    <div class="detalle-opcion" onclick="iniciarCuestionario()">
+                        <span class="icono">📝</span>
+                        <span>Cuestionario</span>
+                    </div>
+                    <div class="detalle-opcion" onclick="iniciarJuego()">
+                        <span class="icono">🎮</span>
+                        <span>Juego</span>
+                    </div>
+                    <div class="detalle-opcion" onclick="verLectura()">
+                        <span class="icono">📖</span>
+                        <span>Lectura</span>
+                    </div>
+                </div>
+            </div>
+            <div class="botones-control">
+                <button class="btn" onclick="listarCuestionarios()">← Volver</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="cuestionarioActivo" class="oculto">
+        <div class="cuestionario-container">
+            <div class="progreso-cuest" id="progresoCuest"></div>
+            <div id="preguntaActual"></div>
+            <div class="mensaje-cuest" id="mensajeCuest"></div>
+        </div>
+        <div class="botones-control">
+            <button class="btn" id="btnSiguienteCuest" onclick="siguientePregunta()" style="display:none;">→ Siguiente</button>
+            <button class="btn" onclick="mostrarPantalla('detalleTema')">← Salir</button>
+        </div>
+    </div>
+
+    <div id="juegoActivo" class="oculto">
+        <div class="juego-container">
+            <div class="juego-titulo" id="juegoTitulo"></div>
+            <div class="juego-instrucciones" id="juegoInstrucciones"></div>
+            <div id="juegoArea"></div>
+            <div class="mensaje-juego" id="mensajeJuego"></div>
+        </div>
+        <div class="botones-control">
+            <button class="btn" id="btnComprobarJuego" onclick="comprobarJuego()">✓ Comprobar</button>
+            <button class="btn" onclick="mostrarPantalla('detalleTema')">← Salir</button>
+        </div>
+    </div>
+
+    <script>
+        // ==================== CONFIGURACION IA ====================
+        var configIA = {
+            provider: 'gemini',
+            keys: { claude: '', gemini: '' }
+        };
+
+        function cargarConfigIA() {
+            var saved = localStorage.getItem('configIA');
+            if (saved) {
+                var savedConfig = JSON.parse(saved);
+                configIA.provider = savedConfig.provider || 'claude';
+                configIA.keys = savedConfig.keys || {};
+            }
+        }
+
+        // ==================== ESTADO GLOBAL ====================
+        var temaActual = null;
+        var cuestionarioActual = null;
+        var preguntaActualIdx = 0;
+        var puntuacionCuest = 0;
+        var fotosSubidas = [];
+        var juegoActual = null;
+        var estadoJuego = {};
+
+        // ==================== NAVEGACION ====================
+        function mostrarPantalla(id) {
+            ['menuCuestionarios', 'nuevoCuestionario', 'listaCuestionarios', 'detalleTema', 'cuestionarioActivo', 'juegoActivo'].forEach(function(pid) {
+                var el = document.getElementById(pid);
+                if (el) el.classList.add('oculto');
+            });
+            var pantalla = document.getElementById(id);
+            if (pantalla) pantalla.classList.remove('oculto');
+        }
+
+        function limpiarTemas() {
+            if (confirm('¿Seguro que quieres borrar todos los temas guardados?')) {
+                localStorage.removeItem('temas');
+                alert('Temas borrados correctamente');
+                listarCuestionarios();
+            }
+        }
+
+        function nuevoCuestionario() {
+            mostrarPantalla('nuevoCuestionario');
+            fotosSubidas = [];
+            document.getElementById('previsualizacion').innerHTML = '';
+            document.getElementById('nombreTema').value = '';
+            document.getElementById('btnGenerar').style.display = 'none';
+            document.getElementById('estadoGeneracion').innerHTML = '';
+        }
+
+        function procesarFotos(event) {
+            var files = event.target.files;
+            var preview = document.getElementById('previsualizacion');
+            for (var i = 0; i < files.length; i++) {
+                (function(file) {
+                    var reader = new FileReader();
+                    reader.onload = function(e) {
+                        fotosSubidas.push(e.target.result);
+                        var img = document.createElement('img');
+                        img.src = e.target.result;
+                        img.className = 'preview-foto';
+                        preview.appendChild(img);
+                        actualizarBotonGenerar();
+                    };
+                    reader.readAsDataURL(file);
+                })(files[i]);
+            }
+        }
+
+        function abrirCamara() {
+            var input = document.getElementById('inputFotos');
+            input.setAttribute('capture', 'environment');
+            input.click();
+        }
+
+        function actualizarBotonGenerar() {
+            var nombre = document.getElementById('nombreTema').value.trim();
+            var btn = document.getElementById('btnGenerar');
+            if (fotosSubidas.length > 0 && nombre) {
+                btn.style.display = 'block';
+            } else {
+                btn.style.display = 'none';
+            }
+        }
+
+        async function generarContenido() {
+            var nombre = document.getElementById('nombreTema').value.trim();
+            var estado = document.getElementById('estadoGeneracion');
+            var key = configIA.keys.gemini;
+
+            if (!key) {
+                estado.innerHTML = '❌ No hay API key de Gemini configurada';
+                return;
+            }
+
+            estado.innerHTML = '⏳ Analizando imagenes con IA...';
+
+            try {
+                var contenidoIA = await generarContenidoConIA(nombre, fotosSubidas, key);
+                var nuevoTema = {
+                    id: Date.now(),
+                    nombre: nombre,
+                    fechaCreacion: new Date().toLocaleDateString(),
+                    imagenes: [],
+                    cuestionario: contenidoIA.cuestionario,
+                    juego: contenidoIA.juego,
+                    lectura: contenidoIA.lectura
+                };
+                guardarTema(nuevoTema);
+                estado.innerHTML = '✅ ¡Tema creado!';
+                setTimeout(function() {
+                    temaActual = nuevoTema;
+                    mostrarDetalleTema();
+                }, 1500);
+            } catch (error) {
+                estado.innerHTML = '❌ Error: ' + error.message;
+                console.error(error);
+            }
+        }
+
+        async function generarContenidoConIA(nombre, imagenes, key) {
+            var prompt = 'Analiza estas imagenes de un libro sobre "' + nombre + '".\n\nGenera un JSON con:\n{\n  "cuestionario": [\n    {"pregunta": "...", "opciones": ["A", "B", "C", "D"], "correcta": 0}\n  ],\n  "lectura": "Resumen del contenido...",\n  "juego": {\n    "tipo": "relacionar",\n    "titulo": "...",\n    "instrucciones": "Une cada elemento",\n    "elementos": [{"izq": "Termino", "der": "Definicion"}]\n  }\n}\n\nGenera 10 preguntas. RESPONDE SOLO CON JSON.';
+            return await generarConGemini(prompt, imagenes, key);
+        }
+
+        async function generarConGemini(prompt, imagenes, key) {
+            var parts = [{ text: prompt }];
+            for (var i = 0; i < imagenes.length; i++) {
+                var img = imagenes[i];
+                parts.push({
+                    inline_data: {
+                        mime_type: img.split(';')[0].split(':')[1],
+                        data: img.split(',')[1]
+                    }
+                });
+            }
+
+            var response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=' + key, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{ parts: parts }],
+                    generationConfig: { maxOutputTokens: 16384 }
+                })
+            });
+
+            if (!response.ok) throw new Error('Error con Gemini API');
+            var data = await response.json();
+            var texto = data.candidates[0].content.parts[0].text;
+            return parsearJSONSeguro(texto);
+        }
+
+        function parsearJSONSeguro(texto) {
+            var clean = texto.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+            try { return JSON.parse(clean); }
+            catch (e) {
+                clean = clean.replace(/,\s*$/, '');
+                var openBrackets = (clean.match(/\[/g) || []).length;
+                var closeBrackets = (clean.match(/\]/g) || []).length;
+                var openBraces = (clean.match(/\{/g) || []).length;
+                var closeBraces = (clean.match(/\}/g) || []).length;
+                for (var i = 0; i < openBrackets - closeBrackets; i++) clean += ']';
+                for (var i = 0; i < openBraces - closeBraces; i++) clean += '}';
+                return JSON.parse(clean);
+            }
+        }
+
+        function guardarTema(tema) {
+            var temas = JSON.parse(localStorage.getItem('temas') || '[]');
+            temas.push(tema);
+            localStorage.setItem('temas', JSON.stringify(temas));
+        }
+
+        function listarCuestionarios() {
+            mostrarPantalla('listaCuestionarios');
+            var lista = document.getElementById('listaTemas');
+            var temas = JSON.parse(localStorage.getItem('temas') || '[]');
+
+            if (temas.length === 0) {
+                lista.innerHTML = '<div class="no-temas">No hay temas guardados.<br>¡Crea uno nuevo!</div>';
+                return;
+            }
+
+            lista.innerHTML = temas.map(function(tema) {
+                return '<div class="tema-item" onclick="seleccionarTema(' + tema.id + ')"><h3>📚 ' + tema.nombre + '</h3><small>Creado: ' + tema.fechaCreacion + '</small></div>';
+            }).join('');
+        }
+
+        function seleccionarTema(id) {
+            var temas = JSON.parse(localStorage.getItem('temas') || '[]');
+            temaActual = temas.find(function(t) { return t.id === id; });
+            if (temaActual) mostrarDetalleTema();
+        }
+
+        function mostrarDetalleTema() {
+            document.getElementById('tituloTema').textContent = temaActual.nombre;
+            mostrarPantalla('detalleTema');
+        }
+
+        function iniciarCuestionario() {
+            if (!temaActual || !temaActual.cuestionario) return;
+            cuestionarioActual = temaActual.cuestionario;
+            preguntaActualIdx = 0;
+            puntuacionCuest = 0;
+            mostrarPantalla('cuestionarioActivo');
+            mostrarPregunta();
+        }
+
+        function mostrarPregunta() {
+            var q = cuestionarioActual[preguntaActualIdx];
+            var container = document.getElementById('preguntaActual');
+            document.getElementById('progresoCuest').textContent = 'Pregunta ' + (preguntaActualIdx + 1) + ' de ' + cuestionarioActual.length;
+            document.getElementById('mensajeCuest').textContent = '';
+            var btnSiguiente = document.getElementById('btnSiguienteCuest');
+            if (btnSiguiente) btnSiguiente.style.display = 'none';
+
+            var letras = ['A', 'B', 'C', 'D'];
+            container.innerHTML = '<div class="pregunta-card"><div class="pregunta-texto">' + q.pregunta + '</div><div class="opciones">' + q.opciones.map(function(op, i) {
+                return '<div class="opcion" onclick="seleccionarOpcion(' + i + ')"><span class="opcion-letra">' + letras[i] + '</span><span>' + op + '</span></div>';
+            }).join('') + '</div></div>';
+        }
+
+        function seleccionarOpcion(idx) {
+            var q = cuestionarioActual[preguntaActualIdx];
+            var opciones = document.querySelectorAll('.opcion');
+
+            opciones.forEach(function(op, i) {
+                op.onclick = null;
+                op.style.cursor = 'default';
+                if (i === q.correcta) op.classList.add('correcta');
+                if (i === idx && idx !== q.correcta) op.classList.add('incorrecta');
+            });
+
+            var mensaje = document.getElementById('mensajeCuest');
+            if (idx === q.correcta) {
+                puntuacionCuest++;
+                mensaje.textContent = '✅ ¡Correcto!';
+                mensaje.className = 'mensaje-cuest mensaje-ok';
+            } else {
+                mensaje.textContent = '❌ Incorrecto - Correcta: ' + q.opciones[q.correcta];
+                mensaje.className = 'mensaje-cuest mensaje-error';
+            }
+
+            setTimeout(function() {
+                preguntaActualIdx++;
+                if (preguntaActualIdx >= cuestionarioActual.length) {
+                    mostrarResultadosCuestionario();
+                } else {
+                    mostrarPregunta();
+                }
+            }, 1500);
+        }
+
+        function siguientePregunta() {
+            preguntaActualIdx++;
+            if (preguntaActualIdx >= cuestionarioActual.length) {
+                mostrarResultadosCuestionario();
+            } else {
+                mostrarPregunta();
+            }
+        }
+
+        function mostrarResultadosCuestionario() {
+            var porcentaje = Math.round((puntuacionCuest / cuestionarioActual.length) * 100);
+            var container = document.getElementById('preguntaActual');
+            var emoji = porcentaje >= 80 ? '🏆' : porcentaje >= 60 ? '👍' : '📚';
+            var mensaje = porcentaje >= 80 ? '¡Excelente!' : porcentaje >= 60 ? '¡Buen trabajo!' : '¡Sigue practicando!';
+
+            container.innerHTML = '<div style="text-align:center;"><div style="font-size:4em; margin-bottom:20px;">' + emoji + '</div><div style="font-size:1.5em; margin-bottom:10px;">Resultado: ' + porcentaje + '%</div><div style="margin-bottom:20px;">' + puntuacionCuest + ' de ' + cuestionarioActual.length + ' correctas</div><div style="margin-bottom:20px;">' + mensaje + '</div><button class="btn" onclick="iniciarCuestionario()">🔄 Repetir</button></div>';
+            document.getElementById('btnSiguienteCuest').style.display = 'none';
+            document.getElementById('progresoCuest').textContent = 'Completado';
+        }
+
+        function verLectura() {
+            if (!temaActual || !temaActual.lectura) return;
+            var container = document.getElementById('preguntaActual');
+            document.getElementById('progresoCuest').textContent = 'Lectura';
+            document.getElementById('btnSiguienteCuest').style.display = 'none';
+            document.getElementById('mensajeCuest').textContent = '';
+            container.innerHTML = '<div style="line-height:1.8; text-align:justify;">' + temaActual.lectura + '</div>';
+            mostrarPantalla('cuestionarioActivo');
+        }
+
+        // ==================== JUEGOS ====================
+        function iniciarJuego() {
+            if (!temaActual || !temaActual.juego) {
+                alert('Este tema no tiene juego.');
+                return;
+            }
+            juegoActual = temaActual.juego;
+            estadoJuego = {};
+            document.getElementById('juegoTitulo').textContent = juegoActual.titulo || 'Juego';
+            document.getElementById('juegoInstrucciones').textContent = juegoActual.instrucciones || '';
+            document.getElementById('mensajeJuego').textContent = '';
+            document.getElementById('btnComprobarJuego').style.display = 'inline-block';
+            var area = document.getElementById('juegoArea');
+
+            if (juegoActual.tipo === 'relacionar') {
+                renderizarJuegoRelacionar(area);
+            } else if (juegoActual.tipo === 'ordenar') {
+                renderizarJuegoOrdenar(area);
+            } else {
+                area.innerHTML = '<p>Tipo de juego no soportado.</p>';
+            }
+            mostrarPantalla('juegoActivo');
+        }
+
+        function renderizarJuegoRelacionar(area) {
+            var pares = juegoActual.elementos;
+            estadoJuego.paresCorrectos = pares;
+            estadoJuego.emparejados = [];
+            estadoJuego.seleccionIzq = null;
+
+            var derechos = pares.map(function(p) { return p.der; });
+            for (var i = derechos.length - 1; i > 0; i--) {
+                var j = Math.floor(Math.random() * (i + 1));
+                var temp = derechos[i]; derechos[i] = derechos[j]; derechos[j] = temp;
+            }
+
+            area.innerHTML = '<div class="relacionar-container"><div class="relacionar-columna" id="colIzq">' + pares.map(function(p) {
+                return '<div class="relacionar-item" data-lado="izq" data-valor="' + p.izq + '" onclick="seleccionarRelacionar(this)">' + p.izq + '</div>';
+            }).join('') + '</div><div class="relacionar-columna" id="colDer">' + derechos.map(function(d) {
+                return '<div class="relacionar-item" data-lado="der" data-valor="' + d + '" onclick="seleccionarRelacionar(this)">' + d + '</div>';
+            }).join('') + '</div></div>';
+        }
+
+        function seleccionarRelacionar(elem) {
+            if (elem.classList.contains('emparejado')) return;
+            var lado = elem.dataset.lado;
+            var valor = elem.dataset.valor;
+
+            if (lado === 'izq') {
+                document.querySelectorAll('#colIzq .relacionar-item.seleccionado').forEach(function(e) { e.classList.remove('seleccionado'); });
+                elem.classList.add('seleccionado');
+                estadoJuego.seleccionIzq = valor;
+            } else if (lado === 'der' && estadoJuego.seleccionIzq) {
+                var parCorrecto = estadoJuego.paresCorrectos.find(function(p) {
+                    return p.izq === estadoJuego.seleccionIzq && p.der === valor;
+                });
+                var itemIzq = document.querySelector('#colIzq .relacionar-item[data-valor="' + estadoJuego.seleccionIzq + '"]');
+
+                if (parCorrecto) {
+                    itemIzq.classList.remove('seleccionado');
+                    itemIzq.classList.add('emparejado');
+                    elem.classList.add('emparejado');
+                    estadoJuego.emparejados.push(parCorrecto);
+                    estadoJuego.seleccionIzq = null;
+
+                    if (estadoJuego.emparejados.length === estadoJuego.paresCorrectos.length) {
+                        document.getElementById('mensajeJuego').textContent = '🎉 ¡Todos los pares encontrados!';
+                        document.getElementById('btnComprobarJuego').style.display = 'none';
+                    }
+                } else {
+                    elem.classList.add('error');
+                    itemIzq.classList.add('error');
+                    setTimeout(function() {
+                        elem.classList.remove('error');
+                        itemIzq.classList.remove('error', 'seleccionado');
+                        estadoJuego.seleccionIzq = null;
+                    }, 500);
+                }
+            }
+        }
+
+        function renderizarJuegoOrdenar(area) {
+            var elementos = juegoActual.elementos.slice();
+            var mezclados = elementos.map(function(el, i) { return { texto: el, originalIndex: i }; });
+            for (var i = mezclados.length - 1; i > 0; i--) {
+                var j = Math.floor(Math.random() * (i + 1));
+                var temp = mezclados[i]; mezclados[i] = mezclados[j]; mezclados[j] = temp;
+            }
+
+            area.innerHTML = '<div class="ordenar-lista" id="ordenarLista">' + mezclados.map(function(el, i) {
+                return '<div class="ordenar-item" data-index="' + i + '"><span class="ordenar-numero">' + (i + 1) + '</span><span class="ordenar-texto">' + el.texto + '</span></div>';
+            }).join('') + '</div>';
+        }
+
+        function comprobarJuego() {
+            if (juegoActual.tipo === 'relacionar') {
+                var correctos = estadoJuego.emparejados.length;
+                var total = estadoJuego.paresCorrectos.length;
+                var porcentaje = Math.round((correctos / total) * 100);
+                document.getElementById('mensajeJuego').innerHTML = 'Resultado: ' + correctos + '/' + total + ' (' + porcentaje + '%)' + (porcentaje === 100 ? ' 🎉' : '');
+            } else if (juegoActual.tipo === 'ordenar') {
+                var items = document.querySelectorAll('#ordenarLista .ordenar-item');
+                var correctos = 0;
+                items.forEach(function(item, i) {
+                    var texto = item.querySelector('.ordenar-texto').textContent;
+                    var indexOriginal = juegoActual.elementos.indexOf(texto);
+                    var esCorrecto = indexOriginal === i;
+                    item.classList.remove('correcto', 'incorrecto');
+                    item.classList.add(esCorrecto ? 'correcto' : 'incorrecto');
+                    if (esCorrecto) correctos++;
+                });
+                var total = juegoActual.elementos.length;
+                var porcentaje = Math.round((correctos / total) * 100);
+                document.getElementById('mensajeJuego').innerHTML = 'Resultado: ' + correctos + '/' + total + ' (' + porcentaje + '%)' + (porcentaje === 100 ? ' 🎉' : '');
+            }
+        }
+
+        // Inicializacion
+        document.addEventListener('DOMContentLoaded', cargarConfigIA);
+    </script>
+</body>
+</html>

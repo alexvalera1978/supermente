@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Resta</title>
+    <link href="https://fonts.googleapis.com/css2?family=Indie+Flower&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { background: #2a5a2a; color: #f0f0e8; margin: 0; padding: 0; font-family: 'Indie Flower', cursive; }
+        .oculto { display: none !important; }
+
+        #nivel { min-height: 100vh; display: flex; flex-direction: column; justify-content: flex-start; align-items: center; padding: 50px 20px 20px 20px; }
+        #nivel h1 { font-size: 2em; margin-bottom: 15px; text-shadow: 0 0 5px rgba(255,255,255,0.5); }
+        #nivel > p { font-size: 1.3em; }
+        .menu-opciones { display: flex; flex-direction: column; gap: 15px; width: 100%; max-width: 300px; }
+        .btn-menu { background: rgba(255,255,255,0.1); border: 3px solid rgba(255,255,255,0.4); color: #f0f0e8; padding: 20px; font-size: 1.5em; border-radius: 12px; font-family: 'Indie Flower', cursive; text-shadow: 0 0 5px rgba(255,255,255,0.5); cursor: pointer; }
+
+        #operacion { min-height: 100vh; padding-bottom: 140px; }
+        .pizarra-container { padding: 10px; display: flex; justify-content: center; }
+        .pizarra { background: #1e4a1e; border: 6px solid #8B4513; border-radius: 8px; padding: 15px; width: 100%; max-width: 350px; box-shadow: inset 0 0 30px rgba(0,0,0,0.3); }
+        .progreso { text-align: center; margin-bottom: 10px; font-size: 1.4em; opacity: 0.9; }
+        #contenidoPizarra { display: flex; justify-content: center; align-items: center; min-height: 150px; }
+        svg { max-width: 100%; height: auto; }
+
+        .panel-inferior {
+            position: fixed; bottom: 0; left: 0; right: 0;
+            background: #1a3a1a; padding: 10px; text-align: center;
+            border-top: 3px solid #8B4513;
+        }
+        .panel-inferior p { margin: 5px 0; }
+        #mensaje { font-size: 1.2em; min-height: 1.4em; }
+        .instruccion { font-size: 1.1em; opacity: 0.7; }
+        .btn { background: rgba(255,255,255,0.15); border: 2px solid rgba(255,255,255,0.5); color: #f0f0e8; padding: 12px 16px; border-radius: 8px; margin: 3px; font-size: 1.1em; font-family: 'Indie Flower', cursive; cursor: pointer; }
+
+        /* Ayuda mode */
+        .header-pizarra { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
+        .btn-ayuda { background: rgba(255,255,255,0.2); border: 2px solid #ffcc00; color: #ffcc00; width: 36px; height: 36px; border-radius: 50%; font-size: 1.3em; font-family: 'Indie Flower', cursive; cursor: pointer; padding: 0; line-height: 32px; }
+        .btn-ayuda.activo { background: #ffcc00; color: #1e4a1e; }
+        #panelAyuda { background: rgba(255,204,0,0.15); border: 2px solid #ffcc00; border-radius: 8px; padding: 10px; margin-top: 10px; font-size: 1.1em; line-height: 1.4; }
+        #panelAyuda .paso-titulo { color: #ffcc00; font-weight: bold; margin-bottom: 5px; }
+        #panelAyuda .paso-instruccion { color: #f0f0e8; }
+        .nav-ayuda { display: flex; justify-content: space-between; margin-top: 8px; }
+        .nav-ayuda button { background: rgba(255,204,0,0.3); border: 1px solid #ffcc00; color: #ffcc00; padding: 5px 12px; border-radius: 5px; font-family: 'Indie Flower', cursive; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div id="nivel">
+        <h1>➖ Resta</h1>
+        <p style="text-align:center; opacity: 0.8; margin-bottom: 20px;">Elige el nivel</p>
+        <div class="menu-opciones">
+            <button class="btn-menu" onclick="iniciarConNivel('basico')">📖 Basico</button>
+            <button class="btn-menu" onclick="iniciarConNivel('normal')">📝 Normal</button>
+            <button class="btn-menu" onclick="window.location.href='/supermente/index.html'" style="margin-top:15px; opacity:0.7;">← Volver</button>
+        </div>
+    </div>
+
+    <div id="operacion" class="oculto">
+        <div class="pizarra-container">
+            <div class="pizarra">
+                <div class="header-pizarra">
+                    <div class="progreso" id="progreso"></div>
+                    <button class="btn-ayuda" id="btnAyuda" onclick="toggleAyuda()">?</button>
+                </div>
+                <div id="contenidoPizarra"></div>
+                <div id="panelAyuda" class="oculto"></div>
+            </div>
+        </div>
+        <div class="panel-inferior">
+            <p id="mensaje"></p>
+            <p class="instruccion">Pulsa en cada casilla para cambiar el numero</p>
+            <div>
+                <button class="btn" onclick="comprobar()">✓ Comprobar</button>
+                <button class="btn" onclick="siguienteEjercicio()">→ Siguiente</button>
+                <button class="btn" onclick="window.location.href='/supermente/index.html'">🏠 Menu</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        var operacionActual = 0;
+        var digitosActuales = 1;
+        var num1, num2, resultado;
+        var nivelActual = 'normal';
+        var modoAyuda = false;
+        var pasoAyuda = 0;
+
+        function iniciarConNivel(nivel) {
+            nivelActual = nivel;
+            operacionActual = 0;
+            digitosActuales = 1;
+            document.getElementById('nivel').classList.add('oculto');
+            document.getElementById('operacion').classList.remove('oculto');
+            generarEjercicio();
+        }
+
+        function generarNumero(digitos) {
+            if (digitos === 1) return Math.floor(Math.random() * 9) + 1;
+            var min = Math.pow(10, digitos - 1);
+            var max = Math.pow(10, digitos) - 1;
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
+
+        function generarEjercicio() {
+            document.getElementById('mensaje').textContent = '';
+            digitosActuales = Math.floor(operacionActual / 3) + 1;
+            var a = generarNumero(digitosActuales);
+            var b = generarNumero(digitosActuales);
+            num1 = Math.max(a, b);
+            num2 = Math.min(a, b);
+            resultado = num1 - num2;
+            renderizarSVG();
+            var nivelTexto = nivelActual === 'basico' ? ' (Basico)' : '';
+            document.getElementById('progreso').textContent = 'Ejercicio ' + (operacionActual + 1) + nivelTexto;
+            if (nivelActual === 'basico') {
+                setTimeout(function() { aplicarAyudas(); }, 100);
+            }
+        }
+
+        function siguienteEjercicio() {
+            document.getElementById('mensaje').textContent = '';
+            operacionActual++;
+            generarEjercicio();
+        }
+
+        function renderizarSVG() {
+            var s1 = num1.toString(), s2 = num2.toString(), sr = resultado.toString();
+            var maxLen = Math.max(s1.length, s2.length, sr.length);
+            var celW = 40, celH = 50;
+            var padX = 20, padY = 15;
+            var fontSize = 36;
+            var svgW = padX * 2 + (maxLen + 1) * celW;
+            var svgH = padY * 2 + celH * 3 + 20;
+            var xBase = padX + celW;
+
+            var svg = '<svg viewBox="0 0 ' + svgW + ' ' + svgH + '" style="font-family: Indie Flower, cursive; font-size: ' + fontSize + 'px;">';
+
+            var y1 = padY + celH;
+            var offset1 = maxLen - s1.length;
+            for (var i = 0; i < s1.length; i++) {
+                var x = xBase + (offset1 + i) * celW + celW / 2;
+                svg += '<text x="' + (x - 12) + '" y="' + (y1 - 30) + '" text-anchor="middle" fill="#ffdd44" font-size="16" font-weight="bold" id="cs' + i + '"></text>';
+                svg += '<text x="' + x + '" y="' + y1 + '" text-anchor="middle" fill="#f0f0e8" style="cursor:pointer;" onclick="incrementarCarry(\'cs' + i + '\')">' + s1[i] + '</text>';
+            }
+
+            var y2 = y1 + celH;
+            svg += '<text x="' + (xBase - celW/2) + '" y="' + y2 + '" text-anchor="middle" fill="#ff9999" font-size="28">−</text>';
+            var offset2 = maxLen - s2.length;
+            for (var i = 0; i < s2.length; i++) {
+                var x = xBase + (offset2 + i) * celW + celW / 2;
+                svg += '<text x="' + x + '" y="' + y2 + '" text-anchor="middle" fill="#f0f0e8">' + s2[i] + '</text>';
+            }
+            svg += '<line x1="' + (xBase - celW/2 - 10) + '" y1="' + (y2 + 10) + '" x2="' + (xBase + maxLen * celW) + '" y2="' + (y2 + 10) + '" stroke="#f0f0e8" stroke-width="3"/>';
+
+            var y3 = y2 + celH + 15;
+            var offset3 = maxLen - sr.length;
+            for (var i = 0; i < sr.length; i++) {
+                var x = xBase + (offset3 + i) * celW;
+                svg += '<rect x="' + x + '" y="' + (y3 - celH + 15) + '" width="' + (celW - 6) + '" height="' + (celH - 10) + '" fill="rgba(255,255,255,0.1)" stroke="rgba(255,255,255,0.5)" stroke-dasharray="4" rx="5" style="cursor:pointer;" onclick="clickCelda(' + i + ')"/>';
+                svg += '<text x="' + (x + celW/2 - 3) + '" y="' + y3 + '" text-anchor="middle" fill="#90EE90" id="res' + i + '" style="pointer-events:none;"></text>';
+            }
+
+            svg += '</svg>';
+            document.getElementById('contenidoPizarra').innerHTML = svg;
+        }
+
+        function incrementarCarry(id) {
+            var el = document.getElementById(id);
+            if (el) {
+                var v = parseInt(el.textContent) || 0;
+                v = (v + 1) % 10;
+                el.textContent = v > 0 ? v : '';
+            }
+        }
+
+        function clickCelda(i) {
+            var el = document.getElementById('res' + i);
+            if (el) {
+                var v = el.textContent;
+                if (v === '') v = '0';
+                else {
+                    v = parseInt(v);
+                    v = v === 9 ? '' : (v + 1).toString();
+                }
+                el.textContent = v;
+            }
+        }
+
+        function aplicarAyudas() {
+            var sr = resultado.toString();
+            if (sr.length <= 1) return;
+            var numAyudas = Math.max(1, Math.floor(sr.length * 0.3));
+            var usados = [];
+            for (var n = 0; n < numAyudas; n++) {
+                var idx;
+                do { idx = Math.floor(Math.random() * sr.length); } while (usados.indexOf(idx) !== -1);
+                usados.push(idx);
+                var el = document.getElementById('res' + idx);
+                if (el) {
+                    el.textContent = sr[idx];
+                    el.style.opacity = '0.5';
+                }
+            }
+        }
+
+        function comprobar() {
+            var sr = resultado.toString();
+            var ok = true;
+            for (var i = 0; i < sr.length; i++) {
+                var el = document.getElementById('res' + i);
+                var rect = document.querySelector('rect[onclick="clickCelda(' + i + ')"]');
+                if (el && rect) {
+                    if (el.textContent === sr[i]) {
+                        rect.setAttribute('fill', 'rgba(0,255,0,0.3)');
+                        rect.setAttribute('stroke', 'lightgreen');
+                    } else {
+                        rect.setAttribute('fill', 'rgba(255,0,0,0.3)');
+                        rect.setAttribute('stroke', '#ff6666');
+                        el.textContent = sr[i];
+                        el.setAttribute('fill', '#ff6666');
+                        ok = false;
+                    }
+                }
+            }
+            var msg = document.getElementById('mensaje');
+            if (ok) {
+                msg.textContent = '¡Muy bien! 🎉';
+                msg.style.color = '#90EE90';
+                setTimeout(function() { operacionActual++; generarEjercicio(); }, 1200);
+            } else {
+                msg.textContent = 'Revisa los errores';
+                msg.style.color = '#ff9999';
+            }
+        }
+
+        function toggleAyuda() {
+            modoAyuda = !modoAyuda;
+            var btn = document.getElementById('btnAyuda');
+            var panel = document.getElementById('panelAyuda');
+            if (modoAyuda) {
+                btn.classList.add('activo');
+                panel.classList.remove('oculto');
+                pasoAyuda = 0;
+                mostrarPasoAyuda();
+            } else {
+                btn.classList.remove('activo');
+                panel.classList.add('oculto');
+            }
+        }
+
+        function mostrarPasoAyuda() {
+            var s1 = num1.toString(), s2 = num2.toString(), sr = resultado.toString();
+            var maxLen = Math.max(s1.length, s2.length, sr.length);
+            var pasos = generarPasosAyuda(s1, s2, sr, maxLen);
+
+            if (pasoAyuda >= pasos.length) pasoAyuda = pasos.length - 1;
+            if (pasoAyuda < 0) pasoAyuda = 0;
+
+            var panel = document.getElementById('panelAyuda');
+            var html = '<div class="paso-titulo">Paso ' + (pasoAyuda + 1) + ' de ' + pasos.length + '</div>';
+            html += '<div class="paso-instruccion">' + pasos[pasoAyuda] + '</div>';
+            html += '<div class="nav-ayuda">';
+            html += '<button onclick="pasoAyuda--; mostrarPasoAyuda();"' + (pasoAyuda === 0 ? ' disabled' : '') + '>← Anterior</button>';
+            html += '<button onclick="pasoAyuda++; mostrarPasoAyuda();"' + (pasoAyuda >= pasos.length - 1 ? ' disabled' : '') + '>Siguiente →</button>';
+            html += '</div>';
+            panel.innerHTML = html;
+        }
+
+        function generarPasosAyuda(s1, s2, sr, maxLen) {
+            var pasos = [];
+            pasos.push('Vamos a restar ' + num1 + ' - ' + num2 + '. Siempre empezamos por la derecha, por la columna de las unidades.');
+
+            var borrow = 0;
+            for (var col = 0; col < maxLen; col++) {
+                var pos1 = s1.length - 1 - col;
+                var pos2 = s2.length - 1 - col;
+                var d1 = pos1 >= 0 ? parseInt(s1[pos1]) : 0;
+                var d2 = pos2 >= 0 ? parseInt(s2[pos2]) : 0;
+
+                var nombreCol = col === 0 ? 'unidades' : (col === 1 ? 'decenas' : (col === 2 ? 'centenas' : 'millares'));
+                var d1Ajustado = d1 - borrow;
+
+                if (borrow > 0) {
+                    pasos.push('Columna de ' + nombreCol + ': Tenemos ' + d1 + ' arriba, pero pedimos prestado antes, asi que ahora es ' + d1Ajustado + '.');
+                } else {
+                    pasos.push('Columna de ' + nombreCol + ': Arriba tenemos ' + d1 + ', abajo tenemos ' + d2 + '.');
+                }
+
+                if (d1Ajustado < d2) {
+                    pasos.push('Problema: ' + d1Ajustado + ' es menor que ' + d2 + '. No podemos restar ' + d2 + ' de ' + d1Ajustado + '!');
+                    pasos.push('Solucion: Pedimos prestado 1 a la columna de la izquierda. Ese 1 vale 10 aqui.');
+                    pasos.push('Ahora tenemos ' + d1Ajustado + ' + 10 = ' + (d1Ajustado + 10) + '. Restamos: ' + (d1Ajustado + 10) + ' - ' + d2 + ' = ' + (d1Ajustado + 10 - d2) + '.');
+                    pasos.push('Escribe ' + (d1Ajustado + 10 - d2) + ' en el resultado. Recuerda que la siguiente columna tendra 1 menos.');
+                    borrow = 1;
+                } else {
+                    pasos.push('Podemos restar: ' + d1Ajustado + ' - ' + d2 + ' = ' + (d1Ajustado - d2) + '. Escribe ' + (d1Ajustado - d2) + '.');
+                    borrow = 0;
+                }
+            }
+
+            pasos.push('Completa todas las casillas y pulsa "Comprobar".');
+            return pasos;
+        }
+    </script>
+</body>
+</html>

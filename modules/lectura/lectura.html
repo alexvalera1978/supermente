@@ -1,0 +1,1185 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Lectura Inteligente</title>
+    <link href="https://fonts.googleapis.com/css2?family=Indie+Flower&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <style>
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { background: #2a5a2a; color: #f0f0e8; margin: 0; padding: 0; font-family: 'Indie Flower', cursive; min-height: 100vh; }
+        .oculto { display: none !important; }
+
+        .menu-container { padding: 50px 20px 20px 20px; }
+        h1, h2 { text-align: center; margin: 10px 0 20px 0; font-size: 1.8em; text-shadow: 0 0 5px rgba(255,255,255,0.5); }
+
+        .lectura-opciones { display: flex; flex-direction: column; gap: 15px; max-width: 350px; margin: 0 auto; }
+        .opcion-lectura {
+            background: rgba(255,255,255,0.1); border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 15px; padding: 20px; cursor: pointer; text-align: center;
+        }
+        .opcion-lectura .icono { font-size: 3em; margin-bottom: 10px; }
+        .opcion-lectura h3 { margin: 0 0 8px 0; font-size: 1.4em; }
+        .opcion-lectura p { margin: 0; opacity: 0.7; font-size: 1em; }
+
+        .idioma-opciones { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+        .idioma-btn {
+            background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 10px; padding: 12px 18px; cursor: pointer; text-align: center; min-width: 100px;
+            color: #f0f0e8; font-family: 'Indie Flower', cursive; font-size: 1.1em;
+        }
+        .idioma-btn.seleccionado { background: rgba(0,201,255,0.3); border-color: #00c9ff; }
+        .idioma-icono { font-size: 1.8em; display: block; margin-bottom: 5px; }
+
+        .tema-sugerencias { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; justify-content: center; }
+        .tema-sugerencia {
+            background: rgba(255,255,255,0.1); padding: 8px 14px; border-radius: 15px;
+            font-size: 1em; cursor: pointer; color: #f0f0e8;
+        }
+
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 8px; font-size: 1.2em; }
+        .form-input {
+            width: 100%; padding: 14px; font-size: 1.2em;
+            background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 8px; color: #f0f0e8; font-family: 'Indie Flower', cursive;
+        }
+        .form-input::placeholder { color: rgba(255,255,255,0.5); }
+
+        .btn-menu {
+            background: rgba(255,255,255,0.1); border: 3px solid rgba(255,255,255,0.4);
+            color: #f0f0e8; padding: 15px 20px; font-size: 1.3em; border-radius: 12px;
+            font-family: 'Indie Flower', cursive; cursor: pointer; width: 100%;
+        }
+        .btn {
+            background: rgba(255,255,255,0.15); border: 2px solid rgba(255,255,255,0.5);
+            color: #f0f0e8; padding: 12px 20px; border-radius: 8px; font-size: 1.1em;
+            font-family: 'Indie Flower', cursive; cursor: pointer; margin: 5px;
+        }
+        .botones-control { text-align: center; margin-top: 20px; }
+
+        .pdf-container {
+            display: flex; flex-direction: column; height: 100vh; padding: 10px;
+        }
+        .pdf-header {
+            display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;
+        }
+        .pdf-header h2 { margin: 0; font-size: 1.4em; flex: 1; text-align: center; }
+        .pdf-header-spacer { width: 40px; }
+        .btn-back {
+            background: rgba(255,255,255,0.15); border: 2px solid rgba(255,255,255,0.4);
+            color: #f0f0e8; width: 40px; height: 40px; border-radius: 50%;
+            font-size: 1.3em; cursor: pointer; font-family: 'Indie Flower', cursive;
+        }
+        .pdf-upload-zona {
+            border: 3px dashed rgba(255,255,255,0.4); border-radius: 15px;
+            padding: 25px 15px; text-align: center; cursor: pointer; margin: 0 auto;
+            max-width: 350px; width: 100%;
+        }
+        .pdf-upload-zona .icono { font-size: 2.5em; margin-bottom: 8px; }
+        .pdf-upload-zona p { margin: 0; font-size: 1em; }
+        .pdf-upload-zona.oculto-soft { display: none; }
+        .pdf-preview-content {
+            background: rgba(255,255,255,0.95); color: #333; padding: 15px;
+            border-radius: 10px; height: calc(100vh - 280px); overflow-y: auto;
+            font-family: Georgia, serif; font-size: 1em; line-height: 1.6;
+        }
+        .pdf-preview-content img { max-width: 100%; border-radius: 8px; margin-bottom: 10px; }
+        .pdf-btn-leer { text-align: center; padding: 10px; }
+
+        .generando { text-align: center; padding: 50px 20px; }
+        .generando .spinner { font-size: 4em; animation: spin 2s linear infinite; }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+        .libro-container { max-width: 500px; margin: 0 auto; padding: 10px; }
+        .libro-pagina {
+            background: #fffef5; border-radius: 8px; padding: 15px;
+            min-height: 50vh; max-height: 60vh; overflow-y: auto;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+        .libro-pagina img { width: 100%; height: 180px; object-fit: cover; border-radius: 8px; margin-bottom: 12px; }
+        .libro-pagina .texto-pagina { color: #333; font-size: 1.1em; line-height: 1.7; font-family: Georgia, serif; }
+        .libro-pagina .numero-pagina { text-align: right; color: #999; font-size: 0.9em; margin-top: 10px; }
+        .libro-navegacion { display: flex; justify-content: space-between; align-items: center; margin-top: 15px; }
+        .libro-btn {
+            background: rgba(255,255,255,0.2); border: 2px solid rgba(255,255,255,0.4);
+            color: #f0f0e8; padding: 10px 20px; border-radius: 20px;
+            font-family: 'Indie Flower', cursive; cursor: pointer;
+        }
+        .libro-btn:disabled { opacity: 0.3; }
+        .libro-contador { color: #f0f0e8; font-size: 1.1em; }
+
+        .lectura-container { max-width: 700px; margin: 0 auto; padding: 8px; padding-bottom: 160px; }
+        .texto-lectura {
+            background: rgba(255,255,255,0.95); color: #333; padding: 15px;
+            border-radius: 12px; font-size: 1.1em; line-height: 1.8;
+            min-height: calc(100vh - 180px); overflow-y: auto;
+            font-family: Georgia, serif;
+        }
+        .texto-lectura .capitulo-titulo { font-family: 'Indie Flower', cursive; font-size: 1.4em; color: #2a5a2a; text-align: center; margin: 25px 0 15px 0; padding: 12px; border-bottom: 2px solid #2a5a2a; border-top: 2px solid #2a5a2a; background: rgba(42,90,42,0.08); clear: both; }
+        .texto-lectura .parrafo { margin-bottom: 12px; text-indent: 20px; text-align: justify; }
+        .texto-lectura .frase { display: inline; padding: 2px 4px; border-radius: 4px; }
+        .texto-lectura .frase.activa { background-color: #ffff00; box-shadow: 0 0 10px rgba(255,255,0,0.5); }
+        .texto-lectura .frase.leida { background-color: rgba(144, 238, 144, 0.3); }
+
+        /* Imagenes del PDF integradas */
+        .texto-lectura .imagen-pdf { max-width: 45%; height: auto; border-radius: 8px; margin: 10px; box-shadow: 0 3px 10px rgba(0,0,0,0.25); }
+        .texto-lectura .img-float-left { float: left; margin-right: 15px; margin-left: 0; }
+        .texto-lectura .img-float-right { float: right; margin-left: 15px; margin-right: 0; }
+        .texto-lectura .img-centrada { display: block; float: none; margin: 15px auto; max-width: 80%; }
+        .texto-lectura .separador-pagina { clear: both; height: 1px; background: linear-gradient(to right, transparent, rgba(42,90,42,0.3), transparent); margin: 20px 0; }
+
+        @media (max-width: 500px) {
+            .texto-lectura .imagen-pdf { max-width: 100%; float: none !important; display: block; margin: 10px auto !important; }
+            .texto-lectura .img-float-left, .texto-lectura .img-float-right { float: none !important; }
+        }
+
+        .controles-lectura {
+            position: fixed; bottom: 0; left: 0; right: 0;
+            padding: 8px 10px; background: rgba(26,58,26,0.98);
+            border-top: 2px solid rgba(255,255,255,0.2);
+        }
+        .controles-fila-1 { display: flex; align-items: center; justify-content: center; gap: 15px; margin-bottom: 6px; }
+        .control-velocidad { display: flex; align-items: center; gap: 5px; }
+        .control-velocidad label { font-size: 0.9em; }
+        .control-velocidad input[type="range"] { width: 80px; }
+        .control-velocidad span { font-size: 0.9em; min-width: 25px; }
+        .botones-lectura { display: flex; gap: 6px; justify-content: center; flex-wrap: nowrap; }
+        .btn-lectura {
+            padding: 10px 14px; font-size: 1em; border-radius: 20px;
+            border: 2px solid rgba(255,255,255,0.5); background: rgba(255,255,255,0.15);
+            color: #f0f0e8; font-family: 'Indie Flower', cursive; cursor: pointer;
+            display: flex; align-items: center; gap: 4px;
+        }
+        .btn-lectura.grabando { animation: pulse-recording 1s infinite; background: #ff4444; }
+        @keyframes pulse-recording { 0%, 100% { box-shadow: 0 0 0 0 rgba(255,0,0,0.5); } 50% { box-shadow: 0 0 0 10px rgba(255,0,0,0); } }
+
+        .indicador-grabacion { display: none; align-items: center; gap: 8px; padding: 6px 12px; background: rgba(255,0,0,0.2); border-radius: 15px; justify-content: center; font-size: 0.9em; }
+        .indicador-grabacion.activo { display: inline-flex; }
+        .indicador-grabacion .punto { width: 10px; height: 10px; background: #ff0000; border-radius: 50%; animation: blink 1s infinite; }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+        .evaluacion-container { max-width: 500px; margin: 0 auto; padding: 20px; }
+        .evaluacion-resultado { background: rgba(255,255,255,0.1); border-radius: 15px; padding: 25px; text-align: center; }
+        .puntuacion-grande { font-size: 3em; margin: 20px 0; }
+        .detalles-evaluacion { text-align: left; margin-top: 20px; padding: 15px; background: rgba(0,0,0,0.2); border-radius: 10px; }
+        .detalle-item { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .feedback-ia { margin-top: 20px; padding: 15px; background: rgba(0,201,255,0.1); border-radius: 10px; border-left: 4px solid #00c9ff; text-align: left; line-height: 1.6; }
+
+        .mensaje-error { color: #ff6666; }
+        .progreso-generacion { margin-top: 20px; font-size: 1em; opacity: 0.8; }
+    </style>
+</head>
+<body>
+    <div id="menuLectura">
+        <div class="menu-container">
+            <h1>📖 Lectura Inteligente</h1>
+            <div class="lectura-opciones">
+                <div class="opcion-lectura" onclick="mostrarGeneradorComic()">
+                    <div class="icono">🎨</div>
+                    <h3>Crear Cuento</h3>
+                    <p>Genera un cuento con imagenes usando IA</p>
+                </div>
+                <div class="opcion-lectura" onclick="mostrarCargaPDF()">
+                    <div class="icono">📄</div>
+                    <h3>Subir PDF</h3>
+                    <p>Carga un documento para practicar lectura</p>
+                </div>
+            </div>
+            <div class="botones-control">
+                <button class="btn" onclick="window.location.href='/supermente/index.html'">← Volver al Menu</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="generadorComic" class="oculto">
+        <div class="menu-container">
+            <h2>🎨 Crear Cuento</h2>
+            <div style="max-width: 400px; margin: 0 auto;">
+                <div class="form-group">
+                    <label>Elige el idioma:</label>
+                    <div class="idioma-opciones">
+                        <div class="idioma-btn" onclick="seleccionarIdiomaComic('es')" data-idioma="es">
+                            <span class="idioma-icono">🇪🇸</span><span>Castellano</span>
+                        </div>
+                        <div class="idioma-btn" onclick="seleccionarIdiomaComic('ca')" data-idioma="ca">
+                            <span class="idioma-icono">🏴</span><span>Catala</span>
+                        </div>
+                        <div class="idioma-btn" onclick="seleccionarIdiomaComic('en')" data-idioma="en">
+                            <span class="idioma-icono">🇬🇧</span><span>English</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>¿Sobre que quieres el cuento?</label>
+                    <input type="text" id="temaComic" class="form-input" placeholder="Ej: Un dragon amigable..." maxlength="100" oninput="actualizarBotonComic()">
+                    <div class="tema-sugerencias" id="sugerenciasComic"></div>
+                </div>
+                <div class="form-group">
+                    <label>Numero de paginas:</label>
+                    <select id="numPaneles" class="form-input">
+                        <option value="4">4 paginas (corto)</option>
+                        <option value="6" selected>6 paginas (medio)</option>
+                        <option value="8">8 paginas (largo)</option>
+                    </select>
+                </div>
+                <button class="btn-menu" id="btnGenerarComic" onclick="generarComic()" style="opacity:0.5; pointer-events:none;">✨ Generar Cuento</button>
+                <div id="mensajeComic" style="text-align:center; margin-top:15px; min-height:30px;"></div>
+            </div>
+            <div class="botones-control">
+                <button class="btn" onclick="mostrarPantalla('menuLectura')">← Volver</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="cargaPDF" class="oculto">
+        <div class="pdf-container">
+            <div class="pdf-header">
+                <button class="btn-back" onclick="mostrarPantalla('menuLectura')">←</button>
+                <h2>📄 Cargar PDF</h2>
+                <div class="pdf-header-spacer"></div>
+            </div>
+            <div id="pdfUploadArea" class="pdf-upload-zona" onclick="document.getElementById('inputPDF').click()">
+                <div class="icono">📁</div>
+                <p>Toca para seleccionar PDF</p>
+                <input type="file" id="inputPDF" accept=".pdf" style="display:none;" onchange="procesarPDF(event)">
+            </div>
+            <div id="pdfInfo" style="text-align:center; margin:10px 0; font-size:0.95em;"></div>
+            <div id="pdfPreview" style="display:none; flex-direction:column; flex:1; overflow:hidden; padding:0 10px;">
+                <div class="pdf-preview-content">
+                    <p id="pdfTextoPreview"></p>
+                </div>
+            </div>
+            <div id="pdfBtnLeer" class="pdf-btn-leer" style="display:none;">
+                <button class="btn-menu" onclick="iniciarLecturaPDF()">📖 Comenzar Lectura</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="generandoComic" class="oculto">
+        <div class="generando">
+            <div class="spinner">🎨</div>
+            <h2>Creando tu cuento...</h2>
+            <div class="progreso-generacion" id="progresoComic">Generando historia...</div>
+        </div>
+    </div>
+
+    <div id="vistaComic" class="oculto">
+        <div class="menu-container">
+            <h2 id="tituloComic"></h2>
+            <div id="panelessComic"></div>
+            <div class="botones-control">
+                <button class="btn" onclick="iniciarLecturaComic()">📖 Comenzar Lectura</button>
+                <button class="btn" onclick="mostrarPantalla('generadorComic')">← Volver</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="lecturaActiva" class="oculto">
+        <div class="lectura-container">
+            <div class="texto-lectura" id="textoLectura"></div>
+        </div>
+        <div class="controles-lectura">
+            <div class="controles-fila-1">
+                <div class="indicador-grabacion" id="indicadorGrabacion">
+                    <div class="punto"></div>
+                    <span><span id="tiempoGrabacion">00:00</span></span>
+                </div>
+                <div class="control-velocidad">
+                    <label>⏱️</label>
+                    <input type="range" id="velocidadLectura" min="1" max="10" value="3" oninput="actualizarVelocidad()">
+                    <span id="valorVelocidad">3s</span>
+                </div>
+            </div>
+            <div class="botones-lectura">
+                <button class="btn-lectura" onclick="volverDesdeLectura()">
+                    <span>←</span>
+                </button>
+                <button class="btn-lectura" id="btnIniciarLectura" onclick="toggleLectura()">
+                    <span id="iconoLectura">▶️</span><span id="textoBotonLectura">Iniciar</span>
+                </button>
+                <button class="btn-lectura" id="btnGrabar" onclick="toggleGrabacion()">
+                    <span>🎤</span>
+                </button>
+                <button class="btn-lectura" onclick="reiniciarLectura()">
+                    <span>🔄</span>
+                </button>
+                <button class="btn-lectura" id="btnTerminar" onclick="terminarLectura()" style="display:none;">
+                    <span>✅</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="evaluacion" class="oculto">
+        <div class="evaluacion-container">
+            <h2>📊 Evaluacion</h2>
+            <div id="evaluandoMsg" class="generando" style="display:none;">
+                <div class="spinner">🤖</div>
+                <p>Analizando tu lectura...</p>
+            </div>
+            <div class="evaluacion-resultado" id="resultadoEvaluacion" style="display:none;">
+                <h3>Tu puntuacion:</h3>
+                <div class="puntuacion-grande" id="puntuacionFinal">--</div>
+                <div class="detalles-evaluacion" id="detallesEvaluacion"></div>
+                <div class="feedback-ia" id="feedbackIA"></div>
+            </div>
+        </div>
+        <div class="botones-control">
+            <button class="btn" onclick="mostrarPantalla('menuLectura')">📖 Nueva Lectura</button>
+            <button class="btn" onclick="window.location.href='/supermente/index.html'">🏠 Menu</button>
+        </div>
+    </div>
+
+    <script>
+        // ==================== CONFIGURACION IA ====================
+        var configIA = {
+            provider: 'claude',
+            keys: { claude: '', gemini: '', groq: '' }
+        };
+
+        function cargarConfigIA() {
+            var saved = localStorage.getItem('configIA');
+            if (saved) {
+                var savedConfig = JSON.parse(saved);
+                configIA.provider = savedConfig.provider || 'claude';
+                configIA.keys = savedConfig.keys || {};
+            }
+        }
+
+        // ==================== ESTADO GLOBAL ====================
+        var idiomaComic = null;
+        var comicActual = null;
+        var textoPDF = '';
+        var paginasPDF = [];
+        var textoActual = '';
+        var frases = [];
+        var fraseActualIdx = 0;
+        var lecturaEnCurso = false;
+        var lecturaInterval = null;
+        var velocidadSegundos = 3;
+        var mediaRecorder = null;
+        var audioChunks = [];
+        var grabando = false;
+        var tiempoGrabacionInterval = null;
+        var tiempoGrabacionSegundos = 0;
+        var audioBlob = null;
+        var tiempoInicioLectura = null;
+        var frasesLeidas = 0;
+        var origenLectura = 'comic';
+        var paginaActualLibro = 0;
+
+        // ==================== INICIALIZACION ====================
+        document.addEventListener('DOMContentLoaded', function() {
+            cargarConfigIA();
+            actualizarSugerenciasComic();
+            actualizarBotonComic();
+            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        });
+
+        // ==================== NAVEGACION ====================
+        function mostrarPantalla(id) {
+            ['menuLectura', 'generadorComic', 'cargaPDF', 'generandoComic', 'vistaComic', 'lecturaActiva', 'evaluacion'].forEach(function(pid) {
+                var el = document.getElementById(pid);
+                if (el) el.classList.add('oculto');
+            });
+            var pantalla = document.getElementById(id);
+            if (pantalla) pantalla.classList.remove('oculto');
+        }
+
+        function mostrarGeneradorComic() {
+            mostrarPantalla('generadorComic');
+            actualizarSugerenciasComic();
+        }
+
+        function mostrarCargaPDF() {
+            mostrarPantalla('cargaPDF');
+            document.getElementById('pdfInfo').innerHTML = '';
+            document.getElementById('pdfUploadArea').style.display = 'block';
+            document.getElementById('pdfPreview').style.display = 'none';
+            document.getElementById('pdfBtnLeer').style.display = 'none';
+            document.getElementById('inputPDF').value = '';
+        }
+
+        function volverDesdeLectura() {
+            detenerLectura();
+            detenerGrabacion();
+            if (origenLectura === 'comic') {
+                mostrarPantalla('vistaComic');
+            } else {
+                mostrarPantalla('cargaPDF');
+            }
+        }
+
+        // ==================== GENERADOR DE COMIC ====================
+        function seleccionarIdiomaComic(idioma) {
+            idiomaComic = idioma;
+            document.querySelectorAll('#generadorComic .idioma-btn').forEach(function(b) { b.classList.remove('seleccionado'); });
+            var btn = document.querySelector('#generadorComic .idioma-btn[data-idioma="' + idioma + '"]');
+            if (btn) btn.classList.add('seleccionado');
+            actualizarBotonComic();
+        }
+
+        function actualizarSugerenciasComic() {
+            var guardado = localStorage.getItem('usuarioAprendizaje');
+            var edad = 10;
+            if (guardado) {
+                var usuario = JSON.parse(guardado);
+                edad = usuario.edad;
+            }
+            var categoria = 'infantil';
+            if (edad >= 8 && edad <= 11) categoria = 'medio';
+            if (edad >= 12) categoria = 'mayor';
+
+            var sugerencias = {
+                infantil: ['Un gatito aventurero', 'La princesa valiente', 'El robot amigable'],
+                medio: ['Superheroes en la escuela', 'Viaje al espacio', 'El misterio del castillo'],
+                mayor: ['Aventura en el tiempo', 'Mision submarina', 'El inventor genial']
+            };
+
+            document.getElementById('sugerenciasComic').innerHTML = sugerencias[categoria].map(function(s) {
+                return '<span class="tema-sugerencia" onclick="usarSugerenciaComic(\'' + s + '\')">' + s + '</span>';
+            }).join('');
+        }
+
+        function usarSugerenciaComic(tema) {
+            document.getElementById('temaComic').value = tema;
+            actualizarBotonComic();
+        }
+
+        function actualizarBotonComic() {
+            var tema = document.getElementById('temaComic').value.trim();
+            var btn = document.getElementById('btnGenerarComic');
+            var msg = document.getElementById('mensajeComic');
+            var falta = [];
+            if (!idiomaComic) falta.push('selecciona un idioma');
+            if (tema.length < 3) falta.push('escribe un tema');
+
+            if (falta.length === 0) {
+                btn.style.opacity = '1';
+                btn.style.pointerEvents = 'auto';
+                msg.innerHTML = '';
+            } else {
+                btn.style.opacity = '0.5';
+                btn.style.pointerEvents = 'none';
+                msg.innerHTML = '<span style="opacity:0.7">Falta: ' + falta.join(', ') + '</span>';
+            }
+        }
+
+        function esTemaInapropiado(tema) {
+            var temas = ['porn', 'sex', 'violen', 'droga', 'matar', 'muerte', 'arma', 'guerra', 'terror', 'sangre'];
+            var temaLower = tema.toLowerCase();
+            return temas.some(function(t) { return temaLower.indexOf(t) !== -1; });
+        }
+
+        async function generarComic() {
+            var tema = document.getElementById('temaComic').value.trim();
+            var numPaneles = parseInt(document.getElementById('numPaneles').value);
+
+            if (esTemaInapropiado(tema)) {
+                document.getElementById('mensajeComic').innerHTML = '<span class="mensaje-error">Ese tema no es apropiado</span>';
+                return;
+            }
+
+            mostrarPantalla('generandoComic');
+            actualizarProgresoComic('Generando historia con IA...', 0, numPaneles + 1);
+
+            try {
+                var guardado = localStorage.getItem('usuarioAprendizaje');
+                var usuario = guardado ? JSON.parse(guardado) : { edad: 10 };
+                var comic = await generarHistoriaComic(tema, numPaneles, idiomaComic, usuario.edad);
+                actualizarProgresoComic('Historia creada. Generando imagenes...', 1, numPaneles + 1);
+
+                for (var i = 0; i < comic.paneles.length; i++) {
+                    comic.paneles[i].imagen = await generarImagenPanel(comic.paneles[i].descripcionVisual, i + 1, comic.paneles.length);
+                }
+
+                comicActual = comic;
+                mostrarComic(comic);
+            } catch (error) {
+                mostrarPantalla('generadorComic');
+                document.getElementById('mensajeComic').innerHTML = '<span class="mensaje-error">Error: ' + error.message + '</span>';
+                console.error(error);
+            }
+        }
+
+        async function generarHistoriaComic(tema, numPaneles, idioma, edad) {
+            var idiomaNombre = { es: 'espanol', ca: 'catalan', en: 'ingles' }[idioma];
+            var nivelTexto = edad <= 8 ? 'simple pero descriptivo' : 'moderado, vocabulario variado';
+            var longitudTexto = edad <= 8 ? '4-5 frases por panel' : '5-6 frases por panel';
+
+            var prompt = 'Eres un escritor de cuentos infantiles. Crea un CUENTO en ' + idiomaNombre + ' sobre "' + tema + '" para un nino de ' + edad + ' anos.\n\nFORMATO: Cuento dividido en ' + numPaneles + ' paginas.\nNIVEL: ' + nivelTexto + '\nLONGITUD: ' + longitudTexto + '\n\nResponde SOLO con JSON:\n{\n    "titulo": "Titulo del cuento",\n    "paneles": [\n        {\n            "numero": 1,\n            "texto": "Parrafo narrativo completo...",\n            "descripcionVisual": "Descripcion de la ilustracion"\n        }\n    ]\n}\n\nRESPONDE SOLO CON JSON VALIDO.';
+
+            return await generarTextoClaude(prompt);
+        }
+
+        async function generarImagenPanel(descripcion, panelNum, totalPaneles) {
+            actualizarProgresoComic('Generando imagen ' + panelNum + '/' + totalPaneles + '...', panelNum, totalPaneles);
+            try {
+                var prompt = 'Children\'s book illustration: ' + descripcion + '. Style: colorful, friendly, cartoon, watercolor, suitable for kids, no text.';
+                var response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=' + configIA.keys.gemini, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: prompt }] }],
+                        generationConfig: { responseModalities: ["image"] }
+                    })
+                });
+                if (response.ok) {
+                    var data = await response.json();
+                    if (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts) {
+                        for (var i = 0; i < data.candidates[0].content.parts.length; i++) {
+                            var part = data.candidates[0].content.parts[i];
+                            if (part.inlineData) {
+                                return 'data:' + part.inlineData.mimeType + ';base64,' + part.inlineData.data;
+                            }
+                        }
+                    }
+                }
+            } catch (error) {
+                console.warn('Error generando imagen:', error);
+            }
+            return generarPlaceholderColor(panelNum - 1);
+        }
+
+        function actualizarProgresoComic(mensaje, actual, total) {
+            var progresoEl = document.getElementById('progresoComic');
+            if (progresoEl) {
+                var porcentaje = Math.round((actual / total) * 100);
+                progresoEl.innerHTML = mensaje + '<div style="margin-top:15px; background:rgba(255,255,255,0.2); border-radius:10px; height:20px;"><div style="background:linear-gradient(90deg, #00c9ff, #92fe9d); height:100%; width:' + porcentaje + '%; border-radius:10px;"></div></div><div style="margin-top:5px;">' + porcentaje + '%</div>';
+            }
+        }
+
+        function generarPlaceholderColor(idx) {
+            var hue = (idx * 60) % 360;
+            var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="512" height="400"><defs><linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:hsl(' + hue + ',70%,85%)"/><stop offset="100%" style="stop-color:hsl(' + (hue + 30) + ',70%,90%)"/></linearGradient></defs><rect fill="url(#g)" width="512" height="400"/><text x="256" y="210" text-anchor="middle" fill="#555" font-size="48">📖</text></svg>';
+            return 'data:image/svg+xml,' + encodeURIComponent(svg);
+        }
+
+        function mostrarComic(comic) {
+            comicActual = comic;
+            paginaActualLibro = 0;
+            document.getElementById('tituloComic').textContent = comic.titulo;
+            var container = document.getElementById('panelessComic');
+            container.innerHTML = '<div class="libro-container"><div class="libro-pagina" id="paginaLibro"></div><div class="libro-navegacion"><button class="libro-btn" id="btnAnterior" onclick="paginaAnterior()">◀ Anterior</button><span class="libro-contador" id="contadorPaginas">1 / ' + comic.paneles.length + '</span><button class="libro-btn" id="btnSiguiente" onclick="paginaSiguiente()">Siguiente ▶</button></div></div>';
+            mostrarPaginaLibro(0);
+            mostrarPantalla('vistaComic');
+        }
+
+        function mostrarPaginaLibro(idx) {
+            if (!comicActual || idx < 0 || idx >= comicActual.paneles.length) return;
+            paginaActualLibro = idx;
+            var panel = comicActual.paneles[idx];
+            var pagina = document.getElementById('paginaLibro');
+            var imgUrl = panel.imagen || generarPlaceholderColor(idx);
+            pagina.innerHTML = '<img src="' + imgUrl + '" onerror="this.src=\'' + generarPlaceholderColor(idx) + '\';"><div class="texto-pagina">' + panel.texto + '</div><div class="numero-pagina">' + (idx + 1) + '</div>';
+            document.getElementById('contadorPaginas').textContent = (idx + 1) + ' / ' + comicActual.paneles.length;
+            document.getElementById('btnAnterior').disabled = (idx === 0);
+            document.getElementById('btnSiguiente').disabled = (idx === comicActual.paneles.length - 1);
+        }
+
+        function paginaSiguiente() {
+            if (paginaActualLibro < comicActual.paneles.length - 1) {
+                mostrarPaginaLibro(paginaActualLibro + 1);
+            }
+        }
+
+        function paginaAnterior() {
+            if (paginaActualLibro > 0) {
+                mostrarPaginaLibro(paginaActualLibro - 1);
+            }
+        }
+
+        function iniciarLecturaComic() {
+            if (!comicActual) return;
+            textoActual = comicActual.paneles.map(function(p) { return p.texto; }).join(' ');
+            origenLectura = 'comic';
+            prepararLectura(textoActual);
+        }
+
+        // ==================== PROCESAMIENTO PDF ====================
+        async function procesarPDF(event) {
+            var file = event.target.files[0];
+            if (!file) return;
+            document.getElementById('pdfInfo').innerHTML = '⏳ Procesando PDF...';
+            try {
+                var arrayBuffer = await file.arrayBuffer();
+                var pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+                paginasPDF = [];
+                var textoCompleto = '';
+                var imagenesExtraidas = [];
+
+                for (var i = 1; i <= pdf.numPages; i++) {
+                    document.getElementById('pdfInfo').innerHTML = '⏳ Procesando pagina ' + i + '/' + pdf.numPages + '...';
+                    var page = await pdf.getPage(i);
+
+                    // Extraer imagenes individuales de la pagina
+                    var imagenesPage = await extraerImagenesPagina(page, i);
+                    imagenesExtraidas = imagenesExtraidas.concat(imagenesPage);
+
+                    // Extraer texto con posiciones
+                    var textContent = await page.getTextContent();
+                    var textoConPosiciones = extraerTextoConPosiciones(textContent, i);
+
+                    // Detectar si es un capitulo
+                    var pageText = textContent.items.map(function(item) { return item.str; }).join(' ').trim();
+                    var capitulo = detectarCapitulo(pageText, i);
+
+                    paginasPDF.push({
+                        numero: i,
+                        texto: pageText,
+                        textoConPosiciones: textoConPosiciones,
+                        imagenes: imagenesPage,
+                        capitulo: capitulo
+                    });
+
+                    textoCompleto += pageText + ' ';
+                }
+
+                textoPDF = textoCompleto.trim();
+
+                if (paginasPDF.length === 0) {
+                    document.getElementById('pdfInfo').innerHTML = '<span class="mensaje-error">No se pudo procesar el PDF</span>';
+                    return;
+                }
+
+                // Mostrar preview
+                var totalImagenes = imagenesExtraidas.length;
+                var capitulosEncontrados = paginasPDF.filter(function(p) { return p.capitulo; }).length;
+                var infoExtra = [];
+                if (capitulosEncontrados > 0) infoExtra.push(capitulosEncontrados + ' capitulos');
+                if (totalImagenes > 0) infoExtra.push(totalImagenes + ' imagenes');
+
+                document.getElementById('pdfInfo').innerHTML = '✅ ' + file.name + '<br>' + pdf.numPages + ' paginas' + (infoExtra.length > 0 ? ' (' + infoExtra.join(', ') + ')' : '');
+
+                var previewHtml = '';
+                if (imagenesExtraidas.length > 0) {
+                    previewHtml += '<img src="' + imagenesExtraidas[0].dataUrl + '" style="width:100%; max-height:150px; object-fit:contain; border-radius:8px; margin-bottom:10px;">';
+                }
+                previewHtml += (paginasPDF[0].texto.substring(0, 500) || '(Pagina sin texto)') + '...';
+                document.getElementById('pdfTextoPreview').innerHTML = previewHtml;
+                document.getElementById('pdfUploadArea').style.display = 'none';
+                document.getElementById('pdfPreview').style.display = 'flex';
+                document.getElementById('pdfBtnLeer').style.display = 'block';
+            } catch (error) {
+                document.getElementById('pdfInfo').innerHTML = '<span class="mensaje-error">Error: ' + error.message + '</span>';
+                console.error(error);
+            }
+        }
+
+        // Extraer imagenes individuales de una pagina PDF
+        async function extraerImagenesPagina(page, numPagina) {
+            var imagenes = [];
+            try {
+                var ops = await page.getOperatorList();
+                var OPS = pdfjsLib.OPS;
+                var imagenesVistas = {};
+
+                for (var j = 0; j < ops.fnArray.length; j++) {
+                    var fn = ops.fnArray[j];
+                    // paintImageXObject o paintJpegXObject
+                    if (fn === OPS.paintImageXObject || fn === OPS.paintJpegXObject) {
+                        var imgName = ops.argsArray[j][0];
+                        if (imagenesVistas[imgName]) continue;
+                        imagenesVistas[imgName] = true;
+
+                        try {
+                            var imgData = await new Promise(function(resolve) {
+                                page.objs.get(imgName, resolve);
+                            });
+
+                            if (imgData) {
+                                var dataUrl = null;
+
+                                // Si es un objeto con bitmap/data
+                                if (imgData.bitmap) {
+                                    // ImageBitmap - crear canvas y dibujar
+                                    var canvas = document.createElement('canvas');
+                                    canvas.width = imgData.bitmap.width;
+                                    canvas.height = imgData.bitmap.height;
+                                    var ctx = canvas.getContext('2d');
+                                    ctx.drawImage(imgData.bitmap, 0, 0);
+                                    dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+                                } else if (imgData.data && imgData.width && imgData.height) {
+                                    // Raw image data (RGBA)
+                                    var canvas = document.createElement('canvas');
+                                    canvas.width = imgData.width;
+                                    canvas.height = imgData.height;
+                                    var ctx = canvas.getContext('2d');
+                                    var imageData = ctx.createImageData(imgData.width, imgData.height);
+
+                                    // Copiar datos - puede ser RGB o RGBA
+                                    if (imgData.data.length === imgData.width * imgData.height * 4) {
+                                        imageData.data.set(imgData.data);
+                                    } else if (imgData.data.length === imgData.width * imgData.height * 3) {
+                                        // RGB -> RGBA
+                                        for (var k = 0, l = 0; k < imgData.data.length; k += 3, l += 4) {
+                                            imageData.data[l] = imgData.data[k];
+                                            imageData.data[l + 1] = imgData.data[k + 1];
+                                            imageData.data[l + 2] = imgData.data[k + 2];
+                                            imageData.data[l + 3] = 255;
+                                        }
+                                    } else {
+                                        imageData.data.set(imgData.data);
+                                    }
+                                    ctx.putImageData(imageData, 0, 0);
+                                    dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+                                } else if (imgData.src) {
+                                    // Ya es una URL
+                                    dataUrl = imgData.src;
+                                }
+
+                                // Solo guardar imagenes significativas (no muy pequeñas)
+                                if (dataUrl) {
+                                    var minSize = 50;
+                                    var w = imgData.width || (imgData.bitmap ? imgData.bitmap.width : 0);
+                                    var h = imgData.height || (imgData.bitmap ? imgData.bitmap.height : 0);
+                                    if (w >= minSize && h >= minSize) {
+                                        imagenes.push({
+                                            pagina: numPagina,
+                                            nombre: imgName,
+                                            dataUrl: dataUrl,
+                                            width: w,
+                                            height: h
+                                        });
+                                    }
+                                }
+                            }
+                        } catch (imgError) {
+                            console.warn('Error extrayendo imagen ' + imgName + ':', imgError);
+                        }
+                    }
+                }
+            } catch (error) {
+                console.warn('Error en getOperatorList:', error);
+            }
+            return imagenes;
+        }
+
+        // Extraer texto con posiciones Y para intercalar imagenes
+        function extraerTextoConPosiciones(textContent, numPagina) {
+            var items = textContent.items;
+            var bloques = [];
+            var yAnterior = null;
+            var bloqueActual = { texto: '', y: 0 };
+
+            for (var i = 0; i < items.length; i++) {
+                var item = items[i];
+                var y = item.transform ? item.transform[5] : 0;
+
+                // Si cambia mucho la posicion Y, nuevo bloque
+                if (yAnterior !== null && Math.abs(y - yAnterior) > 15) {
+                    if (bloqueActual.texto.trim()) {
+                        bloques.push({ texto: bloqueActual.texto.trim(), y: bloqueActual.y });
+                    }
+                    bloqueActual = { texto: '', y: y };
+                }
+
+                bloqueActual.texto += item.str + ' ';
+                if (bloqueActual.y === 0) bloqueActual.y = y;
+                yAnterior = y;
+            }
+
+            if (bloqueActual.texto.trim()) {
+                bloques.push({ texto: bloqueActual.texto.trim(), y: bloqueActual.y });
+            }
+
+            return bloques;
+        }
+
+        function detectarCapitulo(texto, numPagina) {
+            if (!texto || texto.length < 5) return null;
+            var lineas = texto.split(/\s{2,}|\n/).slice(0, 5);
+            var primerasLineas = lineas.join(' ').substring(0, 150);
+
+            // Patrones de capitulo
+            var patrones = [
+                /cap[ií]tulo\s+(\d+|[ivxlc]+)/i,
+                /chapter\s+(\d+|[ivxlc]+)/i,
+                /^(\d+)\.\s+[A-Z]/,
+                /^(I|II|III|IV|V|VI|VII|VIII|IX|X|XI|XII)\.\s/,
+                /cap[ií]tol\s+(\d+|[ivxlc]+)/i
+            ];
+
+            for (var i = 0; i < patrones.length; i++) {
+                var match = primerasLineas.match(patrones[i]);
+                if (match) {
+                    var titulo = primerasLineas.substring(0, 60).trim();
+                    return titulo.length > 3 ? titulo : 'Capitulo ' + numPagina;
+                }
+            }
+
+            // Detectar titulos en mayusculas al inicio
+            if (lineas[0] && lineas[0].length > 3 && lineas[0].length < 50 && lineas[0] === lineas[0].toUpperCase()) {
+                return lineas[0];
+            }
+
+            return null;
+        }
+
+        function iniciarLecturaPDF() {
+            if (paginasPDF.length === 0) return;
+            origenLectura = 'pdf';
+            prepararLecturaDocumento();
+        }
+
+        function prepararLecturaDocumento() {
+            // Construir un documento HTML integrado con imagenes intercaladas
+            var html = '';
+            var fraseIdx = 0;
+            var todasLasFrases = [];
+            var imagenesUsadas = 0;
+
+            for (var p = 0; p < paginasPDF.length; p++) {
+                var pagina = paginasPDF[p];
+                var imagenesPage = pagina.imagenes || [];
+                var textoBlocks = pagina.textoConPosiciones || [];
+
+
+                // Si hay imagenes en esta pagina, intercalarlas con el texto
+                if (imagenesPage.length > 0) {
+                    var imgIdx = 0;
+                    var textoAcumulado = '';
+
+                    // Procesar bloques de texto e intercalar imagenes
+                    for (var b = 0; b < textoBlocks.length; b++) {
+                        textoAcumulado += textoBlocks[b].texto + ' ';
+
+                        // Insertar imagen cada ciertos bloques de texto o al inicio
+                        if (imgIdx < imagenesPage.length && (b === 0 || b === Math.floor(textoBlocks.length / 2))) {
+                            // Primero el texto acumulado hasta ahora
+                            if (textoAcumulado.trim()) {
+                                html += crearParrafosConFrases(textoAcumulado, fraseIdx, todasLasFrases);
+                                fraseIdx = todasLasFrases.length;
+                                textoAcumulado = '';
+                            }
+                            // Luego la imagen
+                            var img = imagenesPage[imgIdx];
+                            var floatClass = (imgIdx % 2 === 0) ? 'img-float-left' : 'img-float-right';
+                            html += '<img src="' + img.dataUrl + '" class="imagen-pdf ' + floatClass + '" alt="Ilustracion">';
+                            imgIdx++;
+                            imagenesUsadas++;
+                        }
+                    }
+
+                    // Texto restante despues de la ultima imagen
+                    if (textoAcumulado.trim()) {
+                        html += crearParrafosConFrases(textoAcumulado, fraseIdx, todasLasFrases);
+                        fraseIdx = todasLasFrases.length;
+                    }
+
+                    // Imagenes restantes que no se insertaron
+                    while (imgIdx < imagenesPage.length) {
+                        var img = imagenesPage[imgIdx];
+                        html += '<img src="' + img.dataUrl + '" class="imagen-pdf img-centrada" alt="Ilustracion">';
+                        imgIdx++;
+                        imagenesUsadas++;
+                    }
+
+                    // Clear floats al final de cada pagina con imagenes
+                    html += '<div style="clear:both;"></div>';
+                } else {
+                    // Sin imagenes - solo texto
+                    if (pagina.texto && pagina.texto.length > 5) {
+                        html += crearParrafosConFrases(pagina.texto, fraseIdx, todasLasFrases);
+                        fraseIdx = todasLasFrases.length;
+                    }
+                }
+
+                // Separador entre paginas (sutil)
+                if (p < paginasPDF.length - 1) {
+                    html += '<div class="separador-pagina"></div>';
+                }
+            }
+
+            frases = todasLasFrases;
+            textoActual = todasLasFrases.join(' ');
+
+            var container = document.getElementById('textoLectura');
+            container.innerHTML = html;
+
+            // Reset
+            fraseActualIdx = 0;
+            lecturaEnCurso = false;
+            frasesLeidas = 0;
+            tiempoInicioLectura = null;
+            document.getElementById('btnTerminar').style.display = 'none';
+            document.getElementById('iconoLectura').textContent = '▶️';
+            document.getElementById('textoBotonLectura').textContent = 'Iniciar';
+
+            mostrarPantalla('lecturaActiva');
+        }
+
+        // Crear parrafos con frases marcadas para lectura
+        function crearParrafosConFrases(texto, startIdx, arrayFrases) {
+            var html = '';
+            var parrafos = texto.split(/\n\n+|\r\n\r\n+|\s{3,}/).filter(function(p) { return p.trim().length > 0; });
+            if (parrafos.length === 0) parrafos = [texto];
+
+            for (var i = 0; i < parrafos.length; i++) {
+                var parrafo = parrafos[i].trim();
+                if (parrafo.length < 3) continue;
+
+                var frasesPar = parrafo.replace(/([.!?¿¡])\s+/g, '$1|SPLIT|').split('|SPLIT|').map(function(f) { return f.trim(); }).filter(function(f) { return f.length > 0; });
+
+                html += '<div class="parrafo">';
+                for (var j = 0; j < frasesPar.length; j++) {
+                    var idx = startIdx + arrayFrases.length;
+                    html += '<span class="frase" data-idx="' + idx + '">' + frasesPar[j] + '</span> ';
+                    arrayFrases.push(frasesPar[j]);
+                }
+                html += '</div>';
+            }
+            return html;
+        }
+
+        // ==================== SISTEMA DE LECTURA ====================
+        function prepararLectura(texto) {
+            frases = texto.replace(/([.!?])\s+/g, '$1|').split('|').map(function(f) { return f.trim(); }).filter(function(f) { return f.length > 0; });
+            var container = document.getElementById('textoLectura');
+            container.innerHTML = frases.map(function(frase, idx) {
+                return '<span class="frase" data-idx="' + idx + '">' + frase + '</span> ';
+            }).join('');
+            fraseActualIdx = 0;
+            lecturaEnCurso = false;
+            frasesLeidas = 0;
+            tiempoInicioLectura = null;
+            document.getElementById('btnTerminar').style.display = 'none';
+            document.getElementById('iconoLectura').textContent = '▶️';
+            document.getElementById('textoBotonLectura').textContent = 'Iniciar';
+            actualizarVelocidad();
+            mostrarPantalla('lecturaActiva');
+        }
+
+        function actualizarVelocidad() {
+            velocidadSegundos = parseInt(document.getElementById('velocidadLectura').value);
+            document.getElementById('valorVelocidad').textContent = velocidadSegundos + 's';
+        }
+
+        function toggleLectura() {
+            if (lecturaEnCurso) { pausarLectura(); } else { iniciarLectura(); }
+        }
+
+        function iniciarLectura() {
+            if (frases.length === 0) return;
+            if (fraseActualIdx >= frases.length) { reiniciarLectura(); }
+            lecturaEnCurso = true;
+            tiempoInicioLectura = tiempoInicioLectura || Date.now();
+            document.getElementById('iconoLectura').textContent = '⏸️';
+            document.getElementById('textoBotonLectura').textContent = 'Pausar';
+            marcarFraseActiva();
+            avanzarLectura();
+        }
+
+        function pausarLectura() {
+            lecturaEnCurso = false;
+            clearInterval(lecturaInterval);
+            document.getElementById('iconoLectura').textContent = '▶️';
+            document.getElementById('textoBotonLectura').textContent = 'Continuar';
+        }
+
+        function detenerLectura() {
+            lecturaEnCurso = false;
+            clearInterval(lecturaInterval);
+        }
+
+        function avanzarLectura() {
+            lecturaInterval = setInterval(function() {
+                if (!lecturaEnCurso) return;
+                var fraseAnterior = document.querySelector('.frase[data-idx="' + fraseActualIdx + '"]');
+                if (fraseAnterior) {
+                    fraseAnterior.classList.remove('activa');
+                    fraseAnterior.classList.add('leida');
+                }
+                frasesLeidas++;
+                fraseActualIdx++;
+                if (fraseActualIdx >= frases.length) {
+                    clearInterval(lecturaInterval);
+                    lecturaEnCurso = false;
+                    document.getElementById('iconoLectura').textContent = '✅';
+                    document.getElementById('textoBotonLectura').textContent = 'Completado';
+                    document.getElementById('btnTerminar').style.display = 'block';
+                } else {
+                    marcarFraseActiva();
+                }
+            }, velocidadSegundos * 1000);
+        }
+
+        function marcarFraseActiva() {
+            document.querySelectorAll('.frase.activa').forEach(function(f) { f.classList.remove('activa'); });
+            var frase = document.querySelector('.frase[data-idx="' + fraseActualIdx + '"]');
+            if (frase) {
+                frase.classList.add('activa');
+                frase.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+
+        function reiniciarLectura() {
+            detenerLectura();
+            fraseActualIdx = 0;
+            frasesLeidas = 0;
+            tiempoInicioLectura = null;
+            document.querySelectorAll('.frase').forEach(function(f) { f.classList.remove('activa', 'leida'); });
+            document.getElementById('iconoLectura').textContent = '▶️';
+            document.getElementById('textoBotonLectura').textContent = 'Iniciar';
+            document.getElementById('btnTerminar').style.display = 'none';
+            // Scroll al inicio
+            var container = document.getElementById('textoLectura');
+            if (container) container.scrollTop = 0;
+        }
+
+        // ==================== GRABACION ====================
+        async function toggleGrabacion() {
+            if (grabando) { detenerGrabacion(); } else { iniciarGrabacion(); }
+        }
+
+        async function iniciarGrabacion() {
+            try {
+                var stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                mediaRecorder = new MediaRecorder(stream);
+                audioChunks = [];
+                mediaRecorder.ondataavailable = function(event) { audioChunks.push(event.data); };
+                mediaRecorder.onstop = function() {
+                    audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                    stream.getTracks().forEach(function(track) { track.stop(); });
+                };
+                mediaRecorder.start();
+                grabando = true;
+                document.getElementById('btnGrabar').classList.add('grabando');
+                document.getElementById('textoBotonGrabar').textContent = 'Detener';
+                document.getElementById('indicadorGrabacion').classList.add('activo');
+                tiempoGrabacionSegundos = 0;
+                actualizarTiempoGrabacion();
+                tiempoGrabacionInterval = setInterval(actualizarTiempoGrabacion, 1000);
+            } catch (error) {
+                alert('No se pudo acceder al microfono');
+            }
+        }
+
+        function detenerGrabacion() {
+            if (mediaRecorder && grabando) {
+                mediaRecorder.stop();
+                grabando = false;
+                clearInterval(tiempoGrabacionInterval);
+                document.getElementById('btnGrabar').classList.remove('grabando');
+                document.getElementById('textoBotonGrabar').textContent = 'Grabar';
+                document.getElementById('indicadorGrabacion').classList.remove('activo');
+            }
+        }
+
+        function actualizarTiempoGrabacion() {
+            tiempoGrabacionSegundos++;
+            var mins = Math.floor(tiempoGrabacionSegundos / 60).toString().padStart(2, '0');
+            var secs = (tiempoGrabacionSegundos % 60).toString().padStart(2, '0');
+            document.getElementById('tiempoGrabacion').textContent = mins + ':' + secs;
+        }
+
+        // ==================== EVALUACION ====================
+        async function terminarLectura() {
+            detenerLectura();
+            detenerGrabacion();
+            mostrarPantalla('evaluacion');
+            document.getElementById('evaluandoMsg').style.display = 'block';
+            document.getElementById('resultadoEvaluacion').style.display = 'none';
+            var tiempoTotal = tiempoInicioLectura ? Math.round((Date.now() - tiempoInicioLectura) / 1000) : 0;
+            try {
+                var transcripcion = null;
+                if (audioBlob && configIA.keys.groq) {
+                    transcripcion = await transcribirConGroq(audioBlob);
+                }
+                var evaluacion = await evaluarLecturaConIA(tiempoTotal, transcripcion);
+                mostrarResultadoEvaluacion(evaluacion, tiempoTotal, transcripcion);
+            } catch (error) {
+                mostrarResultadoBasico(tiempoTotal, null);
+            }
+        }
+
+        async function transcribirConGroq(audioBlob) {
+            try {
+                var formData = new FormData();
+                formData.append('file', audioBlob, 'grabacion.webm');
+                formData.append('model', 'whisper-large-v3-turbo');
+                formData.append('response_format', 'json');
+                formData.append('language', idiomaComic === 'en' ? 'en' : idiomaComic === 'ca' ? 'ca' : 'es');
+                var response = await fetch('https://api.groq.com/openai/v1/audio/transcriptions', {
+                    method: 'POST',
+                    headers: { 'Authorization': 'Bearer ' + configIA.keys.groq },
+                    body: formData
+                });
+                if (response.ok) {
+                    var data = await response.json();
+                    return data.text;
+                }
+            } catch (error) {
+                console.error('Error transcribiendo:', error);
+            }
+            return null;
+        }
+
+        async function evaluarLecturaConIA(tiempoTotal, transcripcion) {
+            var guardado = localStorage.getItem('usuarioAprendizaje');
+            var usuario = guardado ? JSON.parse(guardado) : { nombre: 'Estudiante', edad: 10 };
+            var prompt = 'Evalua esta sesion de lectura de ' + usuario.nombre + ' (' + usuario.edad + ' anos).\nFrases: ' + frasesLeidas + '/' + frases.length + '\nTiempo: ' + tiempoTotal + 's\n' + (transcripcion ? 'Transcripcion: "' + transcripcion + '"' : '') + '\n\nResponde con JSON:\n{"puntuacion": 85, "velocidad": "adecuada", "comprension_estimada": "buena", "feedback": "Mensaje motivador", "consejos": ["Consejo 1"]}';
+            return await generarTextoClaude(prompt);
+        }
+
+        function mostrarResultadoEvaluacion(evaluacion, tiempoTotal, transcripcion) {
+            document.getElementById('evaluandoMsg').style.display = 'none';
+            document.getElementById('resultadoEvaluacion').style.display = 'block';
+            var emoji = evaluacion.puntuacion >= 90 ? '🏆' : evaluacion.puntuacion >= 70 ? '⭐' : '📚';
+            document.getElementById('puntuacionFinal').textContent = emoji + ' ' + evaluacion.puntuacion + '/100';
+            var mins = Math.floor(tiempoTotal / 60);
+            var secs = tiempoTotal % 60;
+            document.getElementById('detallesEvaluacion').innerHTML = '<div class="detalle-item"><span>Frases:</span><span>' + frasesLeidas + '/' + frases.length + '</span></div><div class="detalle-item"><span>Tiempo:</span><span>' + mins + 'm ' + secs + 's</span></div><div class="detalle-item"><span>Velocidad:</span><span>' + evaluacion.velocidad + '</span></div>';
+            document.getElementById('feedbackIA').innerHTML = '<p><strong>💬</strong> ' + evaluacion.feedback + '</p>' + (evaluacion.consejos ? '<p><strong>💡 Consejos:</strong></p><ul>' + evaluacion.consejos.map(function(c) { return '<li>' + c + '</li>'; }).join('') + '</ul>' : '');
+        }
+
+        function mostrarResultadoBasico(tiempoTotal, transcripcion) {
+            document.getElementById('evaluandoMsg').style.display = 'none';
+            document.getElementById('resultadoEvaluacion').style.display = 'block';
+            var porcentaje = Math.round((frasesLeidas / frases.length) * 100);
+            document.getElementById('puntuacionFinal').textContent = (porcentaje >= 90 ? '🏆' : '📚') + ' ' + porcentaje + '%';
+            document.getElementById('detallesEvaluacion').innerHTML = '<div class="detalle-item"><span>Frases:</span><span>' + frasesLeidas + '/' + frases.length + '</span></div>';
+            document.getElementById('feedbackIA').innerHTML = '<p>¡Buen trabajo!</p>';
+        }
+
+        // ==================== API CLAUDE ====================
+        async function generarTextoClaude(prompt) {
+            var response = await fetch('https://api.anthropic.com/v1/messages', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-api-key': configIA.keys.claude,
+                    'anthropic-version': '2023-06-01',
+                    'anthropic-dangerous-direct-browser-access': 'true'
+                },
+                body: JSON.stringify({
+                    model: 'claude-sonnet-4-5-20250929',
+                    max_tokens: 8192,
+                    messages: [{ role: 'user', content: prompt }]
+                })
+            });
+            if (!response.ok) throw new Error('Error con Claude API');
+            var data = await response.json();
+            var texto = data.content[0].text;
+            return parsearJSONSeguro(texto);
+        }
+
+        function parsearJSONSeguro(texto) {
+            var clean = texto.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+            try { return JSON.parse(clean); }
+            catch (e) {
+                clean = clean.replace(/,\s*$/, '');
+                var openBrackets = (clean.match(/\[/g) || []).length;
+                var closeBrackets = (clean.match(/\]/g) || []).length;
+                var openBraces = (clean.match(/\{/g) || []).length;
+                var closeBraces = (clean.match(/\}/g) || []).length;
+                for (var i = 0; i < openBrackets - closeBrackets; i++) clean += ']';
+                for (var i = 0; i < openBraces - closeBraces; i++) clean += '}';
+                return JSON.parse(clean);
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SuperMente</title>
+    <link href="https://fonts.googleapis.com/css2?family=Indie+Flower&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { background: #2a5a2a; color: #f0f0e8; margin: 0; padding: 0; font-family: 'Indie Flower', cursive; min-height: 100vh; }
+        .oculto { display: none !important; }
+        h1 { text-align: center; margin: 10px 0; font-size: 1.8em; text-shadow: 0 0 5px rgba(255,255,255,0.5); }
+
+        .login-container {
+            display: flex; flex-direction: column; justify-content: flex-start; align-items: center;
+            min-height: 100vh; padding: 40px 20px 20px 20px;
+        }
+        .login-titulo { font-size: 2.8em; margin-bottom: 25px; text-shadow: 0 0 5px rgba(255,255,255,0.5); }
+        .login-form { width: 100%; max-width: 320px; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; margin-bottom: 8px; opacity: 0.9; font-size: 1.4em; }
+        .form-input {
+            width: 100%; padding: 14px; font-size: 1.3em;
+            background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 8px; color: #f0f0e8; font-family: 'Indie Flower', cursive;
+        }
+        .form-input::placeholder { color: rgba(255,255,255,0.5); }
+
+        .menu-container { padding: 15px; padding-bottom: 20px; }
+        .menu-opciones { display: flex; flex-direction: column; gap: 10px; max-width: 320px; margin: 0 auto; }
+        .btn-menu {
+            background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.4);
+            color: #f0f0e8; padding: 15px; font-size: 1.2em; border-radius: 12px;
+            font-family: 'Indie Flower', cursive; text-shadow: 0 0 5px rgba(255,255,255,0.5);
+            cursor: pointer; text-align: center;
+        }
+        .btn-menu:active { background: rgba(255,255,255,0.2); }
+
+        .usuario-info {
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            padding: 8px; margin-bottom: 5px; font-size: 1.1em;
+        }
+        .btn-logout {
+            background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.3);
+            font-size: 1em; cursor: pointer; padding: 5px 10px; border-radius: 5px;
+            color: #f0f0e8; font-family: 'Indie Flower', cursive;
+        }
+        .btn-config {
+            position: fixed; bottom: 15px; right: 15px;
+            background: rgba(255,255,255,0.15); border: 2px solid rgba(255,255,255,0.3);
+            font-size: 1.5em; padding: 10px 14px; border-radius: 50%; cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- LOGIN -->
+    <div id="login">
+        <div class="login-container">
+            <div class="login-titulo">👋 Hola!</div>
+            <div class="login-form">
+                <div class="form-group">
+                    <label>Como te llamas?</label>
+                    <input type="text" id="nombreUsuario" class="form-input" placeholder="Tu nombre..." maxlength="20">
+                </div>
+                <div class="form-group">
+                    <label>Cuantos anos tienes?</label>
+                    <input type="number" id="edadUsuario" class="form-input" placeholder="Tu edad..." min="3" max="18">
+                </div>
+                <button class="btn-menu" onclick="iniciarSesion()" style="margin-top:15px; width:100%; font-size:1.4em;">🚀 Empezar!</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MENU PRINCIPAL -->
+    <div id="menu" class="oculto">
+        <div class="menu-container">
+            <div class="usuario-info">
+                <span>👤</span>
+                <span id="nombreMostrar"></span>
+                <span id="edadMostrar"></span>
+                <button class="btn-logout" onclick="cerrarSesion()">🔄 Cambiar</button>
+            </div>
+            <h1>🧠 SuperMente</h1>
+            <div class="menu-opciones">
+                <button class="btn-menu" onclick="irA('modules/suma/suma.html')">➕ Suma</button>
+                <button class="btn-menu" onclick="irA('modules/resta/resta.html')">➖ Resta</button>
+                <button class="btn-menu" onclick="irA('modules/multiplicacion/multiplicacion.html')">✖️ Multiplicacion</button>
+                <button class="btn-menu" onclick="irA('modules/division/division.html')">➗ Division</button>
+                <button class="btn-menu" onclick="irA('modules/tablas/tablas.html')">📋 Tablas</button>
+                <button class="btn-menu" onclick="irA('modules/cuestionarios/cuestionarios.html')">❓ Cuestionarios</button>
+                <button class="btn-menu" onclick="irA('modules/lectura/lectura.html')">📖 Lectura</button>
+            </div>
+        </div>
+        <button class="btn-config" onclick="irA('modules/configuracion/configuracion.html')">⚙️</button>
+    </div>
+
+    <script>
+        var usuarioActual = null;
+
+        function cargarUsuario() {
+            var guardado = localStorage.getItem('usuarioAprendizaje');
+            if (guardado) {
+                usuarioActual = JSON.parse(guardado);
+                mostrarUsuarioLogueado();
+                document.getElementById('login').classList.add('oculto');
+                document.getElementById('menu').classList.remove('oculto');
+            }
+        }
+
+        function iniciarSesion() {
+            var nombre = document.getElementById('nombreUsuario').value.trim();
+            var edad = parseInt(document.getElementById('edadUsuario').value);
+
+            if (!nombre) {
+                alert('Por favor, escribe tu nombre');
+                return;
+            }
+            if (!edad || edad < 3 || edad > 18) {
+                alert('Por favor, escribe tu edad (entre 3 y 18 anos)');
+                return;
+            }
+
+            usuarioActual = { nombre: nombre, edad: edad };
+            localStorage.setItem('usuarioAprendizaje', JSON.stringify(usuarioActual));
+            mostrarUsuarioLogueado();
+            document.getElementById('login').classList.add('oculto');
+            document.getElementById('menu').classList.remove('oculto');
+        }
+
+        function mostrarUsuarioLogueado() {
+            document.getElementById('nombreMostrar').textContent = usuarioActual.nombre;
+            document.getElementById('edadMostrar').textContent = '(' + usuarioActual.edad + ' anos)';
+        }
+
+        function cerrarSesion() {
+            localStorage.removeItem('usuarioAprendizaje');
+            usuarioActual = null;
+            document.getElementById('nombreUsuario').value = '';
+            document.getElementById('edadUsuario').value = '';
+            document.getElementById('menu').classList.add('oculto');
+            document.getElementById('login').classList.remove('oculto');
+        }
+
+        function irA(url) {
+            window.location.href = url;
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            cargarUsuario();
+        });
+    </script>
+</body>
+</html>

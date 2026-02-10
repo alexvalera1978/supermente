@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:www.tuexpertoapps.com)",
+      "Bash(ls:*)",
+      "WebFetch(domain:gemini.google)",
+      "WebSearch",
+      "WebFetch(domain:ai.google.dev)",
+      "WebFetch(domain:docs.anthropic.com)",
+      "WebFetch(domain:discuss.google.dev)",
+      "Bash(curl:*)",
+      "Bash(ipconfig:*)",
+      "Bash(findstr:*)"
+    ]
+  }
+}
