@@ -5,6 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Configuracion</title>
     <link rel="stylesheet" href="/supermente/css/common.css?v=2">
+    <link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        .font-selector { display: flex; gap: 15px; justify-content: center; margin: 15px 0; }
+        .font-option { display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer; padding: 15px; background: rgba(255,255,255,0.1); border-radius: 10px; border: 2px solid transparent; }
+        .font-option:has(input:checked) { border-color: #00c9ff; background: rgba(0,201,255,0.2); }
+        .font-option input { display: none; }
+        .font-preview { font-size: 2em; }
+        .font-ejemplo { text-align: center; font-size: 1.4em; padding: 15px; background: rgba(255,255,255,0.9); color: #333; border-radius: 10px; line-height: 1.8; }
+        .font-ejemplo.ligada { font-family: 'Kalam', cursive; }
+    </style>
 </head>
 <body>
     <div id="configuracion" class="pantalla activa tiza">
@@ -63,6 +73,23 @@
             </div>
 
             <div class="config-section">
+                <h3>Tipo de Letra</h3>
+                <div class="font-selector">
+                    <label class="font-option">
+                        <input type="radio" name="tipoLetra" value="normal" onchange="cambiarTipoLetra('normal')" checked>
+                        <span class="font-preview" style="font-family: Georgia, serif;">Aa</span>
+                        <span>Normal</span>
+                    </label>
+                    <label class="font-option">
+                        <input type="radio" name="tipoLetra" value="ligada" onchange="cambiarTipoLetra('ligada')">
+                        <span class="font-preview" style="font-family: 'Kalam', cursive;">Aa</span>
+                        <span>Ligada</span>
+                    </label>
+                </div>
+                <p class="font-ejemplo" id="fontEjemplo">La nina lee un libro muy bonito.</p>
+            </div>
+
+            <div class="config-section">
                 <div id="estadoConfig" class="estado-config"></div>
                 <button class="btn" onclick="probarConexion()">🔌 Probar conexion</button>
             </div>
@@ -74,7 +101,31 @@
 
     <script src="/supermente/js/common.js?v=2"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', cargarConfiguracion);
+        document.addEventListener('DOMContentLoaded', function() {
+            cargarConfiguracion();
+            cargarTipoLetra();
+        });
+
+        function cargarTipoLetra() {
+            var tipo = localStorage.getItem('tipoLetra') || 'normal';
+            var radio = document.querySelector('input[name="tipoLetra"][value="' + tipo + '"]');
+            if (radio) radio.checked = true;
+            aplicarTipoLetra(tipo);
+        }
+
+        function cambiarTipoLetra(tipo) {
+            localStorage.setItem('tipoLetra', tipo);
+            aplicarTipoLetra(tipo);
+        }
+
+        function aplicarTipoLetra(tipo) {
+            var ejemplo = document.getElementById('fontEjemplo');
+            if (tipo === 'ligada') {
+                ejemplo.classList.add('ligada');
+            } else {
+                ejemplo.classList.remove('ligada');
+            }
+        }
     </script>
 </body>
 </html>

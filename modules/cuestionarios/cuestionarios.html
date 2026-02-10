@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Cuestionarios</title>
-    <link href="https://fonts.googleapis.com/css2?family=Indie+Flower&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Indie+Flower&family=Kalam:wght@400;700&display=swap" rel="stylesheet">
     <style>
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { background: #2a5a2a; color: #f0f0e8; margin: 0; padding: 0; font-family: 'Indie Flower', cursive; min-height: 100vh; }
@@ -116,6 +116,14 @@
 
         .mensaje-juego { text-align: center; margin-top: 15px; font-size: 1.2em; min-height: 30px; }
         .estado-generacion { text-align: center; margin-top: 15px; font-size: 1.1em; }
+
+        /* Letra ligada */
+        .letra-ligada .pregunta-texto,
+        .letra-ligada .opcion,
+        .letra-ligada .relacionar-item,
+        .letra-ligada .ordenar-item {
+            font-family: 'Kalam', cursive;
+        }
     </style>
 </head>
 <body>
@@ -628,7 +636,25 @@
         }
 
         // Inicializacion
-        document.addEventListener('DOMContentLoaded', cargarConfigIA);
+        document.addEventListener('DOMContentLoaded', function() {
+            cargarConfigIA();
+            aplicarTipoLetra();
+        });
+
+        function aplicarTipoLetra() {
+            var tipo = localStorage.getItem('tipoLetra') || 'normal';
+            var containers = ['cuestionarioActivo', 'juegoActivo'];
+            containers.forEach(function(id) {
+                var el = document.getElementById(id);
+                if (el) {
+                    if (tipo === 'ligada') {
+                        el.classList.add('letra-ligada');
+                    } else {
+                        el.classList.remove('letra-ligada');
+                    }
+                }
+            });
+        }
     </script>
 </body>
 </html>

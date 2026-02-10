@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Lectura Inteligente</title>
-    <link href="https://fonts.googleapis.com/css2?family=Indie+Flower&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Indie+Flower&family=Kalam:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <style>
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -116,6 +116,11 @@
             border-radius: 12px; font-size: 1.25em; line-height: 2.1;
             min-height: calc(100vh - 150px); overflow-y: auto;
             font-family: Georgia, serif;
+        }
+        .texto-lectura.letra-ligada {
+            font-family: 'Kalam', cursive;
+            font-size: 1.35em;
+            line-height: 2.3;
         }
         .texto-lectura .capitulo-titulo { font-family: 'Indie Flower', cursive; font-size: 1.4em; color: #2a5a2a; text-align: center; margin: 25px 0 15px 0; padding: 12px; border-bottom: 2px solid #2a5a2a; border-top: 2px solid #2a5a2a; background: rgba(42,90,42,0.08); clear: both; }
         .texto-lectura .parrafo { margin-bottom: 12px; text-indent: 20px; text-align: justify; }
@@ -377,6 +382,18 @@
             actualizarBotonComic();
             pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
         });
+
+        function aplicarTipoLetra() {
+            var tipo = localStorage.getItem('tipoLetra') || 'normal';
+            var textoLectura = document.getElementById('textoLectura');
+            if (textoLectura) {
+                if (tipo === 'ligada') {
+                    textoLectura.classList.add('letra-ligada');
+                } else {
+                    textoLectura.classList.remove('letra-ligada');
+                }
+            }
+        }
 
         // ==================== NAVEGACION ====================
         function mostrarPantalla(id) {
@@ -909,6 +926,7 @@
             document.getElementById('textoBotonLectura').textContent = 'Iniciar';
 
             mostrarPantalla('lecturaActiva');
+            aplicarTipoLetra();
         }
 
         // Crear parrafos con frases marcadas para lectura
@@ -950,6 +968,7 @@
             document.getElementById('textoBotonLectura').textContent = 'Iniciar';
             actualizarVelocidad();
             mostrarPantalla('lecturaActiva');
+            aplicarTipoLetra();
         }
 
         function actualizarVelocidad() {
