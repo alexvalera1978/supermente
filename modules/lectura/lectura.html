@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Lectura Inteligente</title>
-    <link href="https://fonts.googleapis.com/css2?family=Indie+Flower&family=Kalam:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Indie+Flower&family=Dancing+Script:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <style>
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -118,9 +118,9 @@
             font-family: Georgia, serif;
         }
         .texto-lectura.letra-ligada {
-            font-family: 'Kalam', cursive;
-            font-size: 1.35em;
-            line-height: 2.3;
+            font-family: 'Dancing Script', cursive;
+            font-size: 1.4em;
+            line-height: 2.4;
         }
         .texto-lectura .capitulo-titulo { font-family: 'Indie Flower', cursive; font-size: 1.4em; color: #2a5a2a; text-align: center; margin: 25px 0 15px 0; padding: 12px; border-bottom: 2px solid #2a5a2a; border-top: 2px solid #2a5a2a; background: rgba(42,90,42,0.08); clear: both; }
         .texto-lectura .parrafo { margin-bottom: 12px; text-indent: 20px; text-align: justify; }
@@ -174,6 +174,179 @@
 
         .mensaje-error { color: #ff6666; }
         .progreso-generacion { margin-top: 20px; font-size: 1em; opacity: 0.8; }
+
+        /* ==================== APRENENT CATALA ==================== */
+        .aprenent-intro { text-align: center; padding: 20px; max-width: 400px; margin: 0 auto; }
+        .aprenent-intro p { font-size: 1.1em; line-height: 1.6; margin: 10px 0; }
+        .aprenent-intro .aprenent-icono { font-size: 3em; margin: 20px 0; }
+        .aprenent-desc { opacity: 0.8; font-size: 1em !important; }
+
+        .aprenent-container { max-width: 500px; margin: 0 auto; padding: 15px; min-height: 100vh; display: flex; flex-direction: column; }
+        .aprenent-header { display: flex; justify-content: space-between; align-items: center; padding: 10px 15px; background: rgba(255,255,255,0.1); border-radius: 10px; margin-bottom: 15px; }
+        .aprenent-contador { font-size: 1em; opacity: 0.9; }
+        .aprenent-punts { font-size: 1.1em; color: #90EE90; font-weight: bold; }
+
+        .aprenent-text-box {
+            background: rgba(255,255,255,0.95);
+            border-radius: 15px;
+            padding: 25px;
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 200px;
+            margin-bottom: 20px;
+        }
+        .aprenent-paragraf {
+            color: #333;
+            font-family: Georgia, serif;
+            font-size: 1.4em;
+            line-height: 1.8;
+            text-align: center;
+            margin: 0;
+        }
+
+        /* Quiz Aprenent */
+        .quiz-frase-box {
+            background: rgba(255,255,255,0.95);
+            border-radius: 15px;
+            padding: 25px;
+            min-height: 120px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .quiz-frase {
+            color: #333;
+            font-family: Georgia, serif;
+            font-size: 1.3em;
+            line-height: 1.7;
+            text-align: center;
+        }
+        .quiz-frase .hueco {
+            display: inline-block;
+            min-width: 100px;
+            border-bottom: 3px solid #999;
+            margin: 0 5px;
+            color: #999;
+            font-weight: bold;
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+        .quiz-frase .hueco.actiu {
+            border-bottom: 3px solid #ffdd44;
+            background: rgba(255,221,68,0.2);
+            color: #2a5a2a;
+            animation: pulse-hueco 1.5s infinite;
+        }
+        @keyframes pulse-hueco {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(255,221,68,0.4); }
+            50% { box-shadow: 0 0 10px 3px rgba(255,221,68,0.2); }
+        }
+        .quiz-frase .hueco.omplert {
+            border-bottom: none;
+            min-width: auto;
+        }
+        .quiz-frase .hueco.omplert.correcte {
+            background: rgba(144,238,144,0.3);
+            color: #228B22;
+        }
+        .quiz-frase .hueco.omplert.incorrecte {
+            background: rgba(255,170,102,0.3);
+            color: #cc6600;
+        }
+
+        .quiz-opcions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        .quiz-opcio {
+            background: rgba(255,255,255,0.15);
+            border: 3px solid rgba(255,255,255,0.4);
+            border-radius: 12px;
+            padding: 18px 15px;
+            font-size: 1.2em;
+            font-family: 'Indie Flower', cursive;
+            color: #f0f0e8;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+        }
+        .quiz-opcio:hover { background: rgba(255,255,255,0.25); transform: scale(1.02); }
+        .quiz-opcio:active { transform: scale(0.98); }
+        .quiz-opcio.correcta { background: rgba(144,238,144,0.4); border-color: #90EE90; }
+        .quiz-opcio.incorrecta { background: rgba(255,102,102,0.4); border-color: #ff6666; }
+        .quiz-opcio.disabled { pointer-events: none; opacity: 0.7; }
+
+        .quiz-feedback {
+            background: rgba(0,0,0,0.2);
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            animation: fadeIn 0.3s ease;
+        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .feedback-correcte, .feedback-incorrecte { display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 15px; }
+        .feedback-correcte { color: #90EE90; }
+        .feedback-correcte .feedback-icona { font-size: 2em; }
+        .feedback-correcte span { font-size: 1.4em; }
+
+        .feedback-incorrecte { flex-direction: column; color: #ff9999; }
+        .feedback-incorrecte .feedback-icona { font-size: 2em; }
+        .feedback-detall { text-align: left; width: 100%; }
+        .feedback-detall p { margin: 10px 0; font-size: 1.1em; }
+        #respostaCorrecta { color: #90EE90; font-size: 1.2em; }
+
+        .regla-box {
+            background: rgba(0,201,255,0.15);
+            border-left: 4px solid #00c9ff;
+            padding: 12px 15px;
+            border-radius: 0 8px 8px 0;
+            margin-top: 10px;
+            text-align: left;
+            color: #f0f0e8;
+            line-height: 1.5;
+        }
+        .regla-box strong { color: #00c9ff; }
+
+        /* Resultats */
+        .aprenent-estadistiques {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin: 20px 0;
+            text-align: left;
+        }
+        .aprenent-stat {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 15px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 8px;
+        }
+        .aprenent-stat-value { font-weight: bold; }
+        .aprenent-stat-value.correcte { color: #90EE90; }
+        .aprenent-stat-value.incorrecte { color: #ff9999; }
+
+        .aprenent-errors {
+            margin-top: 20px;
+            text-align: left;
+        }
+        .aprenent-errors h4 { margin-bottom: 15px; color: #ffaa66; }
+        .error-item {
+            background: rgba(255,170,102,0.1);
+            border-left: 3px solid #ffaa66;
+            padding: 12px;
+            margin-bottom: 10px;
+            border-radius: 0 8px 8px 0;
+        }
+        .error-item .paraula-error { color: #ff9999; font-weight: bold; }
+        .error-item .paraula-correcta { color: #90EE90; font-weight: bold; }
+        .error-item .regla { font-size: 0.9em; opacity: 0.9; margin-top: 8px; line-height: 1.4; }
     </style>
 </head>
 <body>
@@ -190,6 +363,11 @@
                     <div class="icono">📄</div>
                     <h3>Subir PDF</h3>
                     <p>Carga un documento para practicar lectura</p>
+                </div>
+                <div class="opcion-lectura" onclick="iniciarAprenentCatala()">
+                    <div class="icono">🇦🇩</div>
+                    <h3>Aprenent Catala</h3>
+                    <p>Practica ortografia catalana amb jocs</p>
                 </div>
             </div>
             <div class="botones-control">
@@ -258,6 +436,10 @@
             </div>
             <div id="pdfBtnLeer" class="pdf-btn-leer" style="display:none;">
                 <button class="btn-menu" onclick="iniciarLecturaPDF()">📖 Comenzar Lectura</button>
+            </div>
+            <div id="pdfBtnExtraer" class="pdf-btn-leer" style="display:none;">
+                <button class="btn-menu" onclick="extraerTextoConIA()">🤖 Extraer texto con IA</button>
+                <p style="font-size:0.9em; opacity:0.7; margin-top:8px;">El PDF no tiene texto seleccionable. Usa IA para leerlo.</p>
             </div>
         </div>
     </div>
@@ -337,6 +519,90 @@
         </div>
     </div>
 
+    <!-- ==================== APRENENT CATALA ==================== -->
+    <div id="menuAprenentCatala" class="oculto">
+        <div class="menu-container">
+            <h1>🇦🇩 Aprenent Catala</h1>
+            <div class="aprenent-intro">
+                <p>Practica l'ortografia catalana amb textos i jocs interactius!</p>
+                <div class="aprenent-icono">📖✨</div>
+                <p class="aprenent-desc">Llegiràs paràgrafs curts i després hauràs d'escollir l'ortografia correcta de les paraules.</p>
+            </div>
+            <div id="generantParagraf" class="generando" style="display:none;">
+                <div class="spinner">📝</div>
+                <p>Generant text...</p>
+            </div>
+            <div class="botones-control">
+                <button class="btn-menu" id="btnComençar" onclick="generarParagrafAprenent()">✨ Començar</button>
+                <button class="btn" onclick="mostrarPantalla('menuLectura')">← Tornar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="lecturaAprenent" class="oculto">
+        <div class="aprenent-container">
+            <div class="aprenent-header">
+                <span class="aprenent-contador" id="comptadorParagrafs">Paragraf 1</span>
+                <span class="aprenent-punts" id="puntsAprenent">0 punts</span>
+            </div>
+            <div class="aprenent-text-box">
+                <p class="aprenent-paragraf" id="paragrafText"></p>
+            </div>
+            <div class="botones-control">
+                <button class="btn-menu" onclick="iniciarQuizAprenent()">🎮 Jugar</button>
+                <button class="btn" onclick="finalitzarAprenent()">Finalitzar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="quizAprenent" class="oculto">
+        <div class="aprenent-container">
+            <div class="aprenent-header">
+                <span class="aprenent-contador" id="comptadorParaula">Paraula 1 de 3</span>
+                <span class="aprenent-punts" id="puntsQuiz">0 punts</span>
+            </div>
+            <div class="quiz-frase-box" id="quizFraseBox">
+                <!-- Frase con hueco -->
+            </div>
+            <div class="quiz-opcions" id="quizOpcions">
+                <!-- 4 opciones -->
+            </div>
+            <div class="quiz-feedback oculto" id="quizFeedback">
+                <div class="feedback-correcte oculto" id="feedbackCorrecte">
+                    <span class="feedback-icona">✅</span>
+                    <span>Correcte!</span>
+                </div>
+                <div class="feedback-incorrecte oculto" id="feedbackIncorrecte">
+                    <span class="feedback-icona">❌</span>
+                    <div class="feedback-detall">
+                        <p><strong>La resposta correcta es:</strong> <span id="respostaCorrecta"></span></p>
+                        <div class="regla-box" id="reglaOrtografica"></div>
+                    </div>
+                </div>
+                <button class="btn" id="btnContinuarQuiz" onclick="seguentPreguntaQuiz()">Continuar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="resultatsAprenent" class="oculto">
+        <div class="evaluacion-container">
+            <h2>🏆 Resultats</h2>
+            <div class="evaluacion-resultado">
+                <div class="puntuacion-grande" id="puntuacioFinalAprenent">--</div>
+                <div class="aprenent-estadistiques" id="estadistiquesAprenent">
+                    <!-- Estadisticas -->
+                </div>
+                <div class="aprenent-errors" id="errorsAprenent">
+                    <!-- Lista de errores con reglas -->
+                </div>
+            </div>
+            <div class="botones-control">
+                <button class="btn-menu" onclick="reiniciarAprenent()">🔄 Tornar a practicar</button>
+                <button class="btn" onclick="mostrarPantalla('menuLectura')">← Menu</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // ==================== CONFIGURACION IA ====================
         var configIA = {
@@ -397,7 +663,7 @@
 
         // ==================== NAVEGACION ====================
         function mostrarPantalla(id) {
-            ['menuLectura', 'generadorComic', 'cargaPDF', 'generandoComic', 'vistaComic', 'lecturaActiva', 'evaluacion'].forEach(function(pid) {
+            ['menuLectura', 'generadorComic', 'cargaPDF', 'generandoComic', 'vistaComic', 'lecturaActiva', 'evaluacion', 'menuAprenentCatala', 'lecturaAprenent', 'quizAprenent', 'resultatsAprenent'].forEach(function(pid) {
                 var el = document.getElementById(pid);
                 if (el) el.classList.add('oculto');
             });
@@ -416,6 +682,7 @@
             document.getElementById('pdfUploadArea').style.display = 'block';
             document.getElementById('pdfPreview').style.display = 'none';
             document.getElementById('pdfBtnLeer').style.display = 'none';
+            document.getElementById('pdfBtnExtraer').style.display = 'none';
             document.getElementById('inputPDF').value = '';
         }
 
@@ -678,7 +945,15 @@
                 document.getElementById('pdfTextoPreview').innerHTML = previewHtml;
                 document.getElementById('pdfUploadArea').style.display = 'none';
                 document.getElementById('pdfPreview').style.display = 'flex';
-                document.getElementById('pdfBtnLeer').style.display = 'block';
+
+                // Si hay texto, mostrar boton normal. Si no, ofrecer extraer con IA
+                if (textoCompleto.trim().length > 10) {
+                    document.getElementById('pdfBtnLeer').style.display = 'block';
+                    document.getElementById('pdfBtnExtraer').style.display = 'none';
+                } else if (totalImagenes > 0) {
+                    document.getElementById('pdfBtnLeer').style.display = 'none';
+                    document.getElementById('pdfBtnExtraer').style.display = 'block';
+                }
             } catch (error) {
                 document.getElementById('pdfInfo').innerHTML = '<span class="mensaje-error">Error: ' + error.message + '</span>';
                 console.error(error);
@@ -835,63 +1110,195 @@
             return null;
         }
 
+        async function extraerTextoConIA() {
+            // Recopilar todas las imagenes del PDF
+            var todasImagenes = [];
+            paginasPDF.forEach(function(p) {
+                if (p.imagenes) {
+                    p.imagenes.forEach(function(img) {
+                        todasImagenes.push({ pagina: p.numero, dataUrl: img.dataUrl });
+                    });
+                }
+            });
+
+            if (todasImagenes.length === 0) {
+                alert('No hay imagenes para procesar');
+                return;
+            }
+
+            // Verificar API key
+            if (!configIA.keys.gemini) {
+                alert('Necesitas configurar una API key de Gemini para extraer texto de imagenes');
+                return;
+            }
+
+            document.getElementById('pdfInfo').innerHTML = '🤖 Extrayendo texto con IA... (0/' + todasImagenes.length + ')';
+            document.getElementById('pdfBtnExtraer').style.display = 'none';
+
+            try {
+                // Procesar cada imagen y extraer texto
+                for (var i = 0; i < todasImagenes.length; i++) {
+                    document.getElementById('pdfInfo').innerHTML = '🤖 Leyendo pagina ' + (i + 1) + '/' + todasImagenes.length + '...';
+
+                    var img = todasImagenes[i];
+                    var textoExtraido = await extraerTextoDeImagen(img.dataUrl);
+
+                    // Guardar el texto en la pagina correspondiente
+                    var paginaIdx = img.pagina - 1;
+                    if (paginasPDF[paginaIdx]) {
+                        paginasPDF[paginaIdx].texto = textoExtraido;
+                        paginasPDF[paginaIdx].textoConPosiciones = [{ texto: textoExtraido, y: 0 }];
+                    }
+                }
+
+                // Actualizar textoPDF
+                textoPDF = paginasPDF.map(function(p) { return p.texto || ''; }).join(' ').trim();
+
+                document.getElementById('pdfInfo').innerHTML = '✅ Texto extraido correctamente';
+                document.getElementById('pdfTextoPreview').innerHTML = textoPDF.substring(0, 500) + '...';
+                document.getElementById('pdfBtnLeer').style.display = 'block';
+
+            } catch (error) {
+                console.error('Error extrayendo texto:', error);
+                document.getElementById('pdfInfo').innerHTML = '<span class="mensaje-error">Error: ' + error.message + '</span>';
+                document.getElementById('pdfBtnExtraer').style.display = 'block';
+            }
+        }
+
+        async function extraerTextoDeImagen(dataUrl) {
+            var base64Data = dataUrl.split(',')[1];
+            var mimeType = dataUrl.split(';')[0].split(':')[1];
+
+            var response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=' + configIA.keys.gemini, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{
+                        parts: [
+                            {
+                                inline_data: {
+                                    mime_type: mimeType,
+                                    data: base64Data
+                                }
+                            },
+                            {
+                                text: 'Lee y transcribe TODO el texto que aparece en esta imagen de un cuento infantil. Devuelve SOLO el texto, sin explicaciones ni comentarios adicionales. Mantiene el formato de parrafos si los hay.'
+                            }
+                        ]
+                    }],
+                    generationConfig: { maxOutputTokens: 2048 }
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error('Error de Gemini API');
+            }
+
+            var data = await response.json();
+            if (data.candidates && data.candidates[0] && data.candidates[0].content) {
+                return data.candidates[0].content.parts[0].text || '';
+            }
+            return '';
+        }
+
         function iniciarLecturaPDF() {
-            if (paginasPDF.length === 0) return;
+            console.log('[DEBUG] iniciarLecturaPDF - paginasPDF:', paginasPDF.length);
+            if (paginasPDF.length === 0) {
+                alert('No se pudo extraer contenido del PDF');
+                return;
+            }
+            // Debug: mostrar contenido de cada pagina
+            paginasPDF.forEach(function(p, i) {
+                console.log('[DEBUG] Pagina ' + (i+1) + ':',
+                    'texto:', (p.texto || '').substring(0, 50) + '...',
+                    'imagenes:', (p.imagenes || []).length,
+                    'bloques:', (p.textoConPosiciones || []).length);
+            });
             origenLectura = 'pdf';
             prepararLecturaDocumento();
         }
 
         function prepararLecturaDocumento() {
+            console.log('[DEBUG] prepararLecturaDocumento - iniciando');
             // Construir un documento HTML integrado con imagenes intercaladas
             var html = '';
             var fraseIdx = 0;
             var todasLasFrases = [];
             var imagenesUsadas = 0;
 
+            // Calcular total de imagenes y texto
+            var totalImagenes = 0;
+            var totalTexto = 0;
+            paginasPDF.forEach(function(p) {
+                totalImagenes += (p.imagenes || []).length;
+                totalTexto += (p.texto || '').length;
+            });
+            console.log('[DEBUG] Total imagenes:', totalImagenes, 'Total chars texto:', totalTexto);
+
+            // Si hay muchas imagenes y poco texto, es probablemente un storyboard visual
+            var esStoryboard = totalImagenes > 3 && totalTexto < 500;
+            console.log('[DEBUG] Detectado como storyboard:', esStoryboard);
+
             for (var p = 0; p < paginasPDF.length; p++) {
                 var pagina = paginasPDF[p];
                 var imagenesPage = pagina.imagenes || [];
                 var textoBlocks = pagina.textoConPosiciones || [];
+                console.log('[DEBUG] Procesando pagina', p+1, '- imagenes:', imagenesPage.length, 'bloques texto:', textoBlocks.length);
 
 
                 // Si hay imagenes en esta pagina, intercalarlas con el texto
                 if (imagenesPage.length > 0) {
                     var imgIdx = 0;
                     var textoAcumulado = '';
+                    var textoPageCompleto = textoBlocks.map(function(b) { return b.texto; }).join(' ').trim();
 
-                    // Procesar bloques de texto e intercalar imagenes
-                    for (var b = 0; b < textoBlocks.length; b++) {
-                        textoAcumulado += textoBlocks[b].texto + ' ';
+                    // Para storyboards (poco texto, muchas imagenes): mostrar imagen grande centrada + texto debajo
+                    if (esStoryboard || textoPageCompleto.length < 100) {
+                        // Mostrar todas las imagenes de la pagina centradas
+                        for (var i = 0; i < imagenesPage.length; i++) {
+                            html += '<img src="' + imagenesPage[i].dataUrl + '" class="imagen-pdf img-centrada" style="max-width:90%; margin:15px auto;" alt="Ilustracion">';
+                            imagenesUsadas++;
+                        }
+                        // Luego el texto si hay
+                        if (textoPageCompleto.length > 3) {
+                            html += crearParrafosConFrases(textoPageCompleto, fraseIdx, todasLasFrases);
+                            fraseIdx = todasLasFrases.length;
+                        }
+                    } else {
+                        // Modo normal: intercalar imagenes con texto
+                        for (var b = 0; b < textoBlocks.length; b++) {
+                            textoAcumulado += textoBlocks[b].texto + ' ';
 
-                        // Insertar imagen cada ciertos bloques de texto o al inicio
-                        if (imgIdx < imagenesPage.length && (b === 0 || b === Math.floor(textoBlocks.length / 2))) {
-                            // Primero el texto acumulado hasta ahora
-                            if (textoAcumulado.trim()) {
-                                html += crearParrafosConFrases(textoAcumulado, fraseIdx, todasLasFrases);
-                                fraseIdx = todasLasFrases.length;
-                                textoAcumulado = '';
+                            // Insertar imagen cada ciertos bloques de texto o al inicio
+                            if (imgIdx < imagenesPage.length && (b === 0 || b === Math.floor(textoBlocks.length / 2))) {
+                                // Primero el texto acumulado hasta ahora
+                                if (textoAcumulado.trim()) {
+                                    html += crearParrafosConFrases(textoAcumulado, fraseIdx, todasLasFrases);
+                                    fraseIdx = todasLasFrases.length;
+                                    textoAcumulado = '';
+                                }
+                                // Luego la imagen
+                                var img = imagenesPage[imgIdx];
+                                var floatClass = (imgIdx % 2 === 0) ? 'img-float-left' : 'img-float-right';
+                                html += '<img src="' + img.dataUrl + '" class="imagen-pdf ' + floatClass + '" alt="Ilustracion">';
+                                imgIdx++;
+                                imagenesUsadas++;
                             }
-                            // Luego la imagen
+                        }
+
+                        // Texto restante despues de la ultima imagen
+                        if (textoAcumulado.trim()) {
+                            html += crearParrafosConFrases(textoAcumulado, fraseIdx, todasLasFrases);
+                            fraseIdx = todasLasFrases.length;
+                        }
+
+                        // Imagenes restantes que no se insertaron
+                        while (imgIdx < imagenesPage.length) {
                             var img = imagenesPage[imgIdx];
-                            var floatClass = (imgIdx % 2 === 0) ? 'img-float-left' : 'img-float-right';
-                            html += '<img src="' + img.dataUrl + '" class="imagen-pdf ' + floatClass + '" alt="Ilustracion">';
+                            html += '<img src="' + img.dataUrl + '" class="imagen-pdf img-centrada" alt="Ilustracion">';
                             imgIdx++;
                             imagenesUsadas++;
                         }
-                    }
-
-                    // Texto restante despues de la ultima imagen
-                    if (textoAcumulado.trim()) {
-                        html += crearParrafosConFrases(textoAcumulado, fraseIdx, todasLasFrases);
-                        fraseIdx = todasLasFrases.length;
-                    }
-
-                    // Imagenes restantes que no se insertaron
-                    while (imgIdx < imagenesPage.length) {
-                        var img = imagenesPage[imgIdx];
-                        html += '<img src="' + img.dataUrl + '" class="imagen-pdf img-centrada" alt="Ilustracion">';
-                        imgIdx++;
-                        imagenesUsadas++;
                     }
 
                     // Clear floats al final de cada pagina con imagenes
@@ -912,8 +1319,20 @@
 
             frases = todasLasFrases;
             textoActual = todasLasFrases.join(' ');
+            console.log('[DEBUG] Total frases generadas:', frases.length);
+            console.log('[DEBUG] HTML generado (primeros 500 chars):', html.substring(0, 500));
 
             var container = document.getElementById('textoLectura');
+
+            // Si no hay frases pero hay imagenes, mostrar las imagenes igualmente
+            if (frases.length === 0 && imagenesUsadas > 0) {
+                console.log('[DEBUG] No hay texto pero si imagenes - mostrando solo imagenes');
+                html = '<p style="text-align:center; color:#666; margin-bottom:15px;">📖 Storyboard visual - ' + imagenesUsadas + ' imagenes</p>' + html;
+            } else if (frases.length === 0 && imagenesUsadas === 0) {
+                console.log('[DEBUG] No hay contenido para mostrar');
+                html = '<p style="text-align:center; color:#999;">No se pudo extraer contenido del PDF. Intenta con otro documento.</p>';
+            }
+
             container.innerHTML = html;
 
             // Reset
@@ -922,11 +1341,21 @@
             frasesLeidas = 0;
             tiempoInicioLectura = null;
             document.getElementById('btnTerminar').style.display = 'none';
-            document.getElementById('iconoLectura').textContent = '▶️';
-            document.getElementById('textoBotonLectura').textContent = 'Iniciar';
+
+            // Si no hay frases para leer, ocultar controles de lectura automatica
+            if (frases.length === 0) {
+                document.getElementById('iconoLectura').textContent = '📖';
+                document.getElementById('textoBotonLectura').textContent = 'Ver';
+                document.getElementById('btnIniciarLectura').style.display = 'none';
+            } else {
+                document.getElementById('iconoLectura').textContent = '▶️';
+                document.getElementById('textoBotonLectura').textContent = 'Iniciar';
+                document.getElementById('btnIniciarLectura').style.display = 'inline-flex';
+            }
 
             mostrarPantalla('lecturaActiva');
             aplicarTipoLetra();
+            console.log('[DEBUG] Lectura preparada - frases:', frases.length, 'imagenes usadas:', imagenesUsadas);
         }
 
         // Crear parrafos con frases marcadas para lectura
@@ -1163,7 +1592,24 @@
             document.getElementById('feedbackIA').innerHTML = '<p>¡Buen trabajo!</p>';
         }
 
-        // ==================== API CLAUDE ====================
+        // ==================== API IA (CLAUDE / GEMINI) ====================
+        async function generarTextoIA(prompt) {
+            var provider = configIA.provider || 'gemini';
+            var key = configIA.keys[provider];
+
+            if (!key) {
+                throw new Error('No hi ha API key configurada per a ' + provider);
+            }
+
+            if (provider === 'claude') {
+                return await generarTextoClaude(prompt);
+            } else if (provider === 'gemini') {
+                return await generarTextoGemini(prompt);
+            } else {
+                throw new Error('Proveidor no suportat: ' + provider);
+            }
+        }
+
         async function generarTextoClaude(prompt) {
             var response = await fetch('https://api.anthropic.com/v1/messages', {
                 method: 'POST',
@@ -1185,6 +1631,28 @@
             return parsearJSONSeguro(texto);
         }
 
+        async function generarTextoGemini(prompt) {
+            var response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=' + configIA.keys.gemini, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{ parts: [{ text: prompt }] }],
+                    generationConfig: { maxOutputTokens: 8192 }
+                })
+            });
+            if (!response.ok) {
+                var errorText = await response.text();
+                console.error('Gemini error:', errorText);
+                throw new Error('Error con Gemini API');
+            }
+            var data = await response.json();
+            if (data.candidates && data.candidates[0] && data.candidates[0].content) {
+                var texto = data.candidates[0].content.parts[0].text;
+                return parsearJSONSeguro(texto);
+            }
+            throw new Error('Resposta buida de Gemini');
+        }
+
         function parsearJSONSeguro(texto) {
             var clean = texto.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
             try { return JSON.parse(clean); }
@@ -1198,6 +1666,288 @@
                 for (var i = 0; i < openBraces - closeBraces; i++) clean += '}';
                 return JSON.parse(clean);
             }
+        }
+
+        // ==================== APRENENT CATALA ====================
+        var paragrafActual = null;
+        var paraulesPendents = [];
+        var paraulaActualIdx = 0;
+        var numParagrafsCompletats = 0;
+        var estadistiquesAprenent = {
+            totalCorrectes: 0,
+            totalIncorrectes: 0,
+            errorsDetallats: []
+        };
+
+        function iniciarAprenentCatala() {
+            // Reset estado
+            paragrafActual = null;
+            paraulesPendents = [];
+            paraulaActualIdx = 0;
+            numParagrafsCompletats = 0;
+            estadistiquesAprenent = {
+                totalCorrectes: 0,
+                totalIncorrectes: 0,
+                errorsDetallats: []
+            };
+            mostrarPantalla('menuAprenentCatala');
+        }
+
+        async function generarParagrafAprenent() {
+            // Verificar API key del proveidor configurat
+            var provider = configIA.provider || 'gemini';
+            var key = configIA.keys ? configIA.keys[provider] : null;
+
+            if (!key) {
+                var anar = confirm('Necessites configurar una API key de ' + provider.toUpperCase() + '.\n\nVols anar a Configuracio ara?');
+                if (anar) {
+                    window.location.href = '/supermente/modules/configuracion/configuracion.html';
+                }
+                return;
+            }
+
+            document.getElementById('generantParagraf').style.display = 'block';
+            document.getElementById('btnComençar').style.display = 'none';
+
+            try {
+                var prompt = 'Ets un professor de catala. Genera un exercici d\'ortografia per a un nen de 10 anys.\n\n' +
+                    '1. Escriu un paragraf curt (MAXIM 4 linies, unes 40-50 paraules) sobre un tema adequat per a nens (animals, natura, escola, esports, aventures).\n' +
+                    '2. Selecciona 3-4 paraules amb dificultats ortografiques tipiques del catala.\n' +
+                    '3. Per cada paraula, genera 3 opcions INCORRECTES basades en errors fonetics comuns:\n' +
+                    '   - Confusio QU/C/K davant e/i (exemple: "que" vs "ke" vs "ce")\n' +
+                    '   - Confusio B/V\n' +
+                    '   - Accents greus vs aguts (a/e/o amb accent greu vs agut)\n' +
+                    '   - L·L vs LL vs L\n' +
+                    '   - NY vs N vs NI\n' +
+                    '   - TX vs X vs IG\n' +
+                    '   - Terminacions -QUES vs -CES\n' +
+                    '   - H muda\n' +
+                    '   - C vs S vs SS vs Z\n' +
+                    '   - G/J davant e/i\n\n' +
+                    'Retorna NOMES JSON valid amb aquest format EXACTE:\n' +
+                    '{\n' +
+                    '  "paragraf": "text complet del paragraf",\n' +
+                    '  "paraules": [\n' +
+                    '    {\n' +
+                    '      "correcta": "paraula correcta",\n' +
+                    '      "opcions": ["opcio1", "opcio2", "opcio3", "opcio4"],\n' +
+                    '      "indexCorrecta": 2,\n' +
+                    '      "regla": "Explicacio breu de la regla ortografica en catala"\n' +
+                    '    }\n' +
+                    '  ]\n' +
+                    '}\n\n' +
+                    'IMPORTANT:\n' +
+                    '- Les 4 opcions han d\'incloure la paraula correcta i 3 incorrectes\n' +
+                    '- indexCorrecta indica la posicio (0-3) de la resposta correcta\n' +
+                    '- Barreja l\'ordre de les opcions (no sempre la correcta al mateix lloc)\n' +
+                    '- Les opcions incorrectes han de ser errors fonetics realistes que fan els nens catalans\n' +
+                    '- La regla ha de ser clara i educativa\n' +
+                    '- RESPONDE NOMES AMB JSON VALID, sense explicacions adicionals';
+
+                var resultat = await generarTextoIA(prompt);
+                paragrafActual = resultat;
+
+                // Mostrar paragraf
+                mostrarParagrafAprenent();
+
+            } catch (error) {
+                console.error('Error generant paragraf:', error);
+                alert('Error generant el text. Torna-ho a intentar.');
+                document.getElementById('generantParagraf').style.display = 'none';
+                document.getElementById('btnComençar').style.display = 'block';
+            }
+        }
+
+        function mostrarParagrafAprenent() {
+            if (!paragrafActual) return;
+
+            numParagrafsCompletats++;
+            document.getElementById('comptadorParagrafs').textContent = 'Paragraf ' + numParagrafsCompletats;
+            document.getElementById('puntsAprenent').textContent = estadistiquesAprenent.totalCorrectes + ' punts';
+            document.getElementById('paragrafText').textContent = paragrafActual.paragraf;
+
+            document.getElementById('generantParagraf').style.display = 'none';
+            document.getElementById('btnComençar').style.display = 'block';
+            mostrarPantalla('lecturaAprenent');
+        }
+
+        var textAmbHuecos = ''; // Text amb tots els huecos per al quiz
+
+        function iniciarQuizAprenent() {
+            if (!paragrafActual || !paragrafActual.paraules || paragrafActual.paraules.length === 0) {
+                alert('No hi ha paraules per practicar');
+                return;
+            }
+
+            paraulesPendents = paragrafActual.paraules.slice();
+            paraulaActualIdx = 0;
+
+            // Crear el text amb TOTS els huecos des del principi
+            textAmbHuecos = paragrafActual.paragraf;
+            for (var i = 0; i < paraulesPendents.length; i++) {
+                var p = paraulesPendents[i];
+                // Buscar la paraula (case insensitive, primera ocurrència)
+                var idx = textAmbHuecos.toLowerCase().indexOf(p.correcta.toLowerCase());
+                if (idx !== -1) {
+                    textAmbHuecos = textAmbHuecos.substring(0, idx) +
+                        '<span class="hueco" id="hueco' + i + '">_______</span>' +
+                        textAmbHuecos.substring(idx + p.correcta.length);
+                }
+            }
+
+            mostrarPreguntaQuiz();
+        }
+
+        function mostrarPreguntaQuiz() {
+            if (paraulaActualIdx >= paraulesPendents.length) {
+                // Quiz del paragraf completat
+                mostrarFiParagraf();
+                return;
+            }
+
+            var paraula = paraulesPendents[paraulaActualIdx];
+
+            // Actualizar el hueco actual como activo
+            var textMostrar = textAmbHuecos;
+            // Resaltar el hueco actual (cambiar class="hueco" por class="hueco actiu")
+            textMostrar = textMostrar.replace(
+                '<span class="hueco" id="hueco' + paraulaActualIdx + '">',
+                '<span class="hueco actiu" id="hueco' + paraulaActualIdx + '">'
+            );
+
+            document.getElementById('comptadorParaula').textContent = 'Paraula ' + (paraulaActualIdx + 1) + ' de ' + paraulesPendents.length;
+            document.getElementById('puntsQuiz').textContent = estadistiquesAprenent.totalCorrectes + ' punts';
+            document.getElementById('quizFraseBox').innerHTML = '<p class="quiz-frase">' + textMostrar + '</p>';
+
+            // Mostrar opcions
+            var opcionsHTML = '';
+            for (var i = 0; i < paraula.opcions.length; i++) {
+                opcionsHTML += '<button class="quiz-opcio" onclick="comprovarResposta(' + i + ')">' + paraula.opcions[i] + '</button>';
+            }
+            document.getElementById('quizOpcions').innerHTML = opcionsHTML;
+
+            // Ocultar feedback
+            document.getElementById('quizFeedback').classList.add('oculto');
+            document.getElementById('feedbackCorrecte').classList.add('oculto');
+            document.getElementById('feedbackIncorrecte').classList.add('oculto');
+
+            mostrarPantalla('quizAprenent');
+        }
+
+        function escapeRegExp(string) {
+            return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        }
+
+        function comprovarResposta(indexSeleccionat) {
+            var paraula = paraulesPendents[paraulaActualIdx];
+            var esCorrecte = (indexSeleccionat === paraula.indexCorrecta);
+
+            // Deshabilitar botons
+            var botons = document.querySelectorAll('.quiz-opcio');
+            botons.forEach(function(btn, idx) {
+                btn.classList.add('disabled');
+                if (idx === paraula.indexCorrecta) {
+                    btn.classList.add('correcta');
+                } else if (idx === indexSeleccionat && !esCorrecte) {
+                    btn.classList.add('incorrecta');
+                }
+            });
+
+            // Rellenar el hueco con la palabra correcta
+            var classeHueco = esCorrecte ? 'hueco omplert correcte' : 'hueco omplert incorrecte';
+            var huecoNou = '<span class="' + classeHueco + '" id="hueco' + paraulaActualIdx + '">' + paraula.correcta + '</span>';
+            // Reemplazar el hueco (que todavia tiene class="hueco" en textAmbHuecos)
+            textAmbHuecos = textAmbHuecos.replace(
+                '<span class="hueco" id="hueco' + paraulaActualIdx + '">_______</span>',
+                huecoNou
+            );
+
+            // Actualizar el text mostrat
+            var textMostrar = textAmbHuecos;
+            document.getElementById('quizFraseBox').innerHTML = '<p class="quiz-frase">' + textMostrar + '</p>';
+
+            // Mostrar feedback
+            document.getElementById('quizFeedback').classList.remove('oculto');
+
+            if (esCorrecte) {
+                estadistiquesAprenent.totalCorrectes++;
+                document.getElementById('feedbackCorrecte').classList.remove('oculto');
+                document.getElementById('puntsQuiz').textContent = estadistiquesAprenent.totalCorrectes + ' punts';
+
+                // Auto-avançar despres de 1.2 segons
+                setTimeout(function() {
+                    seguentPreguntaQuiz();
+                }, 1200);
+            } else {
+                estadistiquesAprenent.totalIncorrectes++;
+                estadistiquesAprenent.errorsDetallats.push({
+                    paraula: paraula.opcions[indexSeleccionat],
+                    correcta: paraula.correcta,
+                    regla: paraula.regla
+                });
+
+                document.getElementById('feedbackIncorrecte').classList.remove('oculto');
+                document.getElementById('respostaCorrecta').textContent = paraula.correcta;
+                document.getElementById('reglaOrtografica').innerHTML = '<strong>Regla:</strong> ' + paraula.regla;
+            }
+        }
+
+        function seguentPreguntaQuiz() {
+            paraulaActualIdx++;
+            mostrarPreguntaQuiz();
+        }
+
+        function mostrarFiParagraf() {
+            // Preguntar si vol continuar o finalitzar
+            var continuar = confirm('Has completat el paragraf!\n\nCorrectes: ' + estadistiquesAprenent.totalCorrectes + '\nIncorrectes: ' + estadistiquesAprenent.totalIncorrectes + '\n\nVols continuar amb un altre paragraf?');
+
+            if (continuar) {
+                // Generar nou paragraf
+                mostrarPantalla('menuAprenentCatala');
+                generarParagrafAprenent();
+            } else {
+                finalitzarAprenent();
+            }
+        }
+
+        function finalitzarAprenent() {
+            var total = estadistiquesAprenent.totalCorrectes + estadistiquesAprenent.totalIncorrectes;
+            var percentatge = total > 0 ? Math.round((estadistiquesAprenent.totalCorrectes / total) * 100) : 0;
+
+            var emoji = '📚';
+            if (percentatge >= 90) emoji = '🏆';
+            else if (percentatge >= 70) emoji = '⭐';
+            else if (percentatge >= 50) emoji = '👍';
+
+            document.getElementById('puntuacioFinalAprenent').textContent = emoji + ' ' + percentatge + '%';
+
+            // Estadistiques
+            var statsHTML = '<div class="aprenent-stat"><span>Paragrafs completats:</span><span class="aprenent-stat-value">' + numParagrafsCompletats + '</span></div>';
+            statsHTML += '<div class="aprenent-stat"><span>Respostes correctes:</span><span class="aprenent-stat-value correcte">' + estadistiquesAprenent.totalCorrectes + '</span></div>';
+            statsHTML += '<div class="aprenent-stat"><span>Respostes incorrectes:</span><span class="aprenent-stat-value incorrecte">' + estadistiquesAprenent.totalIncorrectes + '</span></div>';
+            statsHTML += '<div class="aprenent-stat"><span>Percentatge d\'encerts:</span><span class="aprenent-stat-value">' + percentatge + '%</span></div>';
+            document.getElementById('estadistiquesAprenent').innerHTML = statsHTML;
+
+            // Errors detallats
+            var errorsHTML = '';
+            if (estadistiquesAprenent.errorsDetallats.length > 0) {
+                errorsHTML = '<h4>Errors a repassar:</h4>';
+                estadistiquesAprenent.errorsDetallats.forEach(function(error) {
+                    errorsHTML += '<div class="error-item">';
+                    errorsHTML += '<p>Has escrit: <span class="paraula-error">' + error.paraula + '</span> → Correcte: <span class="paraula-correcta">' + error.correcta + '</span></p>';
+                    errorsHTML += '<p class="regla">' + error.regla + '</p>';
+                    errorsHTML += '</div>';
+                });
+            } else {
+                errorsHTML = '<p style="text-align:center; color:#90EE90;">Perfecte! No has comes cap error! 🎉</p>';
+            }
+            document.getElementById('errorsAprenent').innerHTML = errorsHTML;
+
+            mostrarPantalla('resultatsAprenent');
+        }
+
+        function reiniciarAprenent() {
+            iniciarAprenentCatala();
         }
     </script>
 </body>

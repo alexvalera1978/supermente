@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Configuracion</title>
     <link rel="stylesheet" href="/supermente/css/common.css?v=2">
-    <link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;700&display=swap" rel="stylesheet">
     <style>
         /* Permitir scroll en configuracion */
         #configuracion { overflow-y: auto !important; padding: 15px 10px 30px 10px; }
@@ -18,14 +18,15 @@
         .font-option input { display: none; }
         .font-preview { font-size: 1.8em; }
         .font-ejemplo { text-align: center; font-size: 1.2em; padding: 12px; background: rgba(255,255,255,0.9); color: #333; border-radius: 8px; line-height: 1.6; margin-top: 10px; }
-        .font-ejemplo.ligada { font-family: 'Kalam', cursive; }
+        .font-ejemplo.ligada { font-family: 'Dancing Script', cursive; }
     </style>
 </head>
 <body>
     <div id="configuracion" class="pantalla activa tiza">
         <h1>⚙️ Configuracion</h1>
         <div class="config-container">
-            <p class="config-info">Introduce tu API key para generar cuestionarios con IA.<br>Las keys se guardan localmente en tu dispositivo.</p>
+            <p class="config-info">Las keys se guardan localmente en tu dispositivo.</p>
+            <p id="debugStorage" style="font-size:0.8em; opacity:0.6; text-align:center;"></p>
 
             <div class="config-section">
                 <h3>Proveedor de IA</h3>
@@ -50,28 +51,28 @@
                 <div class="api-key-group">
                     <label>Claude (Anthropic)</label>
                     <div class="input-with-toggle">
-                        <input type="password" id="apiKeyClaude" class="input-tema" placeholder="sk-ant-api..." onchange="guardarApiKey('claude')">
+                        <input type="password" id="apiKeyClaude" class="input-tema" placeholder="sk-ant-api..." onchange="guardarApiKey('claude'); mostrarEstadoStorage();">
                         <button class="btn-toggle-key" onclick="toggleKeyVisibility('apiKeyClaude')">👁️</button>
                     </div>
                 </div>
                 <div class="api-key-group">
                     <label>ChatGPT (OpenAI)</label>
                     <div class="input-with-toggle">
-                        <input type="password" id="apiKeyOpenAI" class="input-tema" placeholder="sk-..." onchange="guardarApiKey('openai')">
+                        <input type="password" id="apiKeyOpenAI" class="input-tema" placeholder="sk-..." onchange="guardarApiKey('openai'); mostrarEstadoStorage();">
                         <button class="btn-toggle-key" onclick="toggleKeyVisibility('apiKeyOpenAI')">👁️</button>
                     </div>
                 </div>
                 <div class="api-key-group">
                     <label>Gemini (Google)</label>
                     <div class="input-with-toggle">
-                        <input type="password" id="apiKeyGemini" class="input-tema" placeholder="AIza..." onchange="guardarApiKey('gemini')">
+                        <input type="password" id="apiKeyGemini" class="input-tema" placeholder="AIza..." onchange="guardarApiKey('gemini'); mostrarEstadoStorage();">
                         <button class="btn-toggle-key" onclick="toggleKeyVisibility('apiKeyGemini')">👁️</button>
                     </div>
                 </div>
                 <div class="api-key-group">
                     <label>Groq (transcripcion voz)</label>
                     <div class="input-with-toggle">
-                        <input type="password" id="apiKeyGroq" class="input-tema" placeholder="gsk_..." onchange="guardarApiKey('groq')">
+                        <input type="password" id="apiKeyGroq" class="input-tema" placeholder="gsk_..." onchange="guardarApiKey('groq'); mostrarEstadoStorage();">
                         <button class="btn-toggle-key" onclick="toggleKeyVisibility('apiKeyGroq')">👁️</button>
                     </div>
                 </div>
@@ -87,7 +88,7 @@
                     </label>
                     <label class="font-option">
                         <input type="radio" name="tipoLetra" value="ligada" onchange="cambiarTipoLetra('ligada')">
-                        <span class="font-preview" style="font-family: 'Kalam', cursive;">Aa</span>
+                        <span class="font-preview" style="font-family: 'Dancing Script', cursive;">Aa</span>
                         <span>Ligada</span>
                     </label>
                 </div>
@@ -109,7 +110,31 @@
         document.addEventListener('DOMContentLoaded', function() {
             cargarConfiguracion();
             cargarTipoLetra();
+            mostrarEstadoStorage();
         });
+
+        function mostrarEstadoStorage() {
+            var debug = document.getElementById('debugStorage');
+            try {
+                var config = localStorage.getItem('configIA');
+                var temas = localStorage.getItem('temas');
+                var temasCount = temas ? JSON.parse(temas).length : 0;
+                var keysGuardadas = [];
+                if (config) {
+                    var parsed = JSON.parse(config);
+                    if (parsed.keys) {
+                        if (parsed.keys.claude) keysGuardadas.push('Claude');
+                        if (parsed.keys.openai) keysGuardadas.push('OpenAI');
+                        if (parsed.keys.gemini) keysGuardadas.push('Gemini');
+                        if (parsed.keys.groq) keysGuardadas.push('Groq');
+                    }
+                }
+                var keysText = keysGuardadas.length > 0 ? '✓ ' + keysGuardadas.join(', ') : '✗ Sin API';
+                debug.textContent = keysText + ' | ' + temasCount + ' temas | origen: ' + window.location.origin;
+            } catch (e) {
+                debug.textContent = 'Error leyendo storage: ' + e.message;
+            }
+        }
 
         function cargarTipoLetra() {
             var tipo = localStorage.getItem('tipoLetra') || 'normal';

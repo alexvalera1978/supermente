@@ -1,5 +1,7 @@
 // ==================== ESTADO GLOBAL ====================
 console.log('common.js cargado correctamente');
+console.log('[DEBUG] localStorage disponible:', typeof localStorage !== 'undefined');
+console.log('[DEBUG] Todas las keys en localStorage:', Object.keys(localStorage));
 
 let usuarioActual = null;
 let idiomaSeleccionado = null;
@@ -102,10 +104,18 @@ function esTemaInapropiado(tema) {
 // ==================== CONFIGURACION IA ====================
 function cargarConfiguracion() {
     const saved = localStorage.getItem('configIA');
+    console.log('[DEBUG] cargarConfiguracion - localStorage configIA:', saved);
     if (saved) {
-        const savedConfig = JSON.parse(saved);
-        configIA.provider = savedConfig.provider || 'claude';
-        configIA.keys = savedConfig.keys || { claude: '', openai: '', gemini: '', groq: '' };
+        try {
+            const savedConfig = JSON.parse(saved);
+            configIA.provider = savedConfig.provider || 'claude';
+            configIA.keys = savedConfig.keys || { claude: '', openai: '', gemini: '', groq: '' };
+            console.log('[DEBUG] configIA cargado:', configIA.provider, 'keys:', Object.keys(configIA.keys).filter(k => configIA.keys[k]).join(','));
+        } catch (e) {
+            console.error('[DEBUG] Error parseando configIA:', e);
+        }
+    } else {
+        console.log('[DEBUG] No hay configIA guardado en localStorage');
     }
 
     // Actualizar UI si existe
@@ -148,6 +158,7 @@ function guardarApiKey(provider) {
     if (input) {
         configIA.keys[provider] = input.value;
         localStorage.setItem('configIA', JSON.stringify(configIA));
+        console.log('[DEBUG] guardarApiKey - guardado:', provider, '- localStorage ahora:', localStorage.getItem('configIA'));
     }
 }
 
