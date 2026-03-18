@@ -475,7 +475,7 @@
                 </div>
                 <div class="control-velocidad">
                     <label>⏱️</label>
-                    <input type="range" id="velocidadLectura" min="1" max="10" value="3" oninput="actualizarVelocidad()">
+                    <input type="range" id="velocidadLectura" min="1" max="20" value="3" oninput="actualizarVelocidad()">
                     <span id="valorVelocidad">3s</span>
                 </div>
             </div>
@@ -489,11 +489,14 @@
                 <button class="btn-lectura" id="btnGrabar" onclick="toggleGrabacion()">
                     <span>🎤</span><span id="textoBotonGrabar">Grabar</span>
                 </button>
+                <button class="btn-lectura" id="btnReproducir" onclick="reproducirGrabacion()" style="display:none;">
+                    <span>🔊</span>
+                </button>
                 <button class="btn-lectura" onclick="reiniciarLectura()">
                     <span>🔄</span>
                 </button>
                 <button class="btn-lectura" id="btnTerminar" onclick="terminarLectura()" style="display:none;">
-                    <span>✅</span>
+                    <span>✅ Evaluar</span>
                 </button>
             </div>
         </div>
@@ -1340,7 +1343,11 @@
             lecturaEnCurso = false;
             frasesLeidas = 0;
             tiempoInicioLectura = null;
+            audioBlob = null;
+            audioChunks = [];
             document.getElementById('btnTerminar').style.display = 'none';
+            document.getElementById('btnReproducir').style.display = 'none';
+            document.getElementById('tiempoGrabacion').textContent = '00:00';
 
             // Si no hay frases para leer, ocultar controles de lectura automatica
             if (frases.length === 0) {
@@ -1392,7 +1399,11 @@
             lecturaEnCurso = false;
             frasesLeidas = 0;
             tiempoInicioLectura = null;
+            audioBlob = null;
+            audioChunks = [];
             document.getElementById('btnTerminar').style.display = 'none';
+            document.getElementById('btnReproducir').style.display = 'none';
+            document.getElementById('tiempoGrabacion').textContent = '00:00';
             document.getElementById('iconoLectura').textContent = '▶️';
             document.getElementById('textoBotonLectura').textContent = 'Iniciar';
             actualizarVelocidad();
@@ -1465,13 +1476,18 @@
 
         function reiniciarLectura() {
             detenerLectura();
+            detenerGrabacion();
             fraseActualIdx = 0;
             frasesLeidas = 0;
             tiempoInicioLectura = null;
+            audioBlob = null;
+            audioChunks = [];
             document.querySelectorAll('.frase').forEach(function(f) { f.classList.remove('activa', 'leida'); });
             document.getElementById('iconoLectura').textContent = '▶️';
             document.getElementById('textoBotonLectura').textContent = 'Iniciar';
             document.getElementById('btnTerminar').style.display = 'none';
+            document.getElementById('btnReproducir').style.display = 'none';
+            document.getElementById('tiempoGrabacion').textContent = '00:00';
             // Scroll al inicio
             var container = document.getElementById('textoLectura');
             if (container) container.scrollTop = 0;
@@ -1513,7 +1529,43 @@
                 document.getElementById('btnGrabar').classList.remove('grabando');
                 document.getElementById('textoBotonGrabar').textContent = 'Grabar';
                 document.getElementById('indicadorGrabacion').classList.remove('activo');
+
+                // Mostrar botones de reproducir y evaluar cuando hay grabacion
+                setTimeout(function() {
+                    if (audioBlob) {
+                        document.getElementById('btnReproducir').style.display = 'inline-flex';
+                        document.getElementById('btnTerminar').style.display = 'inline-flex';
+                    }
+                }, 300);
             }
+        }
+
+        var audioReproduciendo = null;
+        function reproducirGrabacion() {
+            if (!audioBlob) {
+                alert('No hay grabacion');
+                return;
+            }
+
+            // Si ya esta reproduciendo, parar
+            if (audioReproduciendo) {
+                audioReproduciendo.pause();
+                audioReproduciendo = null;
+                document.querySelector('#btnReproducir span').textContent = '🔊';
+                return;
+            }
+
+            var url = URL.createObjectURL(audioBlob);
+            audioReproduciendo = new Audio(url);
+            document.querySelector('#btnReproducir span').textContent = '⏹️';
+
+            audioReproduciendo.onended = function() {
+                document.querySelector('#btnReproducir span').textContent = '🔊';
+                audioReproduciendo = null;
+                URL.revokeObjectURL(url);
+            };
+
+            audioReproduciendo.play();
         }
 
         function actualizarTiempoGrabacion() {
