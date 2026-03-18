@@ -33,15 +33,27 @@
         .instruccion { font-size: 1.1em; opacity: 0.7; }
         .btn { background: rgba(255,255,255,0.15); border: 2px solid rgba(255,255,255,0.5); color: #f0f0e8; padding: 12px 16px; border-radius: 8px; margin: 3px; font-size: 1.1em; font-family: 'Indie Flower', cursive; cursor: pointer; }
 
-        /* Ayuda mode */
-        .header-pizarra { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
-        .btn-ayuda { background: rgba(255,255,255,0.2); border: 2px solid #ffcc00; color: #ffcc00; width: 36px; height: 36px; border-radius: 50%; font-size: 1.3em; font-family: 'Indie Flower', cursive; cursor: pointer; padding: 0; line-height: 32px; }
-        .btn-ayuda.activo { background: #ffcc00; color: #1e4a1e; }
-        #panelAyuda { background: rgba(255,204,0,0.15); border: 2px solid #ffcc00; border-radius: 8px; padding: 10px; margin-top: 10px; font-size: 1.1em; line-height: 1.4; }
-        #panelAyuda .paso-titulo { color: #ffcc00; font-weight: bold; margin-bottom: 5px; }
-        #panelAyuda .paso-instruccion { color: #f0f0e8; }
-        .nav-ayuda { display: flex; justify-content: space-between; margin-top: 8px; }
-        .nav-ayuda button { background: rgba(255,204,0,0.3); border: 1px solid #ffcc00; color: #ffcc00; padding: 5px 12px; border-radius: 5px; font-family: 'Indie Flower', cursive; cursor: pointer; }
+        /* Fase de seleccion de digitos */
+        .fase-seleccion {
+            background: rgba(135,206,235,0.15);
+            border: 2px solid #87CEEB;
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        .fase-seleccion p { margin: 5px 0; color: #87CEEB; }
+        .btn-confirmar {
+            background: rgba(135,206,235,0.3);
+            border: 2px solid #87CEEB;
+            color: #87CEEB;
+            padding: 8px 20px;
+            border-radius: 8px;
+            font-family: 'Indie Flower', cursive;
+            font-size: 1.1em;
+            cursor: pointer;
+            margin-top: 8px;
+        }
     </style>
 </head>
 <body>
@@ -58,17 +70,18 @@
     <div id="operacion" class="oculto">
         <div class="pizarra-container">
             <div class="pizarra">
-                <div class="header-pizarra">
-                    <div class="progreso" id="progreso"></div>
-                    <button class="btn-ayuda" id="btnAyuda" onclick="toggleAyuda()">?</button>
+                <div class="progreso" id="progreso"></div>
+                <div id="faseSeleccion" class="fase-seleccion oculto">
+                    <p>Selecciona los digitos del dividendo que vas a coger</p>
+                    <p id="digitosSeleccionadosInfo" style="font-size:1.3em; color:#FFD700;"></p>
+                    <button class="btn-confirmar" onclick="confirmarSeleccionDigitos()">✓ Confirmar</button>
                 </div>
                 <div id="contenidoPizarra"></div>
-                <div id="panelAyuda" class="oculto"></div>
             </div>
         </div>
         <div class="panel-inferior">
             <p id="mensaje"></p>
-            <p class="instruccion">Pulsa en cada casilla para cambiar el numero</p>
+            <p class="instruccion" id="instruccion">Pulsa en cada casilla para cambiar el numero</p>
             <div>
                 <button class="btn" onclick="comprobar()">✓ Comprobar</button>
                 <button class="btn" onclick="siguienteEjercicio()">→ Siguiente</button>
@@ -83,8 +96,11 @@
         var num1, num2, cociente, resto;
         var nivelActual = 'normal';
         var pasosDivision = [];
-        var modoAyuda = false;
-        var pasoAyuda = 0;
+
+        // Estado de seleccion de digitos
+        var faseActual = 'seleccion'; // 'seleccion' o 'resolucion'
+        var digitosSeleccionados = []; // indices de digitos seleccionados del dividendo
+        var seleccionCorrecta = 0; // cuantos digitos hay que coger correctamente
 
         function iniciarConNivel(nivel) {
             nivelActual = nivel;
@@ -110,13 +126,29 @@
             cociente = generarNumero(Math.max(1, digitosActuales));
             resto = Math.floor(Math.random() * num2);
             num1 = num2 * cociente + resto;
+
             calcularPasosDivision();
-            renderizarDivision();
+
+            // Calcular cuantos digitos hay que coger inicialmente
+            var sDividendo = num1.toString();
+            var parcial = 0;
+            seleccionCorrecta = 0;
+            for (var i = 0; i < sDividendo.length; i++) {
+                parcial = parcial * 10 + parseInt(sDividendo[i]);
+                seleccionCorrecta++;
+                if (parcial >= num2) break;
+            }
+
+            // Iniciar fase de seleccion
+            faseActual = 'seleccion';
+            digitosSeleccionados = [];
+
+            renderizarFaseSeleccion();
+
             var nivelTexto = nivelActual === 'basico' ? ' (Basico)' : '';
             document.getElementById('progreso').textContent = 'Ejercicio ' + (operacionActual + 1) + nivelTexto;
-            if (nivelActual === 'basico') {
-                setTimeout(function() { aplicarAyudas(); }, 100);
-            }
+            document.getElementById('instruccion').textContent = 'Pulsa los digitos del dividendo que necesitas coger';
+            document.getElementById('faseSeleccion').classList.remove('oculto');
         }
 
         function siguienteEjercicio() {
@@ -152,6 +184,164 @@
             }
         }
 
+        // ========== FASE DE SELECCION DE DIGITOS ==========
+        function renderizarFaseSeleccion() {
+            var sDividendo = num1.toString();
+            var sDivisor = num2.toString();
+
+            var celW = 40, celH = 45;
+            var padX = 25, padY = 30;
+            var fontSize = 32;
+
+            var anchoDiv = sDividendo.length * celW;
+            var anchoCaja = sDivisor.length * celW + 20;
+            var svgW = padX + anchoDiv + anchoCaja + 20;
+            var svgH = padY + celH + 20;
+
+            var xBase = padX;
+            var yDividendo = padY + celH;
+
+            var svg = '<svg viewBox="0 0 ' + svgW + ' ' + svgH + '" style="font-family: Indie Flower, cursive; font-size: ' + fontSize + 'px;">';
+
+            // Arco de seleccion (se dibuja dinamicamente)
+            svg += '<path id="arcoSeleccion" d="" fill="none" stroke="#FFD700" stroke-width="3" stroke-linecap="round"/>';
+
+            // Digitos del dividendo (clicables)
+            for (var i = 0; i < sDividendo.length; i++) {
+                var x = xBase + i * celW;
+                var seleccionado = digitosSeleccionados.indexOf(i) !== -1;
+                var fillColor = seleccionado ? '#FFD700' : '#f0f0e8';
+                svg += '<text x="' + (x + celW/2) + '" y="' + yDividendo + '" text-anchor="middle" fill="' + fillColor + '" id="digDiv_' + i + '" style="cursor:pointer;" onclick="toggleDigitoSeleccion(' + i + ')">' + sDividendo[i] + '</text>';
+            }
+
+            // Caja de division
+            var xCaja = xBase + anchoDiv + 5;
+            svg += '<line x1="' + xCaja + '" y1="' + (yDividendo - celH + 15) + '" x2="' + xCaja + '" y2="' + (yDividendo + 8) + '" stroke="#ff6666" stroke-width="3"/>';
+            svg += '<line x1="' + xCaja + '" y1="' + (yDividendo + 8) + '" x2="' + (xCaja + anchoCaja) + '" y2="' + (yDividendo + 8) + '" stroke="#ff6666" stroke-width="3"/>';
+
+            // Divisor
+            for (var i = 0; i < sDivisor.length; i++) {
+                var x = xCaja + 10 + i * celW + celW / 2;
+                svg += '<text x="' + x + '" y="' + yDividendo + '" text-anchor="middle" fill="#f0f0e8">' + sDivisor[i] + '</text>';
+            }
+
+            svg += '</svg>';
+            document.getElementById('contenidoPizarra').innerHTML = svg;
+
+            actualizarArcoSeleccion();
+            actualizarInfoSeleccion();
+        }
+
+        function toggleDigitoSeleccion(idx) {
+            if (faseActual !== 'seleccion') return;
+
+            var pos = digitosSeleccionados.indexOf(idx);
+            if (pos !== -1) {
+                // Quitar seleccion
+                digitosSeleccionados.splice(pos, 1);
+            } else {
+                // Solo permitir seleccionar digitos consecutivos desde el inicio
+                if (digitosSeleccionados.length === 0 && idx === 0) {
+                    digitosSeleccionados.push(idx);
+                } else if (digitosSeleccionados.length > 0) {
+                    var ultimo = Math.max.apply(null, digitosSeleccionados);
+                    if (idx === ultimo + 1) {
+                        digitosSeleccionados.push(idx);
+                    } else if (idx === ultimo) {
+                        // Click en el ultimo = quitar
+                        digitosSeleccionados.pop();
+                    }
+                }
+            }
+
+            // Asegurar que siempre sean consecutivos desde 0
+            digitosSeleccionados.sort(function(a,b) { return a-b; });
+
+            renderizarFaseSeleccion();
+        }
+
+        function actualizarArcoSeleccion() {
+            var arco = document.getElementById('arcoSeleccion');
+            if (!arco || digitosSeleccionados.length === 0) {
+                if (arco) arco.setAttribute('d', '');
+                return;
+            }
+
+            var celW = 40;
+            var padX = 25;
+            var yBase = 10;
+
+            var primerDigito = Math.min.apply(null, digitosSeleccionados);
+            var ultimoDigito = Math.max.apply(null, digitosSeleccionados);
+
+            var x1 = padX + primerDigito * celW + celW/2;
+            var x2 = padX + ultimoDigito * celW + celW/2;
+            var xMid = (x1 + x2) / 2;
+            var anchura = x2 - x1;
+            var altura = Math.max(15, anchura * 0.3);
+
+            // Dibujar arco curvo
+            var d = 'M ' + x1 + ' ' + (yBase + altura) + ' Q ' + xMid + ' ' + (yBase - 5) + ' ' + x2 + ' ' + (yBase + altura);
+            arco.setAttribute('d', d);
+        }
+
+        function actualizarInfoSeleccion() {
+            var info = document.getElementById('digitosSeleccionadosInfo');
+            if (digitosSeleccionados.length === 0) {
+                info.textContent = '';
+                return;
+            }
+
+            var sDividendo = num1.toString();
+            var numero = '';
+            for (var i = 0; i < digitosSeleccionados.length; i++) {
+                numero += sDividendo[digitosSeleccionados[i]];
+            }
+            info.textContent = numero + ' >= ' + num2 + '?';
+        }
+
+        function confirmarSeleccionDigitos() {
+            if (digitosSeleccionados.length === 0) {
+                document.getElementById('mensaje').textContent = 'Selecciona al menos un digito';
+                document.getElementById('mensaje').style.color = '#ff9999';
+                return;
+            }
+
+            var sDividendo = num1.toString();
+            var numeroSeleccionado = '';
+            for (var i = 0; i < digitosSeleccionados.length; i++) {
+                numeroSeleccionado += sDividendo[digitosSeleccionados[i]];
+            }
+            var valor = parseInt(numeroSeleccionado);
+
+            // Verificar si la seleccion es correcta
+            if (digitosSeleccionados.length === seleccionCorrecta && valor >= num2) {
+                // Correcto!
+                document.getElementById('mensaje').textContent = '¡Correcto! ' + valor + ' >= ' + num2;
+                document.getElementById('mensaje').style.color = '#90EE90';
+
+                setTimeout(function() {
+                    faseActual = 'resolucion';
+                    document.getElementById('faseSeleccion').classList.add('oculto');
+                    document.getElementById('instruccion').textContent = 'Pulsa en cada casilla para cambiar el numero';
+                    document.getElementById('mensaje').textContent = '';
+                    renderizarDivision();
+                    if (nivelActual === 'basico') {
+                        setTimeout(function() { aplicarAyudas(); }, 100);
+                    }
+                }, 1000);
+            } else if (valor < num2) {
+                // Necesita mas digitos
+                document.getElementById('mensaje').textContent = valor + ' < ' + num2 + '. Necesitas mas digitos!';
+                document.getElementById('mensaje').style.color = '#ff9999';
+            } else if (digitosSeleccionados.length > seleccionCorrecta) {
+                // Demasiados digitos
+                document.getElementById('mensaje').textContent = 'Has cogido mas digitos de los necesarios';
+                document.getElementById('mensaje').style.color = '#ff9999';
+            }
+        }
+
+        // ========== FASE DE RESOLUCION ==========
         function renderizarDivision() {
             var sDividendo = num1.toString();
             var sDivisor = num2.toString();
@@ -159,7 +349,7 @@
             var pasos = pasosDivision;
 
             var celW = 34, celH = 38;
-            var padX = 25, padY = 15;
+            var padX = 25, padY = 35;
             var fontSize = 28;
 
             var anchoDiv = sDividendo.length * celW;
@@ -173,20 +363,39 @@
 
             var svg = '<svg viewBox="0 0 ' + svgW + ' ' + svgH + '" style="font-family: Indie Flower, cursive; font-size: ' + fontSize + 'px;">';
 
-            for (var i = 0; i < sDividendo.length; i++) {
-                var x = xBase + i * celW + celW / 2;
-                svg += '<text x="' + x + '" y="' + yDividendo + '" text-anchor="middle" fill="#f0f0e8">' + sDividendo[i] + '</text>';
+            // Arco sobre los digitos seleccionados (ya confirmado)
+            if (digitosSeleccionados.length > 0) {
+                var primerDigito = Math.min.apply(null, digitosSeleccionados);
+                var ultimoDigito = Math.max.apply(null, digitosSeleccionados);
+                var x1 = xBase + primerDigito * celW + celW/2;
+                var x2 = xBase + ultimoDigito * celW + celW/2;
+                var xMid = (x1 + x2) / 2;
+                var anchura = x2 - x1;
+                var altura = Math.max(12, anchura * 0.25);
+                var yArco = padY - 5;
+                var d = 'M ' + x1 + ' ' + yArco + ' Q ' + xMid + ' ' + (yArco - altura) + ' ' + x2 + ' ' + yArco;
+                svg += '<path d="' + d + '" fill="none" stroke="#90EE90" stroke-width="2" stroke-linecap="round"/>';
             }
 
+            // Dividendo
+            for (var i = 0; i < sDividendo.length; i++) {
+                var x = xBase + i * celW + celW / 2;
+                var color = digitosSeleccionados.indexOf(i) !== -1 ? '#90EE90' : '#f0f0e8';
+                svg += '<text x="' + x + '" y="' + yDividendo + '" text-anchor="middle" fill="' + color + '">' + sDividendo[i] + '</text>';
+            }
+
+            // Caja de division
             var xCaja = xBase + anchoDiv + 5;
             svg += '<line x1="' + xCaja + '" y1="' + (yDividendo - celH + 10) + '" x2="' + xCaja + '" y2="' + (yDividendo + 8) + '" stroke="#ff6666" stroke-width="3"/>';
             svg += '<line x1="' + xCaja + '" y1="' + (yDividendo + 8) + '" x2="' + (xCaja + anchoCaja) + '" y2="' + (yDividendo + 8) + '" stroke="#ff6666" stroke-width="3"/>';
 
+            // Divisor
             for (var i = 0; i < sDivisor.length; i++) {
                 var x = xCaja + 10 + i * celW + celW / 2;
                 svg += '<text x="' + x + '" y="' + yDividendo + '" text-anchor="middle" fill="#f0f0e8">' + sDivisor[i] + '</text>';
             }
 
+            // Cociente (celdas editables)
             for (var i = 0; i < sCociente.length; i++) {
                 var x = xCaja + 10 + i * celW;
                 var y = yDividendo + 12;
@@ -275,6 +484,11 @@
         }
 
         function comprobar() {
+            if (faseActual === 'seleccion') {
+                confirmarSeleccionDigitos();
+                return;
+            }
+
             var ok = true;
 
             var sCociente = cociente.toString();
@@ -379,111 +593,6 @@
                 msg.textContent = 'Revisa los errores';
                 msg.style.color = '#ff9999';
             }
-        }
-
-        function toggleAyuda() {
-            modoAyuda = !modoAyuda;
-            var btn = document.getElementById('btnAyuda');
-            var panel = document.getElementById('panelAyuda');
-            if (modoAyuda) {
-                btn.classList.add('activo');
-                panel.classList.remove('oculto');
-                pasoAyuda = 0;
-                mostrarPasoAyuda();
-            } else {
-                btn.classList.remove('activo');
-                panel.classList.add('oculto');
-            }
-        }
-
-        function mostrarPasoAyuda() {
-            var pasos = generarPasosAyuda();
-            if (pasoAyuda >= pasos.length) pasoAyuda = pasos.length - 1;
-            if (pasoAyuda < 0) pasoAyuda = 0;
-
-            var panel = document.getElementById('panelAyuda');
-            var html = '<div class="paso-titulo">Paso ' + (pasoAyuda + 1) + ' de ' + pasos.length + '</div>';
-            html += '<div class="paso-instruccion">' + pasos[pasoAyuda] + '</div>';
-            html += '<div class="nav-ayuda">';
-            html += '<button onclick="pasoAyuda--; mostrarPasoAyuda();"' + (pasoAyuda === 0 ? ' disabled' : '') + '>← Anterior</button>';
-            html += '<button onclick="pasoAyuda++; mostrarPasoAyuda();"' + (pasoAyuda >= pasos.length - 1 ? ' disabled' : '') + '>Siguiente →</button>';
-            html += '</div>';
-            panel.innerHTML = html;
-        }
-
-        function generarPasosAyuda() {
-            var pasos = [];
-            var sDivisor = num2.toString();
-            var primerDigDivisor = parseInt(sDivisor[0]);
-            var divisorEsGrande = num2 >= 10;
-
-            pasos.push('Vamos a dividir ' + num1 + ' entre ' + num2 + '. Cogemos digitos del dividendo hasta tener un numero >= ' + num2 + '.');
-
-            for (var i = 0; i < pasosDivision.length; i++) {
-                var paso = pasosDivision[i];
-                var sParcial = paso.parcial.toString();
-
-                if (i === 0) {
-                    pasos.push('Cogemos digitos: ' + paso.parcial + '. ¿Es >= ' + num2 + '? Si!');
-                } else {
-                    pasos.push('Bajamos el ' + pasosDivision[i-1].bajaSiguiente + ' y tenemos ' + paso.parcial + '.');
-                }
-
-                if (divisorEsGrande) {
-                    var digParaTabla = sParcial.length > 1 ? parseInt(sParcial.substring(0, sParcial.length - 1)) : parseInt(sParcial[0]);
-                    if (sParcial.length === sDivisor.length) {
-                        digParaTabla = parseInt(sParcial[0]);
-                    }
-
-                    pasos.push('Truco: Como ' + num2 + ' es grande, usamos solo su primera cifra: ' + primerDigDivisor);
-
-                    var digitosDividendo = sParcial.length >= sDivisor.length ? sParcial.substring(0, sDivisor.length) : sParcial;
-                    var primerDigsDividendo = parseInt(digitosDividendo[0]);
-                    if (digitosDividendo.length > 1 && sParcial.length === sDivisor.length) {
-                        primerDigsDividendo = parseInt(digitosDividendo.substring(0, digitosDividendo.length > 1 ? 2 : 1));
-                    } else if (sParcial.length > sDivisor.length) {
-                        primerDigsDividendo = parseInt(sParcial.substring(0, 2));
-                    }
-
-                    pasos.push('Miramos: ¿cuantas veces cabe ' + primerDigDivisor + ' en ' + primerDigsDividendo + '? Tabla del ' + primerDigDivisor + '!');
-
-                    var estimacion = Math.floor(primerDigsDividendo / primerDigDivisor);
-                    if (estimacion > 9) estimacion = 9;
-
-                    pasos.push(primerDigDivisor + ' x ' + estimacion + ' = ' + (primerDigDivisor * estimacion) + '. Probamos ' + estimacion + ' con el divisor completo.');
-
-                    var pruebaEstimacion = estimacion * num2;
-                    if (pruebaEstimacion > paso.parcial && estimacion > 1) {
-                        pasos.push(num2 + ' x ' + estimacion + ' = ' + pruebaEstimacion + '... Se pasa de ' + paso.parcial + '! Probamos con ' + (estimacion - 1) + '.');
-                    }
-                } else {
-                    pasos.push('Tabla del ' + num2 + ': ¿cuantas veces cabe ' + num2 + ' en ' + paso.parcial + '?');
-                }
-
-                pasos.push('Comprobamos: ' + num2 + ' x ' + paso.digitoCociente + ' = ' + paso.producto + '. ¿Cabe en ' + paso.parcial + '? Si!');
-
-                var siguienteIntento = paso.digitoCociente + 1;
-                if (siguienteIntento <= 9) {
-                    pasos.push('¿Y ' + num2 + ' x ' + siguienteIntento + ' = ' + (num2 * siguienteIntento) + '? Se pasa! Entonces es ' + paso.digitoCociente + '.');
-                }
-
-                pasos.push('Escribe ' + paso.digitoCociente + ' en el cociente.');
-
-                pasos.push('Resta: ' + paso.parcial + ' - ' + paso.producto + ' = ' + paso.residuo + '.');
-
-                if (paso.bajaSiguiente !== null) {
-                    pasos.push('Baja el siguiente digito (' + paso.bajaSiguiente + ').');
-                }
-            }
-
-            if (resto === 0) {
-                pasos.push('Resto = 0. La division es exacta! Resultado: ' + cociente);
-            } else {
-                pasos.push('No quedan mas digitos. Cociente = ' + cociente + ', Resto = ' + resto);
-            }
-
-            pasos.push('Completa todas las casillas y pulsa "Comprobar".');
-            return pasos;
         }
     </script>
 </body>
