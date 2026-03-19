@@ -33,6 +33,16 @@
         .instruccion { font-size: 1.1em; opacity: 0.7; }
         .btn { background: rgba(255,255,255,0.15); border: 2px solid rgba(255,255,255,0.5); color: #f0f0e8; padding: 12px 16px; border-radius: 8px; margin: 3px; font-size: 1.1em; font-family: 'Indie Flower', cursive; cursor: pointer; }
 
+        /* Ayuda mode */
+        .header-pizarra { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
+        .btn-ayuda { background: rgba(255,255,255,0.2); border: 2px solid #ffcc00; color: #ffcc00; width: 36px; height: 36px; border-radius: 50%; font-size: 1.3em; font-family: 'Indie Flower', cursive; cursor: pointer; padding: 0; line-height: 32px; }
+        .btn-ayuda.activo { background: #ffcc00; color: #1e4a1e; }
+        #panelAyuda { background: rgba(255,204,0,0.15); border: 2px solid #ffcc00; border-radius: 8px; padding: 10px; margin-top: 10px; font-size: 1.1em; line-height: 1.4; }
+        #panelAyuda .paso-titulo { color: #ffcc00; font-weight: bold; margin-bottom: 5px; }
+        #panelAyuda .paso-instruccion { color: #f0f0e8; }
+        .nav-ayuda { display: flex; justify-content: space-between; margin-top: 8px; }
+        .nav-ayuda button { background: rgba(255,204,0,0.3); border: 1px solid #ffcc00; color: #ffcc00; padding: 5px 12px; border-radius: 5px; font-family: 'Indie Flower', cursive; cursor: pointer; }
+
         /* Fase de seleccion de digitos */
         .fase-seleccion {
             background: rgba(135,206,235,0.15);
@@ -54,6 +64,7 @@
             cursor: pointer;
             margin-top: 8px;
         }
+
     </style>
 </head>
 <body>
@@ -63,6 +74,8 @@
         <div class="menu-opciones">
             <button class="btn-menu" onclick="iniciarConNivel('basico')">📖 Basico</button>
             <button class="btn-menu" onclick="iniciarConNivel('normal')">📝 Normal</button>
+            <button class="btn-menu" id="btnAvanzado" onclick="iniciarConNivel('avanzado')" style="display:none;">🎯 Avanzado</button>
+            <button class="btn-menu" id="btnDecimales" onclick="iniciarConNivel('decimales')" style="display:none;">🔢 Decimales</button>
             <button class="btn-menu" onclick="window.location.href='/supermente/index.html'" style="margin-top:15px; opacity:0.7;">← Volver</button>
         </div>
     </div>
@@ -70,13 +83,29 @@
     <div id="operacion" class="oculto">
         <div class="pizarra-container">
             <div class="pizarra">
-                <div class="progreso" id="progreso"></div>
+                <div class="header-pizarra">
+                    <div class="progreso" id="progreso"></div>
+                    <button class="btn-ayuda" id="btnAyuda" onclick="toggleAyuda()">?</button>
+                </div>
+                <!-- Fase de transformación para decimales -->
+                <div id="faseTransformacion" class="fase-seleccion oculto" style="border-color: #90EE90; background: rgba(144,238,144,0.15);">
+                    <p style="color: #90EE90;">Elimina los decimales del divisor</p>
+                    <p id="problemaOriginal" style="font-size:1.2em; margin: 8px 0;"></p>
+                    <p style="font-size: 0.95em; opacity: 0.8;">Multiplica ambos por <span id="factorTransf" style="color:#FFD700;"></span></p>
+                    <div style="display: flex; justify-content: center; align-items: center; gap: 8px; margin: 10px 0;">
+                        <input type="text" id="inputDivTransf" style="width: 70px; padding: 8px; text-align: center; font-size: 1.2em; font-family: 'Indie Flower', cursive; border-radius: 5px; border: 2px solid rgba(255,255,255,0.5); background: rgba(255,255,255,0.1); color: #f0f0e8;" placeholder="÷endo" maxlength="6">
+                        <span style="font-size: 1.3em;">÷</span>
+                        <input type="text" id="inputDsrTransf" style="width: 60px; padding: 8px; text-align: center; font-size: 1.2em; font-family: 'Indie Flower', cursive; border-radius: 5px; border: 2px solid rgba(255,255,255,0.5); background: rgba(255,255,255,0.1); color: #f0f0e8;" placeholder="÷sor" maxlength="4">
+                    </div>
+                    <button class="btn-confirmar" onclick="confirmarTransformacion()" style="background: rgba(144,238,144,0.3); border-color: #90EE90; color: #90EE90;">✓ Confirmar</button>
+                </div>
                 <div id="faseSeleccion" class="fase-seleccion oculto">
                     <p>Selecciona los digitos del dividendo que vas a coger</p>
                     <p id="digitosSeleccionadosInfo" style="font-size:1.3em; color:#FFD700;"></p>
                     <button class="btn-confirmar" onclick="confirmarSeleccionDigitos()">✓ Confirmar</button>
                 </div>
                 <div id="contenidoPizarra"></div>
+                <div id="panelAyuda" class="oculto"></div>
             </div>
         </div>
         <div class="panel-inferior">
@@ -96,16 +125,38 @@
         var num1, num2, cociente, resto;
         var nivelActual = 'normal';
         var pasosDivision = [];
+        var edadUsuario = 10;
+        var esDecimal = false; // Para alternar en modo avanzado
+        var modoAyuda = false;
+        var pasoAyuda = 0;
 
         // Estado de seleccion de digitos
         var faseActual = 'seleccion'; // 'seleccion' o 'resolucion'
         var digitosSeleccionados = []; // indices de digitos seleccionados del dividendo
         var seleccionCorrecta = 0; // cuantos digitos hay que coger correctamente
 
+        // Variables para división con decimales (paso a paso)
+        var dividendoOriginal, divisorOriginal; // Números con decimales originales
+        var factorTransformacion = 1; // Factor para eliminar decimales del divisor
+
+        // Cargar edad y mostrar botones avanzado/decimales si >= 12
+        document.addEventListener('DOMContentLoaded', function() {
+            var guardado = localStorage.getItem('usuarioAprendizaje');
+            if (guardado) {
+                var usuario = JSON.parse(guardado);
+                edadUsuario = usuario.edad || 10;
+                if (edadUsuario >= 12) {
+                    document.getElementById('btnAvanzado').style.display = 'block';
+                    document.getElementById('btnDecimales').style.display = 'block';
+                }
+            }
+        });
+
         function iniciarConNivel(nivel) {
             nivelActual = nivel;
             operacionActual = 0;
             digitosActuales = 1;
+            esDecimal = (nivel === 'decimales');
             document.getElementById('nivel').classList.add('oculto');
             document.getElementById('operacion').classList.remove('oculto');
             generarEjercicio();
@@ -120,13 +171,121 @@
 
         function generarEjercicio() {
             document.getElementById('mensaje').textContent = '';
-            digitosActuales = Math.floor(operacionActual / 3) + 1;
-            var digDiv = Math.min(digitosActuales, 3);
-            num2 = generarNumero(Math.max(1, Math.min(digDiv, 2)));
-            cociente = generarNumero(Math.max(1, digitosActuales));
-            resto = Math.floor(Math.random() * num2);
-            num1 = num2 * cociente + resto;
+            document.getElementById('faseTransformacion').classList.add('oculto');
+            document.getElementById('faseSeleccion').classList.add('oculto');
 
+            if (nivelActual === 'decimales') {
+                // Modo decimales: primero fase de transformación
+                generarEjercicioConDecimales();
+                return;
+            }
+
+            if (nivelActual === 'avanzado') {
+                // Modo avanzado: divisores de 2-3 cifras
+                var usarDivisorGrande = operacionActual % 2 === 0;
+                if (usarDivisorGrande) {
+                    var digitosDivisor = Math.random() < 0.5 ? 2 : 3;
+                    num2 = generarNumero(digitosDivisor);
+                    cociente = generarNumero(Math.min(2, Math.floor(operacionActual / 3) + 1));
+                } else {
+                    num2 = generarNumero(Math.max(1, Math.min(2, Math.floor(operacionActual / 4) + 1)));
+                    cociente = generarNumero(Math.min(3, Math.floor(operacionActual / 2) + 1));
+                }
+                resto = Math.floor(Math.random() * Math.min(num2, 99));
+                num1 = num2 * cociente + resto;
+            } else {
+                // Modo normal/basico
+                digitosActuales = Math.floor(operacionActual / 3) + 1;
+                var digDiv = Math.min(digitosActuales, 3);
+                num2 = generarNumero(Math.max(1, Math.min(digDiv, 2)));
+                cociente = generarNumero(Math.max(1, digitosActuales));
+                resto = Math.floor(Math.random() * num2);
+                num1 = num2 * cociente + resto;
+            }
+
+            iniciarFaseSeleccion();
+        }
+
+        function generarEjercicioConDecimales() {
+            // Generar ejercicio con decimales
+            var tipoEjercicio = operacionActual % 3;
+
+            if (tipoEjercicio === 0) {
+                // Divisor con 1 decimal (ej: 12.5 ÷ 2.5)
+                divisorOriginal = (Math.floor(Math.random() * 9) + 1) * 0.5; // 0.5, 1, 1.5, ..., 4.5
+                cociente = Math.floor(Math.random() * 15) + 5; // 5-19
+                dividendoOriginal = divisorOriginal * cociente;
+                factorTransformacion = 10;
+            } else if (tipoEjercicio === 1) {
+                // Divisor con 1 decimal más variado
+                divisorOriginal = Math.round((Math.random() * 4 + 0.5) * 10) / 10; // 0.5-4.5
+                cociente = Math.floor(Math.random() * 12) + 3; // 3-14
+                dividendoOriginal = Math.round(divisorOriginal * cociente * 10) / 10;
+                factorTransformacion = 10;
+            } else {
+                // Divisor con 2 decimales (ej: 12.75 ÷ 0.25)
+                divisorOriginal = Math.round((Math.random() * 0.9 + 0.1) * 100) / 100; // 0.1-0.99
+                divisorOriginal = Math.round(divisorOriginal * 4) / 4; // Redondear a .25
+                cociente = Math.floor(Math.random() * 20) + 10; // 10-29
+                dividendoOriginal = Math.round(divisorOriginal * cociente * 100) / 100;
+                factorTransformacion = 100;
+            }
+
+            resto = 0;
+
+            // Mostrar fase de transformación
+            document.getElementById('problemaOriginal').innerHTML =
+                '<span style="color:#FFD700;">' + dividendoOriginal.toString().replace('.', ',') + '</span> ÷ ' +
+                '<span style="color:#87CEEB;">' + divisorOriginal.toString().replace('.', ',') + '</span>';
+            document.getElementById('factorTransf').textContent = factorTransformacion;
+            document.getElementById('inputDivTransf').value = '';
+            document.getElementById('inputDsrTransf').value = '';
+            document.getElementById('inputDivTransf').style.borderColor = 'rgba(255,255,255,0.5)';
+            document.getElementById('inputDsrTransf').style.borderColor = 'rgba(255,255,255,0.5)';
+
+            faseActual = 'transformacion';
+            document.getElementById('faseTransformacion').classList.remove('oculto');
+
+            var nivelTexto = ' (Decimales)';
+            document.getElementById('progreso').textContent = 'Ejercicio ' + (operacionActual + 1) + nivelTexto;
+            document.getElementById('instruccion').textContent = 'Multiplica ambos números para eliminar los decimales del divisor';
+            document.getElementById('contenidoPizarra').innerHTML = '';
+        }
+
+        function confirmarTransformacion() {
+            var inputDiv = document.getElementById('inputDivTransf').value.trim().replace(',', '.');
+            var inputDsr = document.getElementById('inputDsrTransf').value.trim().replace(',', '.');
+            var msg = document.getElementById('mensaje');
+
+            var divEsperado = Math.round(dividendoOriginal * factorTransformacion);
+            var dsrEsperado = Math.round(divisorOriginal * factorTransformacion);
+
+            var divOk = parseInt(inputDiv) === divEsperado;
+            var dsrOk = parseInt(inputDsr) === dsrEsperado;
+
+            document.getElementById('inputDivTransf').style.borderColor = divOk ? '#90EE90' : '#ff6666';
+            document.getElementById('inputDsrTransf').style.borderColor = dsrOk ? '#90EE90' : '#ff6666';
+
+            if (divOk && dsrOk) {
+                msg.textContent = '¡Correcto! Ahora divide ' + divEsperado + ' ÷ ' + dsrEsperado;
+                msg.style.color = '#90EE90';
+
+                // Establecer los valores transformados para la división normal
+                num1 = divEsperado;
+                num2 = dsrEsperado;
+
+                setTimeout(function() {
+                    document.getElementById('faseTransformacion').classList.add('oculto');
+                    msg.textContent = '';
+                    iniciarFaseSeleccion();
+                }, 1200);
+            } else {
+                msg.textContent = 'Revisa los cálculos: ' + dividendoOriginal.toString().replace('.', ',') + ' × ' + factorTransformacion + ' y ' + divisorOriginal.toString().replace('.', ',') + ' × ' + factorTransformacion;
+                msg.style.color = '#ff9999';
+            }
+        }
+
+        function iniciarFaseSeleccion() {
             calcularPasosDivision();
 
             // Calcular cuantos digitos hay que coger inicialmente
@@ -145,7 +304,7 @@
 
             renderizarFaseSeleccion();
 
-            var nivelTexto = nivelActual === 'basico' ? ' (Basico)' : '';
+            var nivelTexto = nivelActual === 'basico' ? ' (Basico)' : nivelActual === 'avanzado' ? ' (Avanzado)' : nivelActual === 'decimales' ? ' (Decimales)' : '';
             document.getElementById('progreso').textContent = 'Ejercicio ' + (operacionActual + 1) + nivelTexto;
             document.getElementById('instruccion').textContent = 'Pulsa los digitos del dividendo que necesitas coger';
             document.getElementById('faseSeleccion').classList.remove('oculto');
@@ -483,6 +642,14 @@
             }
         }
 
+        // Mostrar error tachado + correcto
+        function mostrarErrorCorreccion(el, valorCorrecto) {
+            var valorErroneo = el.textContent || '?';
+            if (valorErroneo !== valorCorrecto) {
+                el.innerHTML = '<tspan fill="#ff6666" text-decoration="line-through">' + valorErroneo + '</tspan><tspan fill="#90EE90" dx="2">' + valorCorrecto + '</tspan>';
+            }
+        }
+
         function comprobar() {
             if (faseActual === 'seleccion') {
                 confirmarSeleccionDigitos();
@@ -502,8 +669,7 @@
                     } else {
                         rect.setAttribute('fill', 'rgba(255,0,0,0.3)');
                         rect.setAttribute('stroke', '#ff6666');
-                        el.textContent = sCociente[i];
-                        el.setAttribute('fill', '#ff6666');
+                        mostrarErrorCorreccion(el, sCociente[i]);
                         ok = false;
                     }
                 }
@@ -521,8 +687,7 @@
                         } else {
                             rect.setAttribute('fill', 'rgba(255,0,0,0.3)');
                             rect.setAttribute('stroke', '#ff6666');
-                            el.textContent = sProd[i];
-                            el.setAttribute('fill', '#ff6666');
+                            mostrarErrorCorreccion(el, sProd[i]);
                             ok = false;
                         }
                     }
@@ -540,8 +705,7 @@
                             } else {
                                 rect.setAttribute('fill', 'rgba(255,0,0,0.3)');
                                 rect.setAttribute('stroke', '#ff6666');
-                                el.textContent = sRes[i];
-                                el.setAttribute('fill', '#ff6666');
+                                mostrarErrorCorreccion(el, sRes[i]);
                                 ok = false;
                             }
                         }
@@ -557,8 +721,7 @@
                             } else {
                                 rect.setAttribute('fill', 'rgba(255,0,0,0.3)');
                                 rect.setAttribute('stroke', '#ff6666');
-                                el.textContent = pasosDivision[p].bajaSiguiente;
-                                el.setAttribute('fill', '#ff6666');
+                                mostrarErrorCorreccion(el, pasosDivision[p].bajaSiguiente);
                                 ok = false;
                             }
                         }
@@ -577,8 +740,7 @@
                     } else {
                         rect.setAttribute('fill', 'rgba(255,0,0,0.3)');
                         rect.setAttribute('stroke', '#ff6666');
-                        el.textContent = sResto[i];
-                        el.setAttribute('fill', '#ff6666');
+                        mostrarErrorCorreccion(el, sResto[i]);
                         ok = false;
                     }
                 }
@@ -594,6 +756,105 @@
                 msg.style.color = '#ff9999';
             }
         }
+
+        function toggleAyuda() {
+            modoAyuda = !modoAyuda;
+            var btn = document.getElementById('btnAyuda');
+            var panel = document.getElementById('panelAyuda');
+            if (modoAyuda) {
+                btn.classList.add('activo');
+                panel.classList.remove('oculto');
+                pasoAyuda = 0;
+                mostrarPasoAyuda();
+            } else {
+                btn.classList.remove('activo');
+                panel.classList.add('oculto');
+            }
+        }
+
+        function mostrarPasoAyuda() {
+            var pasos = generarPasosAyuda();
+            if (pasoAyuda >= pasos.length) pasoAyuda = pasos.length - 1;
+            if (pasoAyuda < 0) pasoAyuda = 0;
+
+            var panel = document.getElementById('panelAyuda');
+            var html = '<div class="paso-titulo">Paso ' + (pasoAyuda + 1) + ' de ' + pasos.length + '</div>';
+            html += '<div class="paso-instruccion">' + pasos[pasoAyuda] + '</div>';
+            html += '<div class="nav-ayuda">';
+            html += '<button onclick="pasoAyuda--; mostrarPasoAyuda();"' + (pasoAyuda === 0 ? ' disabled' : '') + '>← Anterior</button>';
+            html += '<button onclick="pasoAyuda++; mostrarPasoAyuda();"' + (pasoAyuda >= pasos.length - 1 ? ' disabled' : '') + '>Siguiente →</button>';
+            html += '</div>';
+            panel.innerHTML = html;
+        }
+
+        function generarPasosAyuda() {
+            var pasos = [];
+            var sDividendo = num1.toString();
+            var sDivisor = num2.toString();
+
+            if (faseActual === 'transformacion') {
+                // Ayuda para la fase de transformación de decimales
+                var divOriginal = dividendoOriginal.toString().replace('.', ',');
+                var dsrOriginal = divisorOriginal.toString().replace('.', ',');
+                var divTransf = Math.round(dividendoOriginal * factorTransformacion);
+                var dsrTransf = Math.round(divisorOriginal * factorTransformacion);
+
+                pasos.push('Vamos a dividir ' + divOriginal + ' entre ' + dsrOriginal + '.');
+                pasos.push('El divisor (' + dsrOriginal + ') tiene decimales, así que primero los eliminamos.');
+                pasos.push('Para eliminar los decimales, multiplicamos AMBOS números por ' + factorTransformacion + '.');
+                pasos.push(divOriginal + ' × ' + factorTransformacion + ' = ' + divTransf);
+                pasos.push(dsrOriginal + ' × ' + factorTransformacion + ' = ' + dsrTransf);
+                pasos.push('Escribe ' + divTransf + ' en el primer campo y ' + dsrTransf + ' en el segundo.');
+                pasos.push('Al multiplicar ambos por el mismo número, el resultado de la división no cambia.');
+            } else if (faseActual === 'seleccion') {
+                if (nivelActual === 'decimales') {
+                    pasos.push('Ahora dividimos ' + num1 + ' entre ' + num2 + ' (números ya transformados).');
+                } else {
+                    pasos.push('Vamos a dividir ' + num1 + ' entre ' + num2 + '.');
+                }
+                pasos.push('Primero, debemos seleccionar los digitos del dividendo que vamos a coger.');
+                pasos.push('Necesitamos coger suficientes digitos para que el numero sea mayor o igual que el divisor (' + num2 + ').');
+                pasos.push('Pulsa sobre los digitos del dividendo de izquierda a derecha hasta que el numero formado sea >= ' + num2 + '.');
+                pasos.push('Cuando hayas seleccionado los digitos correctos, pulsa "Confirmar".');
+            } else {
+                pasos.push('Ahora resolvemos la division ' + num1 + ' ÷ ' + num2 + ' paso a paso.');
+
+                for (var p = 0; p < pasosDivision.length; p++) {
+                    var paso = pasosDivision[p];
+                    var parcial = paso.parcial;
+                    var digitoCoc = paso.digitoCociente;
+                    var producto = paso.producto;
+                    var residuo = paso.residuo;
+
+                    if (p === 0) {
+                        pasos.push('Cogemos ' + parcial + ' (los primeros digitos seleccionados).');
+                    } else {
+                        pasos.push('Bajamos el siguiente digito. Ahora tenemos ' + parcial + '.');
+                    }
+
+                    pasos.push('¿Cuantas veces cabe ' + num2 + ' en ' + parcial + '? Cabe ' + digitoCoc + ' vez/veces.');
+                    pasos.push('Escribimos ' + digitoCoc + ' en el cociente.');
+                    pasos.push('Multiplicamos: ' + num2 + ' x ' + digitoCoc + ' = ' + producto + '. Escribimos ' + producto + ' debajo.');
+                    pasos.push('Restamos: ' + parcial + ' - ' + producto + ' = ' + residuo + '.');
+
+                    if (paso.bajaSiguiente !== null) {
+                        pasos.push('El residuo es ' + residuo + '. Bajamos el siguiente digito (' + paso.bajaSiguiente + ').');
+                    } else {
+                        if (residuo === 0) {
+                            pasos.push('El residuo final es 0. La division es exacta!');
+                        } else {
+                            pasos.push('Ya no quedan mas digitos que bajar. El resto de la division es ' + residuo + '.');
+                        }
+                    }
+                }
+
+                pasos.push('El cociente es ' + cociente + ' y el resto es ' + resto + '.');
+                pasos.push('Completa todas las casillas y pulsa "Comprobar".');
+            }
+
+            return pasos;
+        }
+
     </script>
 </body>
 </html>

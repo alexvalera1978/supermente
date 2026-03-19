@@ -51,6 +51,7 @@
         <div class="menu-opciones">
             <button class="btn-menu" onclick="iniciarConNivel('basico')">📖 Basico</button>
             <button class="btn-menu" onclick="iniciarConNivel('normal')">📝 Normal</button>
+            <button class="btn-menu" id="btnAvanzado" onclick="iniciarConNivel('avanzado')" style="display:none;">🎯 Avanzado</button>
             <button class="btn-menu" onclick="window.location.href='/supermente/index.html'" style="margin-top:15px; opacity:0.7;">← Volver</button>
         </div>
     </div>
@@ -85,6 +86,21 @@
         var parcialesEsperados = [];
         var modoAyuda = false;
         var pasoAyuda = 0;
+        var edadUsuario = 10;
+        var esDecimal = false;
+        var decimalPlaces = 0; // Total de decimales en el resultado
+
+        // Cargar edad y mostrar boton avanzado si >= 12
+        document.addEventListener('DOMContentLoaded', function() {
+            var guardado = localStorage.getItem('usuarioAprendizaje');
+            if (guardado) {
+                var usuario = JSON.parse(guardado);
+                edadUsuario = usuario.edad || 10;
+                if (edadUsuario >= 12) {
+                    document.getElementById('btnAvanzado').style.display = 'block';
+                }
+            }
+        });
 
         function iniciarConNivel(nivel) {
             nivelActual = nivel;
@@ -102,16 +118,58 @@
             return Math.floor(Math.random() * (max - min + 1)) + min;
         }
 
+        function generarNumeroDecimal(digEnteros, digDecimales) {
+            var parteEntera = generarNumero(digEnteros);
+            var parteDecimal = 0;
+            for (var i = 0; i < digDecimales; i++) {
+                parteDecimal = parteDecimal * 10 + Math.floor(Math.random() * 10);
+            }
+            return parteEntera + parteDecimal / Math.pow(10, digDecimales);
+        }
+
+        function contarDecimales(num) {
+            var s = num.toString();
+            if (s.indexOf('.') === -1) return 0;
+            return s.split('.')[1].length;
+        }
+
         function generarEjercicio() {
             document.getElementById('mensaje').textContent = '';
-            digitosActuales = Math.floor(operacionActual / 3) + 1;
-            var digMult = Math.min(digitosActuales, 3);
-            num1 = generarNumero(digMult);
-            var digMult2 = Math.min(Math.floor(digitosActuales / 2) + 1, 2);
-            num2 = generarNumero(digMult2);
-            resultado = num1 * num2;
+
+            if (nivelActual === 'avanzado') {
+                esDecimal = operacionActual % 2 === 0;
+
+                if (esDecimal) {
+                    // Para multiplicación con decimales, usar números más pequeños
+                    // para que sea manejable
+                    var dec1 = Math.floor(Math.random() * 2) + 1; // 1-2 decimales
+                    var dec2 = Math.floor(Math.random() * 2) + 1; // 1-2 decimales
+                    num1 = generarNumeroDecimal(1, dec1); // 1 entero + decimales
+                    num2 = generarNumeroDecimal(1, dec2); // 1 entero + decimales
+                    decimalPlaces = dec1 + dec2;
+                    resultado = Math.round(num1 * num2 * Math.pow(10, decimalPlaces)) / Math.pow(10, decimalPlaces);
+                } else {
+                    esDecimal = false;
+                    decimalPlaces = 0;
+                    var dificultad = Math.floor(operacionActual / 2) % 3 + 2;
+                    num1 = generarNumero(Math.min(dificultad + 1, 4));
+                    num2 = generarNumero(Math.min(dificultad, 3));
+                    resultado = num1 * num2;
+                }
+                digitosActuales = Math.max(num1.toString().replace('.', '').length, num2.toString().replace('.', '').length);
+            } else {
+                esDecimal = false;
+                decimalPlaces = 0;
+                digitosActuales = Math.floor(operacionActual / 3) + 1;
+                var digMult = Math.min(digitosActuales, 3);
+                num1 = generarNumero(digMult);
+                var digMult2 = Math.min(Math.floor(digitosActuales / 2) + 1, 2);
+                num2 = generarNumero(digMult2);
+                resultado = num1 * num2;
+            }
+
             renderizarSVG();
-            var nivelTexto = nivelActual === 'basico' ? ' (Basico)' : '';
+            var nivelTexto = nivelActual === 'basico' ? ' (Basico)' : nivelActual === 'avanzado' ? ' (Avanzado)' : '';
             document.getElementById('progreso').textContent = 'Ejercicio ' + (operacionActual + 1) + nivelTexto;
             if (nivelActual === 'basico') {
                 setTimeout(function() { aplicarAyudas(); }, 100);
@@ -124,21 +182,43 @@
             generarEjercicio();
         }
 
+        function formatearNumero(num) {
+            var s = num.toString();
+            if (s.indexOf('.') !== -1) {
+                var partes = s.split('.');
+                return { entero: partes[0], decimal: partes[1] || '', completo: partes[0] + partes[1] };
+            }
+            return { entero: s, decimal: '', completo: s };
+        }
+
         function renderizarSVG() {
-            var s1 = num1.toString();
-            var s2 = num2.toString().split('').reverse();
-            var sr = resultado.toString();
+            // Para multiplicación, trabajamos con los dígitos sin el punto
+            var f1 = formatearNumero(num1);
+            var f2 = formatearNumero(num2);
+            var fr = formatearNumero(resultado);
+
+            // Strings de dígitos (sin punto decimal)
+            var s1 = f1.completo;
+            var s2Arr = f2.completo.split('').reverse();
+            var sr = fr.completo;
             var maxLen = sr.length;
 
+            // Posiciones de decimales para mostrar
+            var dec1Pos = f1.decimal.length > 0 ? f1.entero.length : -1;
+            var dec2Pos = f2.decimal.length > 0 ? f2.entero.length : -1;
+            var decRPos = fr.decimal.length > 0 ? fr.entero.length : -1;
+
             parcialesEsperados = [];
-            for (var i = 0; i < s2.length; i++) {
-                parcialesEsperados.push(num1 * parseInt(s2[i]));
+            // Para los parciales, multiplicamos entero por cada dígito
+            var n1Entero = parseInt(f1.completo);
+            for (var i = 0; i < s2Arr.length; i++) {
+                parcialesEsperados.push(n1Entero * parseInt(s2Arr[i]));
             }
 
             var celW = 34, celH = 38;
             var padX = 15, padY = 10;
             var fontSize = 26;
-            var numFilas = 2 + s2.length + (s2.length > 1 ? 1 : 0);
+            var numFilas = 2 + s2Arr.length + (s2Arr.length > 1 ? 1 : 0);
             var svgW = padX * 2 + (maxLen + 1) * celW;
             var svgH = padY * 2 + numFilas * celH + 15;
             var xBase = padX + celW;
@@ -146,29 +226,47 @@
             var svg = '<svg viewBox="0 0 ' + svgW + ' ' + svgH + '" style="font-family: Indie Flower, cursive; font-size: ' + fontSize + 'px;">';
 
             var y1 = padY + celH;
-            var offset1 = maxLen - s1.length;
+            var offset1 = maxLen - s1.length - (dec1Pos >= 0 ? 1 : 0);
+            var col1 = 0;
             for (var i = 0; i < s1.length; i++) {
-                var x = xBase + (offset1 + i) * celW + celW / 2;
+                // Añadir coma antes del decimal si aplica
+                if (dec1Pos >= 0 && i === dec1Pos) {
+                    var xComa = xBase + (offset1 + col1) * celW + celW / 2 - 5;
+                    svg += '<text x="' + xComa + '" y="' + y1 + '" text-anchor="middle" fill="#ffaa00" font-size="24">,</text>';
+                    col1++;
+                }
+                var x = xBase + (offset1 + col1) * celW + celW / 2;
                 svg += '<text x="' + (x - 10) + '" y="' + (y1 - 22) + '" text-anchor="middle" fill="#ffdd44" font-size="14" font-weight="bold" id="cm' + i + '"></text>';
                 svg += '<text x="' + x + '" y="' + y1 + '" text-anchor="middle" fill="#f0f0e8" style="cursor:pointer;" onclick="incrementarCarry(\'cm' + i + '\')">' + s1[i] + '</text>';
+                col1++;
             }
 
             var y2 = y1 + celH;
             svg += '<text x="' + (xBase - celW/2) + '" y="' + y2 + '" text-anchor="middle" fill="#ff9999" font-size="20">x</text>';
-            var offset2 = maxLen - s2.length;
-            for (var i = s2.length - 1; i >= 0; i--) {
-                var x = xBase + (offset2 + (s2.length - 1 - i)) * celW + celW / 2;
-                svg += '<text x="' + x + '" y="' + y2 + '" text-anchor="middle" fill="#f0f0e8">' + s2[i] + '</text>';
+            var s2Str = f2.completo;
+            var s2Rev = s2Str.split('').reverse();
+            var offset2 = maxLen - s2Str.length - (dec2Pos >= 0 ? 1 : 0);
+            var col2 = 0;
+            for (var i = s2Rev.length - 1; i >= 0; i--) {
+                var posEnOriginal = s2Str.length - 1 - i;
+                if (dec2Pos >= 0 && posEnOriginal === dec2Pos) {
+                    var xComa = xBase + (offset2 + col2) * celW + celW / 2 - 5;
+                    svg += '<text x="' + xComa + '" y="' + y2 + '" text-anchor="middle" fill="#ffaa00" font-size="24">,</text>';
+                    col2++;
+                }
+                var x = xBase + (offset2 + col2) * celW + celW / 2;
+                svg += '<text x="' + x + '" y="' + y2 + '" text-anchor="middle" fill="#f0f0e8">' + s2Rev[i] + '</text>';
+                col2++;
             }
             svg += '<line x1="' + (xBase - celW/2 - 8) + '" y1="' + (y2 + 6) + '" x2="' + (xBase + maxLen * celW) + '" y2="' + (y2 + 6) + '" stroke="#f0f0e8" stroke-width="2"/>';
 
             var yActual = y2 + celH + 5;
-            for (var p = 0; p < s2.length; p++) {
+            for (var p = 0; p < s2Arr.length; p++) {
                 var ps = parcialesEsperados[p].toString();
                 var totalCols = ps.length + p;
                 var offsetP = maxLen - totalCols;
 
-                if (p === s2.length - 1 && s2.length > 1) {
+                if (p === s2Arr.length - 1 && s2Arr.length > 1) {
                     svg += '<text x="' + (xBase - celW/2) + '" y="' + yActual + '" text-anchor="middle" fill="#ff9999" font-size="16">+</text>';
                 }
 
@@ -186,7 +284,7 @@
                 yActual += celH;
             }
 
-            if (s2.length > 1) {
+            if (s2Arr.length > 1) {
                 svg += '<line x1="' + (xBase - celW/2 - 8) + '" y1="' + (yActual - celH + 3) + '" x2="' + (xBase + maxLen * celW) + '" y2="' + (yActual - celH + 3) + '" stroke="#f0f0e8" stroke-width="2"/>';
 
                 var offsetR = maxLen - sr.length;
@@ -225,10 +323,14 @@
         }
 
         function aplicarAyudas() {
-            var sr = resultado.toString();
+            var fr = formatearNumero(resultado);
+            var sr = fr.completo; // Sin punto decimal
             if (sr.length <= 1) return;
-            var s2 = num2.toString().split('').reverse();
-            for (var p = 0; p < s2.length; p++) {
+
+            var f2 = formatearNumero(num2);
+            var s2Arr = f2.completo.split('').reverse();
+
+            for (var p = 0; p < s2Arr.length; p++) {
                 var ps = parcialesEsperados[p].toString();
                 if (Math.random() < 0.3) {
                     var idx = Math.floor(Math.random() * ps.length);
@@ -236,8 +338,7 @@
                     if (el) { el.textContent = ps[idx]; el.style.opacity = '0.5'; }
                 }
             }
-            if (s2.length > 1) {
-                var sr = resultado.toString();
+            if (s2Arr.length > 1) {
                 if (Math.random() < 0.3) {
                     var idx = Math.floor(Math.random() * sr.length);
                     var el = document.getElementById('t0_' + idx);
@@ -246,11 +347,19 @@
             }
         }
 
+        function mostrarErrorCorreccion(el, valorCorrecto) {
+            var valorErroneo = el.textContent || '?';
+            if (valorErroneo !== valorCorrecto) {
+                el.innerHTML = '<tspan fill="#ff6666" text-decoration="line-through">' + valorErroneo + '</tspan><tspan fill="#90EE90" dx="2">' + valorCorrecto + '</tspan>';
+            }
+        }
+
         function comprobar() {
-            var s2 = num2.toString().split('').reverse();
+            var f2 = formatearNumero(num2);
+            var s2Arr = f2.completo.split('').reverse();
             var ok = true;
 
-            for (var p = 0; p < s2.length; p++) {
+            for (var p = 0; p < s2Arr.length; p++) {
                 var ps = parcialesEsperados[p].toString();
                 for (var i = 0; i < ps.length; i++) {
                     var el = document.getElementById('p' + p + '_' + i);
@@ -262,16 +371,16 @@
                         } else {
                             rect.setAttribute('fill', 'rgba(255,0,0,0.3)');
                             rect.setAttribute('stroke', '#ff6666');
-                            el.textContent = ps[i];
-                            el.setAttribute('fill', '#ff6666');
+                            mostrarErrorCorreccion(el, ps[i]);
                             ok = false;
                         }
                     }
                 }
             }
 
-            if (s2.length > 1) {
-                var sr = resultado.toString();
+            if (s2Arr.length > 1) {
+                var fr = formatearNumero(resultado);
+                var sr = fr.completo; // Sin punto decimal
                 for (var i = 0; i < sr.length; i++) {
                     var el = document.getElementById('t0_' + i);
                     var rect = document.querySelector('rect[onclick="clickCelda(\'t\', 0, ' + i + ')"]');
@@ -282,8 +391,7 @@
                         } else {
                             rect.setAttribute('fill', 'rgba(255,0,0,0.3)');
                             rect.setAttribute('stroke', '#ff6666');
-                            el.textContent = sr[i];
-                            el.setAttribute('fill', '#ff6666');
+                            mostrarErrorCorreccion(el, sr[i]);
                             ok = false;
                         }
                     }
@@ -333,53 +441,87 @@
 
         function generarPasosAyuda() {
             var pasos = [];
-            var s1 = num1.toString();
-            var s2 = num2.toString().split('').reverse();
 
-            pasos.push('Vamos a multiplicar ' + num1 + ' x ' + num2 + '. Multiplicamos ' + num1 + ' por cada digito de ' + num2 + ', empezando por el de la derecha.');
+            if (esDecimal) {
+                // Ayuda para multiplicación con decimales
+                var f1 = formatearNumero(num1);
+                var f2 = formatearNumero(num2);
+                var totalDecimales = f1.decimal.length + f2.decimal.length;
 
-            for (var p = 0; p < s2.length; p++) {
-                var digito = parseInt(s2[p]);
-                var parcial = parcialesEsperados[p];
-                var posicion = p === 0 ? 'unidades' : (p === 1 ? 'decenas' : 'centenas');
+                pasos.push('Vamos a multiplicar ' + num1 + ' x ' + num2 + '.');
+                pasos.push('Cuando multiplicamos decimales, primero contamos el total de cifras decimales.');
+                pasos.push(num1 + ' tiene ' + f1.decimal.length + ' decimal(es).');
+                pasos.push(num2 + ' tiene ' + f2.decimal.length + ' decimal(es).');
+                pasos.push('Total: ' + f1.decimal.length + ' + ' + f2.decimal.length + ' = ' + totalDecimales + ' decimales en el resultado.');
+                pasos.push('Ahora multiplicamos como si no hubiera comas, ignorando los decimales.');
 
-                pasos.push('Ahora multiplicamos ' + num1 + ' x ' + digito + ' (el digito de las ' + posicion + ').');
+                var s1 = f1.completo;
+                var s2Arr = f2.completo.split('').reverse();
 
-                var carry = 0;
-                for (var d = s1.length - 1; d >= 0; d--) {
-                    var dig1 = parseInt(s1[d]);
-                    var prod = dig1 * digito + carry;
-                    var resultado_dig = prod % 10;
-                    var nuevo_carry = Math.floor(prod / 10);
-                    var colNombre = d === s1.length - 1 ? 'unidades' : (d === s1.length - 2 ? 'decenas' : 'centenas');
+                for (var p = 0; p < s2Arr.length; p++) {
+                    var digito = parseInt(s2Arr[p]);
+                    var parcial = parcialesEsperados[p];
+                    pasos.push('Multiplicamos todos los dígitos por ' + digito + ': resultado parcial = ' + parcial);
+                }
+
+                if (s2Arr.length > 1) {
+                    pasos.push('Sumamos todos los productos parciales.');
+                }
+
+                var fr = formatearNumero(resultado);
+                pasos.push('El producto sin decimales es ' + fr.completo + '.');
+                pasos.push('Ahora ponemos la coma: contamos ' + totalDecimales + ' posiciones desde la derecha.');
+                pasos.push('El resultado final es ' + resultado);
+            } else {
+                // Ayuda para multiplicación sin decimales (original)
+                var s1 = num1.toString();
+                var s2 = num2.toString().split('').reverse();
+
+                pasos.push('Vamos a multiplicar ' + num1 + ' x ' + num2 + '. Multiplicamos ' + num1 + ' por cada digito de ' + num2 + ', empezando por el de la derecha.');
+
+                for (var p = 0; p < s2.length; p++) {
+                    var digito = parseInt(s2[p]);
+                    var parcial = parcialesEsperados[p];
+                    var posicion = p === 0 ? 'unidades' : (p === 1 ? 'decenas' : 'centenas');
+
+                    pasos.push('Ahora multiplicamos ' + num1 + ' x ' + digito + ' (el digito de las ' + posicion + ').');
+
+                    var carry = 0;
+                    for (var d = s1.length - 1; d >= 0; d--) {
+                        var dig1 = parseInt(s1[d]);
+                        var prod = dig1 * digito + carry;
+                        var resultado_dig = prod % 10;
+                        var nuevo_carry = Math.floor(prod / 10);
+                        var colNombre = d === s1.length - 1 ? 'unidades' : (d === s1.length - 2 ? 'decenas' : 'centenas');
+
+                        if (carry > 0) {
+                            pasos.push('Digito de ' + colNombre + ': ' + dig1 + ' x ' + digito + ' = ' + (dig1 * digito) + ', mas ' + carry + ' que llevabamos = ' + prod + '.');
+                        } else {
+                            pasos.push('Digito de ' + colNombre + ': ' + dig1 + ' x ' + digito + ' = ' + prod + '.');
+                        }
+
+                        if (prod >= 10) {
+                            pasos.push('Como ' + prod + ' tiene dos digitos, escribimos ' + resultado_dig + ' y nos llevamos ' + nuevo_carry + '.');
+                        } else {
+                            pasos.push('Escribimos ' + resultado_dig + '.');
+                        }
+
+                        carry = nuevo_carry;
+                    }
 
                     if (carry > 0) {
-                        pasos.push('Digito de ' + colNombre + ': ' + dig1 + ' x ' + digito + ' = ' + (dig1 * digito) + ', mas ' + carry + ' que llevabamos = ' + prod + '.');
-                    } else {
-                        pasos.push('Digito de ' + colNombre + ': ' + dig1 + ' x ' + digito + ' = ' + prod + '.');
+                        pasos.push('Nos queda ' + carry + ' de llevada, lo escribimos al principio. Resultado: ' + parcial);
                     }
 
-                    if (prod >= 10) {
-                        pasos.push('Como ' + prod + ' tiene dos digitos, escribimos ' + resultado_dig + ' y nos llevamos ' + nuevo_carry + '.');
-                    } else {
-                        pasos.push('Escribimos ' + resultado_dig + '.');
+                    if (p > 0) {
+                        pasos.push('Como multiplicamos por las ' + posicion + ', este resultado va desplazado ' + p + ' posicion(es) a la izquierda (o añadimos ' + p + ' cero(s) a la derecha).');
                     }
-
-                    carry = nuevo_carry;
                 }
 
-                if (carry > 0) {
-                    pasos.push('Nos queda ' + carry + ' de llevada, lo escribimos al principio. Resultado: ' + parcial);
+                if (s2.length > 1) {
+                    pasos.push('Ya tenemos todos los productos parciales. Ahora hay que sumarlos todos.');
+                    pasos.push('Suma los productos parciales columna por columna, de derecha a izquierda, igual que una suma normal.');
                 }
-
-                if (p > 0) {
-                    pasos.push('Como multiplicamos por las ' + posicion + ', este resultado va desplazado ' + p + ' posicion(es) a la izquierda (o añadimos ' + p + ' cero(s) a la derecha).');
-                }
-            }
-
-            if (s2.length > 1) {
-                pasos.push('Ya tenemos todos los productos parciales. Ahora hay que sumarlos todos.');
-                pasos.push('Suma los productos parciales columna por columna, de derecha a izquierda, igual que una suma normal.');
             }
 
             pasos.push('Completa todas las casillas y pulsa "Comprobar".');

@@ -1584,6 +1584,15 @@
             document.getElementById('resultadoEvaluacion').style.display = 'none';
             var tiempoTotal = tiempoInicioLectura ? Math.round((Date.now() - tiempoInicioLectura) / 1000) : 0;
             try {
+                // Preferir Gemini para transcripción + evaluación en una llamada
+                if (audioBlob && configIA.keys.gemini) {
+                    var resultado = await transcribirYEvaluarConGemini(audioBlob, tiempoTotal);
+                    if (resultado) {
+                        mostrarResultadoEvaluacionCompleta(resultado, tiempoTotal);
+                        return;
+                    }
+                }
+                // Fallback: Groq para transcripción + IA para evaluación
                 var transcripcion = null;
                 if (audioBlob && configIA.keys.groq) {
                     transcripcion = await transcribirConGroq(audioBlob);
@@ -1591,6 +1600,7 @@
                 var evaluacion = await evaluarLecturaConIA(tiempoTotal, transcripcion);
                 mostrarResultadoEvaluacion(evaluacion, tiempoTotal, transcripcion);
             } catch (error) {
+                console.error('Error en evaluación:', error);
                 mostrarResultadoBasico(tiempoTotal, null);
             }
         }
@@ -1612,7 +1622,116 @@
                     return data.text;
                 }
             } catch (error) {
-                console.error('Error transcribiendo:', error);
+                console.error('Error transcribiendo con Groq:', error);
+            }
+            return null;
+        }
+
+        // Convertir Blob a Base64
+        function blobToBase64(blob) {
+            return new Promise(function(resolve, reject) {
+                var reader = new FileReader();
+                reader.onloadend = function() {
+                    var base64 = reader.result.split(',')[1];
+                    resolve(base64);
+                };
+                reader.onerror = reject;
+                reader.readAsDataURL(blob);
+            });
+        }
+
+        // Transcribir audio usando Gemini (multimodal)
+        async function transcribirConGemini(audioBlob) {
+            try {
+                var base64Audio = await blobToBase64(audioBlob);
+                var idioma = idiomaComic === 'en' ? 'inglés' : idiomaComic === 'ca' ? 'catalán' : 'español';
+
+                var response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' + configIA.keys.gemini, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{
+                            parts: [
+                                { text: 'Transcribe este audio en ' + idioma + '. Devuelve SOLO el texto transcrito, sin explicaciones ni comentarios adicionales.' },
+                                {
+                                    inline_data: {
+                                        mime_type: 'audio/webm',
+                                        data: base64Audio
+                                    }
+                                }
+                            ]
+                        }],
+                        generationConfig: { maxOutputTokens: 2048 }
+                    })
+                });
+
+                if (response.ok) {
+                    var data = await response.json();
+                    if (data.candidates && data.candidates[0] && data.candidates[0].content) {
+                        return data.candidates[0].content.parts[0].text.trim();
+                    }
+                } else {
+                    var errorText = await response.text();
+                    console.error('Gemini audio error:', errorText);
+                }
+            } catch (error) {
+                console.error('Error transcribiendo con Gemini:', error);
+            }
+            return null;
+        }
+
+        // Transcribir y evaluar en una sola llamada a Gemini (más eficiente)
+        async function transcribirYEvaluarConGemini(audioBlob, tiempoTotal) {
+            try {
+                var base64Audio = await blobToBase64(audioBlob);
+                var idioma = idiomaComic === 'en' ? 'inglés' : idiomaComic === 'ca' ? 'catalán' : 'español';
+                var guardado = localStorage.getItem('usuarioAprendizaje');
+                var usuario = guardado ? JSON.parse(guardado) : { nombre: 'Estudiante', edad: 10 };
+                var textoOriginal = frases.join(' ');
+
+                var prompt = 'Eres un evaluador de lectura en voz alta para niños.\n\n' +
+                    'TEXTO ORIGINAL que debía leer:\n"' + textoOriginal + '"\n\n' +
+                    'AUDIO: El estudiante ' + usuario.nombre + ' (' + usuario.edad + ' años) ha leído el texto.\n' +
+                    'Frases completadas: ' + frasesLeidas + '/' + frases.length + '\n' +
+                    'Tiempo: ' + tiempoTotal + ' segundos\n\n' +
+                    'TAREAS:\n' +
+                    '1. Transcribe exactamente lo que dice el audio en ' + idioma + '\n' +
+                    '2. Compara con el texto original\n' +
+                    '3. Evalúa: pronunciación, fluidez, entonación\n\n' +
+                    'Responde SOLO con este JSON:\n' +
+                    '{"transcripcion": "texto transcrito", "puntuacion": 85, "velocidad": "adecuada/lenta/rápida", "pronunciacion": "buena/regular/mejorable", "entonacion": "natural/monótona/exagerada", "errores": ["palabra mal pronunciada"], "feedback": "Mensaje motivador personalizado", "consejos": ["Consejo específico"]}';
+
+                var response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' + configIA.keys.gemini, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{
+                            parts: [
+                                { text: prompt },
+                                {
+                                    inline_data: {
+                                        mime_type: 'audio/webm',
+                                        data: base64Audio
+                                    }
+                                }
+                            ]
+                        }],
+                        generationConfig: { maxOutputTokens: 4096 }
+                    })
+                });
+
+                if (response.ok) {
+                    var data = await response.json();
+                    if (data.candidates && data.candidates[0] && data.candidates[0].content) {
+                        var texto = data.candidates[0].content.parts[0].text;
+                        return parsearJSONSeguro(texto);
+                    }
+                } else {
+                    var errorText = await response.text();
+                    console.error('Gemini eval error:', errorText);
+                }
+            } catch (error) {
+                console.error('Error evaluando con Gemini:', error);
             }
             return null;
         }
@@ -1633,6 +1752,50 @@
             var secs = tiempoTotal % 60;
             document.getElementById('detallesEvaluacion').innerHTML = '<div class="detalle-item"><span>Frases:</span><span>' + frasesLeidas + '/' + frases.length + '</span></div><div class="detalle-item"><span>Tiempo:</span><span>' + mins + 'm ' + secs + 's</span></div><div class="detalle-item"><span>Velocidad:</span><span>' + evaluacion.velocidad + '</span></div>';
             document.getElementById('feedbackIA').innerHTML = '<p><strong>💬</strong> ' + evaluacion.feedback + '</p>' + (evaluacion.consejos ? '<p><strong>💡 Consejos:</strong></p><ul>' + evaluacion.consejos.map(function(c) { return '<li>' + c + '</li>'; }).join('') + '</ul>' : '');
+        }
+
+        // Mostrar resultado completo con transcripción, pronunciación y entonación (Gemini)
+        function mostrarResultadoEvaluacionCompleta(resultado, tiempoTotal) {
+            document.getElementById('evaluandoMsg').style.display = 'none';
+            document.getElementById('resultadoEvaluacion').style.display = 'block';
+
+            var puntuacion = resultado.puntuacion || 70;
+            var emoji = puntuacion >= 90 ? '🏆' : puntuacion >= 70 ? '⭐' : '📚';
+            document.getElementById('puntuacionFinal').textContent = emoji + ' ' + puntuacion + '/100';
+
+            var mins = Math.floor(tiempoTotal / 60);
+            var secs = tiempoTotal % 60;
+
+            // Detalles expandidos con pronunciación y entonación
+            var detallesHTML = '<div class="detalle-item"><span>Frases:</span><span>' + frasesLeidas + '/' + frases.length + '</span></div>';
+            detallesHTML += '<div class="detalle-item"><span>Tiempo:</span><span>' + mins + 'm ' + secs + 's</span></div>';
+            detallesHTML += '<div class="detalle-item"><span>Velocidad:</span><span>' + (resultado.velocidad || 'normal') + '</span></div>';
+            detallesHTML += '<div class="detalle-item"><span>Pronunciación:</span><span>' + (resultado.pronunciacion || '-') + '</span></div>';
+            detallesHTML += '<div class="detalle-item"><span>Entonación:</span><span>' + (resultado.entonacion || '-') + '</span></div>';
+            document.getElementById('detallesEvaluacion').innerHTML = detallesHTML;
+
+            // Feedback con transcripción y errores
+            var feedbackHTML = '';
+
+            // Mostrar transcripción
+            if (resultado.transcripcion) {
+                feedbackHTML += '<p><strong>🎤 Lo que leíste:</strong></p><p style="font-style:italic; background:rgba(255,255,255,0.1); padding:8px; border-radius:5px;">"' + resultado.transcripcion + '"</p>';
+            }
+
+            // Mostrar errores de pronunciación si hay
+            if (resultado.errores && resultado.errores.length > 0) {
+                feedbackHTML += '<p><strong>⚠️ Palabras a practicar:</strong> ' + resultado.errores.join(', ') + '</p>';
+            }
+
+            // Feedback principal
+            feedbackHTML += '<p><strong>💬</strong> ' + (resultado.feedback || '¡Buen trabajo!') + '</p>';
+
+            // Consejos
+            if (resultado.consejos && resultado.consejos.length > 0) {
+                feedbackHTML += '<p><strong>💡 Consejos:</strong></p><ul>' + resultado.consejos.map(function(c) { return '<li>' + c + '</li>'; }).join('') + '</ul>';
+            }
+
+            document.getElementById('feedbackIA').innerHTML = feedbackHTML;
         }
 
         function mostrarResultadoBasico(tiempoTotal, transcripcion) {

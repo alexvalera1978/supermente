@@ -130,8 +130,12 @@
                         } else {
                             rect.setAttribute('fill', 'rgba(255,0,0,0.3)');
                             rect.setAttribute('stroke', '#ff6666');
-                            texto.textContent = esperado[d];
-                            texto.setAttribute('fill', '#ff6666');
+                            // Mostrar erróneo tachado + correcto
+                            var valorErroneo = texto.textContent || '?';
+                            var valorCorrecto = esperado[d];
+                            if (valorErroneo !== valorCorrecto) {
+                                texto.innerHTML = '<tspan fill="#ff6666" text-decoration="line-through">' + valorErroneo + '</tspan><tspan fill="#90EE90" dx="2">' + valorCorrecto + '</tspan>';
+                            }
                             ok = false;
                         }
                     }

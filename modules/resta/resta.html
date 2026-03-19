@@ -51,6 +51,7 @@
         <div class="menu-opciones">
             <button class="btn-menu" onclick="iniciarConNivel('basico')">📖 Basico</button>
             <button class="btn-menu" onclick="iniciarConNivel('normal')">📝 Normal</button>
+            <button class="btn-menu" id="btnAvanzado" onclick="iniciarConNivel('avanzado')" style="display:none;">🎯 Avanzado</button>
             <button class="btn-menu" onclick="window.location.href='/supermente/index.html'" style="margin-top:15px; opacity:0.7;">← Volver</button>
         </div>
     </div>
@@ -84,6 +85,20 @@
         var nivelActual = 'normal';
         var modoAyuda = false;
         var pasoAyuda = 0;
+        var edadUsuario = 10;
+        var esDecimal = false;
+
+        // Cargar edad y mostrar boton avanzado si >= 12
+        document.addEventListener('DOMContentLoaded', function() {
+            var guardado = localStorage.getItem('usuarioAprendizaje');
+            if (guardado) {
+                var usuario = JSON.parse(guardado);
+                edadUsuario = usuario.edad || 10;
+                if (edadUsuario >= 12) {
+                    document.getElementById('btnAvanzado').style.display = 'block';
+                }
+            }
+        });
 
         function iniciarConNivel(nivel) {
             nivelActual = nivel;
@@ -101,16 +116,49 @@
             return Math.floor(Math.random() * (max - min + 1)) + min;
         }
 
+        function generarNumeroDecimal(digEnteros, digDecimales) {
+            var parteEntera = generarNumero(digEnteros);
+            var parteDecimal = 0;
+            for (var i = 0; i < digDecimales; i++) {
+                parteDecimal = parteDecimal * 10 + Math.floor(Math.random() * 10);
+            }
+            return parteEntera + parteDecimal / Math.pow(10, digDecimales);
+        }
+
         function generarEjercicio() {
             document.getElementById('mensaje').textContent = '';
-            digitosActuales = Math.floor(operacionActual / 3) + 1;
-            var a = generarNumero(digitosActuales);
-            var b = generarNumero(digitosActuales);
-            num1 = Math.max(a, b);
-            num2 = Math.min(a, b);
-            resultado = num1 - num2;
+
+            if (nivelActual === 'avanzado') {
+                esDecimal = operacionActual % 2 === 0;
+
+                if (esDecimal) {
+                    var digDecimales = Math.floor(Math.random() * 3) + 1;
+                    var a = generarNumeroDecimal(2, digDecimales);
+                    var b = generarNumeroDecimal(2, digDecimales);
+                    num1 = Math.max(a, b);
+                    num2 = Math.min(a, b);
+                    resultado = Math.round((num1 - num2) * 1000) / 1000;
+                } else {
+                    var dificultad = Math.floor(operacionActual / 2) % 3 + 3;
+                    digitosActuales = dificultad;
+                    var a = generarNumero(digitosActuales);
+                    var b = generarNumero(Math.max(2, digitosActuales - 1));
+                    num1 = Math.max(a, b);
+                    num2 = Math.min(a, b);
+                    resultado = num1 - num2;
+                }
+            } else {
+                esDecimal = false;
+                digitosActuales = Math.floor(operacionActual / 3) + 1;
+                var a = generarNumero(digitosActuales);
+                var b = generarNumero(digitosActuales);
+                num1 = Math.max(a, b);
+                num2 = Math.min(a, b);
+                resultado = num1 - num2;
+            }
+
             renderizarSVG();
-            var nivelTexto = nivelActual === 'basico' ? ' (Basico)' : '';
+            var nivelTexto = nivelActual === 'basico' ? ' (Basico)' : nivelActual === 'avanzado' ? ' (Avanzado)' : '';
             document.getElementById('progreso').textContent = 'Ejercicio ' + (operacionActual + 1) + nivelTexto;
             if (nivelActual === 'basico') {
                 setTimeout(function() { aplicarAyudas(); }, 100);
@@ -123,41 +171,104 @@
             generarEjercicio();
         }
 
+        function formatearNumero(num) {
+            var s = num.toString();
+            if (s.indexOf('.') !== -1) {
+                var partes = s.split('.');
+                return { entero: partes[0], decimal: partes[1] || '' };
+            }
+            return { entero: s, decimal: '' };
+        }
+
         function renderizarSVG() {
-            var s1 = num1.toString(), s2 = num2.toString(), sr = resultado.toString();
-            var maxLen = Math.max(s1.length, s2.length, sr.length);
+            var f1 = formatearNumero(num1);
+            var f2 = formatearNumero(num2);
+            var fr = formatearNumero(resultado);
+
+            var maxEnteros = Math.max(f1.entero.length, f2.entero.length, fr.entero.length);
+            var maxDecimales = Math.max(f1.decimal.length, f2.decimal.length, fr.decimal.length);
+            var tieneDecimales = maxDecimales > 0;
+
             var celW = 40, celH = 50;
             var padX = 20, padY = 15;
             var fontSize = 36;
-            var svgW = padX * 2 + (maxLen + 1) * celW;
+            var puntoW = tieneDecimales ? 20 : 0;
+            var totalCols = maxEnteros + (tieneDecimales ? 1 : 0) + maxDecimales;
+            var svgW = padX * 2 + (totalCols + 1) * celW;
             var svgH = padY * 2 + celH * 3 + 20;
             var xBase = padX + celW;
 
             var svg = '<svg viewBox="0 0 ' + svgW + ' ' + svgH + '" style="font-family: Indie Flower, cursive; font-size: ' + fontSize + 'px;">';
 
-            var y1 = padY + celH;
-            var offset1 = maxLen - s1.length;
-            for (var i = 0; i < s1.length; i++) {
-                var x = xBase + (offset1 + i) * celW + celW / 2;
-                svg += '<text x="' + (x - 12) + '" y="' + (y1 - 30) + '" text-anchor="middle" fill="#ffdd44" font-size="16" font-weight="bold" id="cs' + i + '"></text>';
-                svg += '<text x="' + x + '" y="' + y1 + '" text-anchor="middle" fill="#f0f0e8" style="cursor:pointer;" onclick="incrementarCarry(\'cs' + i + '\')">' + s1[i] + '</text>';
+            function renderNumero(f, y, conCarry, carryPrefix) {
+                var offset = maxEnteros - f.entero.length;
+                var resultado = '';
+                var colIdx = 0;
+
+                for (var i = 0; i < f.entero.length; i++) {
+                    var x = xBase + (offset + i) * celW + celW / 2;
+                    if (conCarry) {
+                        resultado += '<text x="' + (x - 12) + '" y="' + (y - 30) + '" text-anchor="middle" fill="#ffdd44" font-size="16" font-weight="bold" id="' + carryPrefix + colIdx + '"></text>';
+                        resultado += '<text x="' + x + '" y="' + y + '" text-anchor="middle" fill="#f0f0e8" style="cursor:pointer;" onclick="incrementarCarry(\'' + carryPrefix + colIdx + '\')">' + f.entero[i] + '</text>';
+                    } else {
+                        resultado += '<text x="' + x + '" y="' + y + '" text-anchor="middle" fill="#f0f0e8">' + f.entero[i] + '</text>';
+                    }
+                    colIdx++;
+                }
+
+                if (tieneDecimales) {
+                    var xPunto = xBase + maxEnteros * celW + puntoW / 2;
+                    resultado += '<text x="' + xPunto + '" y="' + y + '" text-anchor="middle" fill="#ffaa00" font-size="40">,</text>';
+                }
+
+                var decStr = f.decimal;
+                while (decStr.length < maxDecimales) decStr += '0';
+                for (var i = 0; i < decStr.length; i++) {
+                    var x = xBase + maxEnteros * celW + puntoW + i * celW + celW / 2;
+                    if (conCarry) {
+                        resultado += '<text x="' + x + '" y="' + y + '" text-anchor="middle" fill="#f0f0e8" style="cursor:pointer;" onclick="incrementarCarry(\'' + carryPrefix + colIdx + '\')">' + decStr[i] + '</text>';
+                    } else {
+                        resultado += '<text x="' + x + '" y="' + y + '" text-anchor="middle" fill="#f0f0e8">' + decStr[i] + '</text>';
+                    }
+                    colIdx++;
+                }
+
+                return resultado;
             }
+
+            var y1 = padY + celH;
+            svg += renderNumero(f1, y1, true, 'cs');
 
             var y2 = y1 + celH;
             svg += '<text x="' + (xBase - celW/2) + '" y="' + y2 + '" text-anchor="middle" fill="#ff9999" font-size="28">−</text>';
-            var offset2 = maxLen - s2.length;
-            for (var i = 0; i < s2.length; i++) {
-                var x = xBase + (offset2 + i) * celW + celW / 2;
-                svg += '<text x="' + x + '" y="' + y2 + '" text-anchor="middle" fill="#f0f0e8">' + s2[i] + '</text>';
-            }
-            svg += '<line x1="' + (xBase - celW/2 - 10) + '" y1="' + (y2 + 10) + '" x2="' + (xBase + maxLen * celW) + '" y2="' + (y2 + 10) + '" stroke="#f0f0e8" stroke-width="3"/>';
+            svg += renderNumero(f2, y2, false, '');
+
+            var lineaEnd = xBase + maxEnteros * celW + (tieneDecimales ? puntoW + maxDecimales * celW : 0);
+            svg += '<line x1="' + (xBase - celW/2 - 10) + '" y1="' + (y2 + 10) + '" x2="' + lineaEnd + '" y2="' + (y2 + 10) + '" stroke="#f0f0e8" stroke-width="3"/>';
 
             var y3 = y2 + celH + 15;
-            var offset3 = maxLen - sr.length;
-            for (var i = 0; i < sr.length; i++) {
-                var x = xBase + (offset3 + i) * celW;
-                svg += '<rect x="' + x + '" y="' + (y3 - celH + 15) + '" width="' + (celW - 6) + '" height="' + (celH - 10) + '" fill="rgba(255,255,255,0.1)" stroke="rgba(255,255,255,0.5)" stroke-dasharray="4" rx="5" style="cursor:pointer;" onclick="clickCelda(' + i + ')"/>';
-                svg += '<text x="' + (x + celW/2 - 3) + '" y="' + y3 + '" text-anchor="middle" fill="#90EE90" id="res' + i + '" style="pointer-events:none;"></text>';
+            var offsetR = maxEnteros - fr.entero.length;
+            var cellIdx = 0;
+
+            for (var i = 0; i < fr.entero.length; i++) {
+                var x = xBase + (offsetR + i) * celW;
+                svg += '<rect x="' + x + '" y="' + (y3 - celH + 15) + '" width="' + (celW - 6) + '" height="' + (celH - 10) + '" fill="rgba(255,255,255,0.1)" stroke="rgba(255,255,255,0.5)" stroke-dasharray="4" rx="5" style="cursor:pointer;" onclick="clickCelda(' + cellIdx + ')"/>';
+                svg += '<text x="' + (x + celW/2 - 3) + '" y="' + y3 + '" text-anchor="middle" fill="#90EE90" id="res' + cellIdx + '" style="pointer-events:none;"></text>';
+                cellIdx++;
+            }
+
+            if (tieneDecimales) {
+                var xPunto = xBase + maxEnteros * celW + puntoW / 2;
+                svg += '<text x="' + xPunto + '" y="' + y3 + '" text-anchor="middle" fill="#ffaa00" font-size="40">,</text>';
+
+                var decR = fr.decimal;
+                while (decR.length < maxDecimales) decR += '0';
+                for (var i = 0; i < decR.length; i++) {
+                    var x = xBase + maxEnteros * celW + puntoW + i * celW;
+                    svg += '<rect x="' + x + '" y="' + (y3 - celH + 15) + '" width="' + (celW - 6) + '" height="' + (celH - 10) + '" fill="rgba(255,255,255,0.1)" stroke="rgba(255,255,255,0.5)" stroke-dasharray="4" rx="5" style="cursor:pointer;" onclick="clickCelda(' + cellIdx + ')"/>';
+                    svg += '<text x="' + (x + celW/2 - 3) + '" y="' + y3 + '" text-anchor="middle" fill="#90EE90" id="res' + cellIdx + '" style="pointer-events:none;"></text>';
+                    cellIdx++;
+                }
             }
 
             svg += '</svg>';
@@ -187,7 +298,17 @@
         }
 
         function aplicarAyudas() {
-            var sr = resultado.toString();
+            var fr = formatearNumero(resultado);
+            var maxDecimales = 0;
+            if (esDecimal) {
+                var f1 = formatearNumero(num1);
+                var f2 = formatearNumero(num2);
+                maxDecimales = Math.max(f1.decimal.length, f2.decimal.length, fr.decimal.length);
+            }
+            var decR = fr.decimal;
+            while (decR.length < maxDecimales) decR += '0';
+            var sr = fr.entero + decR;
+
             if (sr.length <= 1) return;
             var numAyudas = Math.max(1, Math.floor(sr.length * 0.3));
             var usados = [];
@@ -203,8 +324,25 @@
             }
         }
 
+        function mostrarErrorCorreccion(el, valorCorrecto) {
+            var valorErroneo = el.textContent || '?';
+            if (valorErroneo !== valorCorrecto) {
+                el.innerHTML = '<tspan fill="#ff6666" text-decoration="line-through">' + valorErroneo + '</tspan><tspan fill="#90EE90" dx="2">' + valorCorrecto + '</tspan>';
+            }
+        }
+
         function comprobar() {
-            var sr = resultado.toString();
+            var fr = formatearNumero(resultado);
+            var maxDecimales = 0;
+            if (esDecimal) {
+                var f1 = formatearNumero(num1);
+                var f2 = formatearNumero(num2);
+                maxDecimales = Math.max(f1.decimal.length, f2.decimal.length, fr.decimal.length);
+            }
+            var decR = fr.decimal;
+            while (decR.length < maxDecimales) decR += '0';
+            var sr = fr.entero + decR;
+
             var ok = true;
             for (var i = 0; i < sr.length; i++) {
                 var el = document.getElementById('res' + i);
@@ -216,8 +354,7 @@
                     } else {
                         rect.setAttribute('fill', 'rgba(255,0,0,0.3)');
                         rect.setAttribute('stroke', '#ff6666');
-                        el.textContent = sr[i];
-                        el.setAttribute('fill', '#ff6666');
+                        mostrarErrorCorreccion(el, sr[i]);
                         ok = false;
                     }
                 }
@@ -268,33 +405,97 @@
 
         function generarPasosAyuda(s1, s2, sr, maxLen) {
             var pasos = [];
-            pasos.push('Vamos a restar ' + num1 + ' - ' + num2 + '. Siempre empezamos por la derecha, por la columna de las unidades.');
 
-            var borrow = 0;
-            for (var col = 0; col < maxLen; col++) {
-                var pos1 = s1.length - 1 - col;
-                var pos2 = s2.length - 1 - col;
-                var d1 = pos1 >= 0 ? parseInt(s1[pos1]) : 0;
-                var d2 = pos2 >= 0 ? parseInt(s2[pos2]) : 0;
+            if (esDecimal) {
+                // Ayuda para restas con decimales
+                var f1 = formatearNumero(num1);
+                var f2 = formatearNumero(num2);
+                var fr = formatearNumero(resultado);
+                var maxDec = Math.max(f1.decimal.length, f2.decimal.length);
 
-                var nombreCol = col === 0 ? 'unidades' : (col === 1 ? 'decenas' : (col === 2 ? 'centenas' : 'millares'));
-                var d1Ajustado = d1 - borrow;
+                pasos.push('Vamos a restar ' + num1 + ' - ' + num2 + '. Como tienen decimales, debemos alinear las comas.');
+                pasos.push('Importante: La coma del resultado va alineada con las comas de los números.');
+                pasos.push('Empezamos por la derecha, restando primero los decimales.');
 
-                if (borrow > 0) {
-                    pasos.push('Columna de ' + nombreCol + ': Tenemos ' + d1 + ' arriba, pero pedimos prestado antes, asi que ahora es ' + d1Ajustado + '.');
-                } else {
-                    pasos.push('Columna de ' + nombreCol + ': Arriba tenemos ' + d1 + ', abajo tenemos ' + d2 + '.');
+                // Rellenar decimales
+                var dec1 = f1.decimal; while (dec1.length < maxDec) dec1 += '0';
+                var dec2 = f2.decimal; while (dec2.length < maxDec) dec2 += '0';
+                var nombresDecimales = ['milésimas', 'centésimas', 'décimas'];
+
+                var borrow = 0;
+
+                // Parte decimal
+                for (var i = maxDec - 1; i >= 0; i--) {
+                    var d1 = parseInt(dec1[i]) || 0;
+                    var d2 = parseInt(dec2[i]) || 0;
+                    var d1Ajustado = d1 - borrow;
+                    var nombrePos = nombresDecimales[maxDec - 1 - i] || 'decimal';
+
+                    if (d1Ajustado < d2) {
+                        pasos.push('Columna de ' + nombrePos + ': ' + d1Ajustado + ' < ' + d2 + '. Pedimos prestado.');
+                        pasos.push((d1Ajustado + 10) + ' - ' + d2 + ' = ' + (d1Ajustado + 10 - d2));
+                        borrow = 1;
+                    } else {
+                        pasos.push('Columna de ' + nombrePos + ': ' + d1Ajustado + ' - ' + d2 + ' = ' + (d1Ajustado - d2));
+                        borrow = 0;
+                    }
                 }
 
-                if (d1Ajustado < d2) {
-                    pasos.push('Problema: ' + d1Ajustado + ' es menor que ' + d2 + '. No podemos restar ' + d2 + ' de ' + d1Ajustado + '!');
-                    pasos.push('Solucion: Pedimos prestado 1 a la columna de la izquierda. Ese 1 vale 10 aqui.');
-                    pasos.push('Ahora tenemos ' + d1Ajustado + ' + 10 = ' + (d1Ajustado + 10) + '. Restamos: ' + (d1Ajustado + 10) + ' - ' + d2 + ' = ' + (d1Ajustado + 10 - d2) + '.');
-                    pasos.push('Escribe ' + (d1Ajustado + 10 - d2) + ' en el resultado. Recuerda que la siguiente columna tendra 1 menos.');
-                    borrow = 1;
-                } else {
-                    pasos.push('Podemos restar: ' + d1Ajustado + ' - ' + d2 + ' = ' + (d1Ajustado - d2) + '. Escribe ' + (d1Ajustado - d2) + '.');
-                    borrow = 0;
+                pasos.push('Ahora ponemos la coma decimal y continuamos con la parte entera.');
+
+                // Parte entera
+                var maxEnt = Math.max(f1.entero.length, f2.entero.length);
+                var ent1 = f1.entero; while (ent1.length < maxEnt) ent1 = '0' + ent1;
+                var ent2 = f2.entero; while (ent2.length < maxEnt) ent2 = '0' + ent2;
+                var nombresEnteros = ['unidades', 'decenas', 'centenas', 'millares'];
+
+                for (var i = maxEnt - 1; i >= 0; i--) {
+                    var d1 = parseInt(ent1[i]) || 0;
+                    var d2 = parseInt(ent2[i]) || 0;
+                    var d1Ajustado = d1 - borrow;
+                    var nombrePos = nombresEnteros[maxEnt - 1 - i] || 'entero';
+
+                    if (d1Ajustado < d2) {
+                        pasos.push('Columna de ' + nombrePos + ': ' + d1Ajustado + ' < ' + d2 + '. Pedimos prestado.');
+                        pasos.push((d1Ajustado + 10) + ' - ' + d2 + ' = ' + (d1Ajustado + 10 - d2));
+                        borrow = 1;
+                    } else {
+                        pasos.push('Columna de ' + nombrePos + ': ' + d1Ajustado + ' - ' + d2 + ' = ' + (d1Ajustado - d2));
+                        borrow = 0;
+                    }
+                }
+
+                pasos.push('El resultado es ' + resultado);
+            } else {
+                // Ayuda para restas sin decimales (original)
+                pasos.push('Vamos a restar ' + num1 + ' - ' + num2 + '. Siempre empezamos por la derecha, por la columna de las unidades.');
+
+                var borrow = 0;
+                for (var col = 0; col < maxLen; col++) {
+                    var pos1 = s1.length - 1 - col;
+                    var pos2 = s2.length - 1 - col;
+                    var d1 = pos1 >= 0 ? parseInt(s1[pos1]) : 0;
+                    var d2 = pos2 >= 0 ? parseInt(s2[pos2]) : 0;
+
+                    var nombreCol = col === 0 ? 'unidades' : (col === 1 ? 'decenas' : (col === 2 ? 'centenas' : 'millares'));
+                    var d1Ajustado = d1 - borrow;
+
+                    if (borrow > 0) {
+                        pasos.push('Columna de ' + nombreCol + ': Tenemos ' + d1 + ' arriba, pero pedimos prestado antes, asi que ahora es ' + d1Ajustado + '.');
+                    } else {
+                        pasos.push('Columna de ' + nombreCol + ': Arriba tenemos ' + d1 + ', abajo tenemos ' + d2 + '.');
+                    }
+
+                    if (d1Ajustado < d2) {
+                        pasos.push('Problema: ' + d1Ajustado + ' es menor que ' + d2 + '. No podemos restar ' + d2 + ' de ' + d1Ajustado + '!');
+                        pasos.push('Solucion: Pedimos prestado 1 a la columna de la izquierda. Ese 1 vale 10 aqui.');
+                        pasos.push('Ahora tenemos ' + d1Ajustado + ' + 10 = ' + (d1Ajustado + 10) + '. Restamos: ' + (d1Ajustado + 10) + ' - ' + d2 + ' = ' + (d1Ajustado + 10 - d2) + '.');
+                        pasos.push('Escribe ' + (d1Ajustado + 10 - d2) + ' en el resultado. Recuerda que la siguiente columna tendra 1 menos.');
+                        borrow = 1;
+                    } else {
+                        pasos.push('Podemos restar: ' + d1Ajustado + ' - ' + d2 + ' = ' + (d1Ajustado - d2) + '. Escribe ' + (d1Ajustado - d2) + '.');
+                        borrow = 0;
+                    }
                 }
             }
 
