@@ -1498,6 +1498,8 @@
             if (grabando) { detenerGrabacion(); } else { iniciarGrabacion(); }
         }
 
+        var audioBlobReady = null; // Promise resolve function
+
         async function iniciarGrabacion() {
             try {
                 var stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -1507,6 +1509,11 @@
                 mediaRecorder.onstop = function() {
                     audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
                     stream.getTracks().forEach(function(track) { track.stop(); });
+                    // Notificar que el audioBlob está listo
+                    if (audioBlobReady) {
+                        audioBlobReady(audioBlob);
+                        audioBlobReady = null;
+                    }
                 };
                 mediaRecorder.start();
                 grabando = true;
@@ -1522,22 +1529,27 @@
         }
 
         function detenerGrabacion() {
-            if (mediaRecorder && grabando) {
-                mediaRecorder.stop();
-                grabando = false;
-                clearInterval(tiempoGrabacionInterval);
-                document.getElementById('btnGrabar').classList.remove('grabando');
-                document.getElementById('textoBotonGrabar').textContent = 'Grabar';
-                document.getElementById('indicadorGrabacion').classList.remove('activo');
+            return new Promise(function(resolve) {
+                if (mediaRecorder && grabando) {
+                    audioBlobReady = resolve; // Se llamará cuando onstop cree el blob
+                    mediaRecorder.stop();
+                    grabando = false;
+                    clearInterval(tiempoGrabacionInterval);
+                    document.getElementById('btnGrabar').classList.remove('grabando');
+                    document.getElementById('textoBotonGrabar').textContent = 'Grabar';
+                    document.getElementById('indicadorGrabacion').classList.remove('activo');
 
-                // Mostrar botones de reproducir y evaluar cuando hay grabacion
-                setTimeout(function() {
-                    if (audioBlob) {
-                        document.getElementById('btnReproducir').style.display = 'inline-flex';
-                        document.getElementById('btnTerminar').style.display = 'inline-flex';
-                    }
-                }, 300);
-            }
+                    // Mostrar botones de reproducir y evaluar cuando hay grabacion
+                    setTimeout(function() {
+                        if (audioBlob) {
+                            document.getElementById('btnReproducir').style.display = 'inline-flex';
+                            document.getElementById('btnTerminar').style.display = 'inline-flex';
+                        }
+                    }, 300);
+                } else {
+                    resolve(audioBlob); // Ya existe o no hay grabación
+                }
+            });
         }
 
         var audioReproduciendo = null;
@@ -1578,15 +1590,15 @@
         // ==================== EVALUACION ====================
         async function terminarLectura() {
             detenerLectura();
-            detenerGrabacion();
+            var audioBlobFinal = await detenerGrabacion(); // Esperar a que el blob esté listo
             mostrarPantalla('evaluacion');
             document.getElementById('evaluandoMsg').style.display = 'block';
             document.getElementById('resultadoEvaluacion').style.display = 'none';
             var tiempoTotal = tiempoInicioLectura ? Math.round((Date.now() - tiempoInicioLectura) / 1000) : 0;
             try {
                 // Preferir Gemini para transcripción + evaluación en una llamada
-                if (audioBlob && configIA.keys.gemini) {
-                    var resultado = await transcribirYEvaluarConGemini(audioBlob, tiempoTotal);
+                if (audioBlobFinal && configIA.keys.gemini) {
+                    var resultado = await transcribirYEvaluarConGemini(audioBlobFinal, tiempoTotal);
                     if (resultado) {
                         mostrarResultadoEvaluacionCompleta(resultado, tiempoTotal);
                         return;
@@ -1594,8 +1606,8 @@
                 }
                 // Fallback: Groq para transcripción + IA para evaluación
                 var transcripcion = null;
-                if (audioBlob && configIA.keys.groq) {
-                    transcripcion = await transcribirConGroq(audioBlob);
+                if (audioBlobFinal && configIA.keys.groq) {
+                    transcripcion = await transcribirConGroq(audioBlobFinal);
                 }
                 var evaluacion = await evaluarLecturaConIA(tiempoTotal, transcripcion);
                 mostrarResultadoEvaluacion(evaluacion, tiempoTotal, transcripcion);
@@ -1683,7 +1695,10 @@
         // Transcribir y evaluar en una sola llamada a Gemini (más eficiente)
         async function transcribirYEvaluarConGemini(audioBlob, tiempoTotal) {
             try {
+                console.log('Iniciando transcripción con Gemini...', audioBlob);
                 var base64Audio = await blobToBase64(audioBlob);
+                console.log('Audio convertido a base64, tamaño:', base64Audio.length);
+
                 var idioma = idiomaComic === 'en' ? 'inglés' : idiomaComic === 'ca' ? 'catalán' : 'español';
                 var guardado = localStorage.getItem('usuarioAprendizaje');
                 var usuario = guardado ? JSON.parse(guardado) : { nombre: 'Estudiante', edad: 10 };
@@ -1691,16 +1706,27 @@
 
                 var prompt = 'Eres un evaluador de lectura en voz alta para niños.\n\n' +
                     'TEXTO ORIGINAL que debía leer:\n"' + textoOriginal + '"\n\n' +
-                    'AUDIO: El estudiante ' + usuario.nombre + ' (' + usuario.edad + ' años) ha leído el texto.\n' +
+                    'AUDIO: El estudiante ' + usuario.nombre + ' (' + usuario.edad + ' años) ha leído el texto en ' + idioma + '.\n' +
                     'Frases completadas: ' + frasesLeidas + '/' + frases.length + '\n' +
                     'Tiempo: ' + tiempoTotal + ' segundos\n\n' +
                     'TAREAS:\n' +
-                    '1. Transcribe exactamente lo que dice el audio en ' + idioma + '\n' +
-                    '2. Compara con el texto original\n' +
-                    '3. Evalúa: pronunciación, fluidez, entonación\n\n' +
-                    'Responde SOLO con este JSON:\n' +
-                    '{"transcripcion": "texto transcrito", "puntuacion": 85, "velocidad": "adecuada/lenta/rápida", "pronunciacion": "buena/regular/mejorable", "entonacion": "natural/monótona/exagerada", "errores": ["palabra mal pronunciada"], "feedback": "Mensaje motivador personalizado", "consejos": ["Consejo específico"]}';
+                    '1. Escucha atentamente el audio y transcribe EXACTAMENTE lo que dice el niño\n' +
+                    '2. Compara la transcripción con el texto original palabra por palabra\n' +
+                    '3. Identifica palabras mal pronunciadas, omitidas o añadidas\n' +
+                    '4. Evalúa la pronunciación, fluidez y entonación\n\n' +
+                    'IMPORTANTE: Responde ÚNICAMENTE con este JSON (sin texto adicional):\n' +
+                    '{\n' +
+                    '  "transcripcion": "lo que realmente dijo el niño",\n' +
+                    '  "puntuacion": 85,\n' +
+                    '  "velocidad": "adecuada",\n' +
+                    '  "pronunciacion": "buena",\n' +
+                    '  "entonacion": "natural",\n' +
+                    '  "errores": ["palabra1", "palabra2"],\n' +
+                    '  "feedback": "Mensaje motivador",\n' +
+                    '  "consejos": ["Consejo 1"]\n' +
+                    '}';
 
+                console.log('Enviando a Gemini...');
                 var response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' + configIA.keys.gemini, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -1720,15 +1746,20 @@
                     })
                 });
 
+                console.log('Respuesta Gemini status:', response.status);
                 if (response.ok) {
                     var data = await response.json();
+                    console.log('Respuesta Gemini:', data);
                     if (data.candidates && data.candidates[0] && data.candidates[0].content) {
                         var texto = data.candidates[0].content.parts[0].text;
-                        return parsearJSONSeguro(texto);
+                        console.log('Texto Gemini:', texto);
+                        var resultado = parsearJSONSeguro(texto);
+                        console.log('Resultado parseado:', resultado);
+                        return resultado;
                     }
                 } else {
                     var errorText = await response.text();
-                    console.error('Gemini eval error:', errorText);
+                    console.error('Gemini eval error:', response.status, errorText);
                 }
             } catch (error) {
                 console.error('Error evaluando con Gemini:', error);
