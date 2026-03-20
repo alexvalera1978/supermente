@@ -805,7 +805,7 @@
             actualizarProgresoComic('Generando imagen ' + panelNum + '/' + totalPaneles + '...', panelNum, totalPaneles);
             try {
                 var prompt = 'Children\'s book illustration: ' + descripcion + '. Style: colorful, friendly, cartoon, watercolor, suitable for kids, no text.';
-                var response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=' + configIA.keys.gemini, {
+                var response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=' + configIA.keys.gemini, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -1588,23 +1588,35 @@
         }
 
         // ==================== EVALUACION ====================
+        function debugMsg(msg) {
+            var dbg = document.getElementById('debugInfo');
+            if (dbg) dbg.innerHTML += msg + '<br>';
+            console.log(msg);
+        }
+
         async function terminarLectura() {
             detenerLectura();
-            var audioBlobFinal = await detenerGrabacion(); // Esperar a que el blob esté listo
             mostrarPantalla('evaluacion');
-            document.getElementById('evaluandoMsg').style.display = 'block';
+            document.getElementById('evaluandoMsg').innerHTML = 'Evaluando tu lectura...<div id="debugInfo" style="font-size:0.7em; margin-top:10px; text-align:left; max-height:150px; overflow:auto; background:rgba(0,0,0,0.2); padding:8px; border-radius:5px;"></div>';
             document.getElementById('resultadoEvaluacion').style.display = 'none';
+
+            debugMsg('Esperando audio...');
+            var audioBlobFinal = await detenerGrabacion();
+            debugMsg('Audio: ' + (audioBlobFinal ? audioBlobFinal.size + ' bytes' : 'NO HAY'));
+            debugMsg('Gemini: ' + (configIA.keys.gemini ? 'SI' : 'NO'));
+
             var tiempoTotal = tiempoInicioLectura ? Math.round((Date.now() - tiempoInicioLectura) / 1000) : 0;
             try {
-                // Preferir Gemini para transcripción + evaluación en una llamada
                 if (audioBlobFinal && configIA.keys.gemini) {
+                    debugMsg('Llamando a Gemini...');
                     var resultado = await transcribirYEvaluarConGemini(audioBlobFinal, tiempoTotal);
+                    debugMsg('Respuesta: ' + (resultado ? 'OK' : 'FALLO'));
                     if (resultado) {
                         mostrarResultadoEvaluacionCompleta(resultado, tiempoTotal);
                         return;
                     }
                 }
-                // Fallback: Groq para transcripción + IA para evaluación
+                debugMsg('Usando fallback...');
                 var transcripcion = null;
                 if (audioBlobFinal && configIA.keys.groq) {
                     transcripcion = await transcribirConGroq(audioBlobFinal);
@@ -1612,7 +1624,7 @@
                 var evaluacion = await evaluarLecturaConIA(tiempoTotal, transcripcion);
                 mostrarResultadoEvaluacion(evaluacion, tiempoTotal, transcripcion);
             } catch (error) {
-                console.error('Error en evaluación:', error);
+                debugMsg('ERROR: ' + error.message);
                 mostrarResultadoBasico(tiempoTotal, null);
             }
         }
@@ -1658,7 +1670,7 @@
                 var base64Audio = await blobToBase64(audioBlob);
                 var idioma = idiomaComic === 'en' ? 'inglés' : idiomaComic === 'ca' ? 'catalán' : 'español';
 
-                var response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' + configIA.keys.gemini, {
+                var response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=' + configIA.keys.gemini, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -1695,9 +1707,9 @@
         // Transcribir y evaluar en una sola llamada a Gemini (más eficiente)
         async function transcribirYEvaluarConGemini(audioBlob, tiempoTotal) {
             try {
-                console.log('Iniciando transcripción con Gemini...', audioBlob);
+                debugMsg('Convirtiendo audio...');
                 var base64Audio = await blobToBase64(audioBlob);
-                console.log('Audio convertido a base64, tamaño:', base64Audio.length);
+                debugMsg('Base64: ' + base64Audio.length + ' chars');
 
                 var idioma = idiomaComic === 'en' ? 'inglés' : idiomaComic === 'ca' ? 'catalán' : 'español';
                 var guardado = localStorage.getItem('usuarioAprendizaje');
@@ -1726,8 +1738,8 @@
                     '  "consejos": ["Consejo 1"]\n' +
                     '}';
 
-                console.log('Enviando a Gemini...');
-                var response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' + configIA.keys.gemini, {
+                debugMsg('Enviando a Gemini...');
+                var response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=' + configIA.keys.gemini, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -1746,23 +1758,23 @@
                     })
                 });
 
-                console.log('Respuesta Gemini status:', response.status);
+                debugMsg('Status: ' + response.status);
                 if (response.ok) {
                     var data = await response.json();
-                    console.log('Respuesta Gemini:', data);
                     if (data.candidates && data.candidates[0] && data.candidates[0].content) {
                         var texto = data.candidates[0].content.parts[0].text;
-                        console.log('Texto Gemini:', texto);
+                        debugMsg('Texto recibido OK');
                         var resultado = parsearJSONSeguro(texto);
-                        console.log('Resultado parseado:', resultado);
                         return resultado;
+                    } else {
+                        debugMsg('Sin candidates en respuesta');
                     }
                 } else {
                     var errorText = await response.text();
-                    console.error('Gemini eval error:', response.status, errorText);
+                    debugMsg('Error Gemini: ' + response.status);
                 }
             } catch (error) {
-                console.error('Error evaluando con Gemini:', error);
+                debugMsg('Excepción: ' + error.message);
             }
             return null;
         }
