@@ -958,6 +958,42 @@
             container.innerHTML = '<div class="libro-container"><div class="libro-pagina" id="paginaLibro"></div><div class="libro-navegacion"><button class="libro-btn" id="btnAnterior" onclick="paginaAnterior()">◀ Anterior</button><span class="libro-contador" id="contadorPaginas">1 / ' + comic.paneles.length + '</span><button class="libro-btn" id="btnSiguiente" onclick="paginaSiguiente()">Siguiente ▶</button></div></div>';
             mostrarPaginaLibro(0);
             mostrarPantalla('vistaComic');
+
+            // Guardar cuento automáticamente al generarlo
+            guardarCuentoEnHistorial(comic);
+        }
+
+        // Guardar cuento en historial (sin resultados de lectura todavía)
+        function guardarCuentoEnHistorial(comic) {
+            var historial = JSON.parse(localStorage.getItem('historialLecturas') || '[]');
+
+            // Crear frases del cuento
+            var frasesComic = comic.paneles.map(function(p) { return p.texto; });
+
+            var registro = {
+                id: Date.now(), // ID único para poder actualizar después
+                fecha: new Date().toISOString(),
+                cuento: {
+                    titulo: comic.titulo,
+                    frases: frasesComic,
+                    idioma: idiomaComic,
+                    paneles: comic.paneles // Guardar paneles completos para releer
+                },
+                resultado: null, // Sin evaluación todavía
+                evaluado: false
+            };
+
+            historial.unshift(registro);
+
+            // Limitar a 30 registros
+            if (historial.length > 30) {
+                historial = historial.slice(0, 30);
+            }
+
+            localStorage.setItem('historialLecturas', JSON.stringify(historial));
+
+            // Guardar ID del cuento actual para actualizar después
+            window.cuentoActualId = registro.id;
         }
 
         function mostrarPaginaLibro(idx) {
@@ -1703,7 +1739,8 @@
         async function terminarLectura() {
             detenerLectura();
             mostrarPantalla('evaluacion');
-            document.getElementById('evaluandoMsg').innerHTML = 'Evaluando tu lectura...<div id="debugInfo" style="font-size:0.7em; margin-top:10px; text-align:left; max-height:150px; overflow:auto; background:rgba(0,0,0,0.2); padding:8px; border-radius:5px;"></div>';
+            document.getElementById('evaluandoMsg').style.display = 'block';
+            document.getElementById('evaluandoMsg').innerHTML = '<div class="spinner">🤖</div><p>Evaluando tu lectura...</p><div id="debugInfo" style="font-size:0.7em; margin-top:10px; text-align:left; max-height:150px; overflow:auto; background:rgba(0,0,0,0.2); padding:8px; border-radius:5px;"></div>';
             document.getElementById('resultadoEvaluacion').style.display = 'none';
 
             debugMsg('Esperando audio...');
@@ -1712,13 +1749,17 @@
             debugMsg('Gemini: ' + (configIA.keys.gemini ? 'SI' : 'NO'));
 
             var tiempoTotal = tiempoInicioLectura ? Math.round((Date.now() - tiempoInicioLectura) / 1000) : 0;
+
+            // Guardar referencia al audio para guardarlo después
+            window.ultimoAudioGrabacion = audioBlobFinal;
+
             try {
                 if (audioBlobFinal && configIA.keys.gemini) {
                     debugMsg('Llamando a Gemini...');
                     var resultado = await transcribirYEvaluarConGemini(audioBlobFinal, tiempoTotal);
                     debugMsg('Respuesta: ' + (resultado ? 'OK' : 'FALLO'));
                     if (resultado) {
-                        mostrarResultadoEvaluacionCompleta(resultado, tiempoTotal);
+                        mostrarResultadoEvaluacionCompleta(resultado, tiempoTotal, audioBlobFinal);
                         return;
                     }
                 }
@@ -1909,7 +1950,7 @@
         }
 
         // Mostrar resultado completo con análisis detallado de pronunciación
-        function mostrarResultadoEvaluacionCompleta(resultado, tiempoTotal) {
+        async function mostrarResultadoEvaluacionCompleta(resultado, tiempoTotal, audioGrabacion) {
             document.getElementById('evaluandoMsg').style.display = 'none';
             document.getElementById('resultadoEvaluacion').style.display = 'block';
 
@@ -1992,8 +2033,21 @@
 
             document.getElementById('feedbackIA').innerHTML = feedbackHTML;
 
-            // Guardar resultado en historial
-            guardarResultadoLectura(resultado, tiempoTotal);
+            // Generar audios TTS para palabras mal pronunciadas antes de guardar
+            if (palabrasMal.length > 0) {
+                for (var i = 0; i < Math.min(palabrasMal.length, 5); i++) { // Máximo 5 para no tardar mucho
+                    var p = palabrasMal[i];
+                    var palabra = typeof p === 'object' ? p.palabra : p;
+                    if (palabra) {
+                        try {
+                            await reproducirPalabra(palabra, idiomaComic); // Esto genera y cachea el audio
+                        } catch (e) { }
+                    }
+                }
+            }
+
+            // Guardar resultado en historial (con audios)
+            await guardarResultadoLectura(resultado, tiempoTotal, audioGrabacion);
         }
 
         // Variable para guardar últimas palabras mal pronunciadas
@@ -2138,37 +2192,109 @@
         }
 
         // Guardar resultado de lectura en historial
-        function guardarResultadoLectura(resultado, tiempoTotal) {
+        // Variable para guardar el audio de la grabación actual
+        var ultimaGrabacionBase64 = null;
+
+        async function guardarResultadoLectura(resultado, tiempoTotal, audioGrabacion) {
             var historial = JSON.parse(localStorage.getItem('historialLecturas') || '[]');
 
-            var registro = {
-                fecha: new Date().toISOString(),
-                cuento: {
-                    titulo: tituloComic || 'Sin título',
-                    frases: frases,
-                    idioma: idiomaComic
-                },
-                resultado: {
-                    puntuacion: resultado.puntuacion,
-                    transcripcion: resultado.transcripcion,
-                    palabras_mal_pronunciadas: resultado.palabras_mal_pronunciadas || [],
-                    fluidez: resultado.fluidez,
-                    entonacion: resultado.entonacion,
-                    velocidad: resultado.velocidad,
-                    feedback: resultado.feedback
-                },
-                tiempoTotal: tiempoTotal,
-                frasesLeidas: frasesLeidas
-            };
-
-            historial.unshift(registro); // Añadir al principio
-
-            // Limitar a últimos 50 registros
-            if (historial.length > 50) {
-                historial = historial.slice(0, 50);
+            // Convertir audio de grabación a base64 si existe
+            var audioBase64 = null;
+            if (audioGrabacion) {
+                try {
+                    audioBase64 = await blobToBase64(audioGrabacion);
+                } catch (e) {
+                    console.error('Error convirtiendo audio:', e);
+                }
             }
 
-            localStorage.setItem('historialLecturas', JSON.stringify(historial));
+            // Generar audios TTS para palabras mal pronunciadas
+            var audiosPalabras = {};
+            var palabrasMal = resultado.palabras_mal_pronunciadas || [];
+            if (palabrasMal.length > 0) {
+                for (var i = 0; i < palabrasMal.length; i++) {
+                    var p = palabrasMal[i];
+                    var palabra = typeof p === 'object' ? p.palabra : p;
+                    if (palabra && cacheAudios[palabra + '_' + (idiomaComic || 'ca')]) {
+                        // Si ya tenemos el audio en caché, usarlo
+                        audiosPalabras[palabra] = cacheAudios[palabra + '_' + (idiomaComic || 'ca')];
+                    }
+                }
+            }
+
+            // Buscar si existe el cuento actual para actualizarlo
+            var encontrado = false;
+            if (window.cuentoActualId) {
+                for (var i = 0; i < historial.length; i++) {
+                    if (historial[i].id === window.cuentoActualId) {
+                        // Actualizar registro existente
+                        historial[i].resultado = {
+                            puntuacion: resultado.puntuacion,
+                            transcripcion: resultado.transcripcion,
+                            palabras_mal_pronunciadas: resultado.palabras_mal_pronunciadas || [],
+                            fluidez: resultado.fluidez,
+                            entonacion: resultado.entonacion,
+                            velocidad: resultado.velocidad,
+                            feedback: resultado.feedback,
+                            consejos: resultado.consejos || []
+                        };
+                        historial[i].tiempoTotal = tiempoTotal;
+                        historial[i].frasesLeidas = frasesLeidas;
+                        historial[i].evaluado = true;
+                        historial[i].fechaEvaluacion = new Date().toISOString();
+                        historial[i].audioGrabacion = audioBase64;
+                        historial[i].audiosPalabras = audiosPalabras;
+                        encontrado = true;
+                        break;
+                    }
+                }
+            }
+
+            // Si no encontramos el registro (por ejemplo, PDF o releer), crear uno nuevo
+            if (!encontrado) {
+                var registro = {
+                    id: Date.now(),
+                    fecha: new Date().toISOString(),
+                    cuento: {
+                        titulo: tituloComic || 'Sin título',
+                        frases: frases,
+                        idioma: idiomaComic
+                    },
+                    resultado: {
+                        puntuacion: resultado.puntuacion,
+                        transcripcion: resultado.transcripcion,
+                        palabras_mal_pronunciadas: resultado.palabras_mal_pronunciadas || [],
+                        fluidez: resultado.fluidez,
+                        entonacion: resultado.entonacion,
+                        velocidad: resultado.velocidad,
+                        feedback: resultado.feedback,
+                        consejos: resultado.consejos || []
+                    },
+                    tiempoTotal: tiempoTotal,
+                    frasesLeidas: frasesLeidas,
+                    evaluado: true,
+                    audioGrabacion: audioBase64,
+                    audiosPalabras: audiosPalabras
+                };
+                historial.unshift(registro);
+            }
+
+            // Limitar a últimos 20 registros (menos porque ahora guardamos audios)
+            if (historial.length > 20) {
+                historial = historial.slice(0, 20);
+            }
+
+            try {
+                localStorage.setItem('historialLecturas', JSON.stringify(historial));
+            } catch (e) {
+                // Si falla por espacio, intentar sin audios
+                console.error('Error guardando con audios, intentando sin:', e);
+                historial.forEach(function(h) {
+                    delete h.audioGrabacion;
+                    delete h.audiosPalabras;
+                });
+                localStorage.setItem('historialLecturas', JSON.stringify(historial));
+            }
         }
 
         function mostrarResultadoBasico(tiempoTotal, transcripcion) {
@@ -2556,16 +2682,29 @@
             var html = '';
             historial.forEach(function(registro, idx) {
                 var fecha = new Date(registro.fecha);
-                var fechaStr = fecha.toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+                var fechaStr = fecha.toLocaleDateString('es-ES', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+                var evaluado = registro.evaluado || (registro.resultado && registro.resultado.puntuacion);
                 var puntuacion = registro.resultado ? registro.resultado.puntuacion : 0;
                 var errores = registro.resultado && registro.resultado.palabras_mal_pronunciadas ? registro.resultado.palabras_mal_pronunciadas.length : 0;
 
                 html += '<div class="historial-item" onclick="toggleHistorialDetalle(' + idx + ')" data-idx="' + idx + '">';
+
+                // Cabecera con fecha y botón borrar
+                html += '<div style="display:flex; justify-content:space-between; align-items:center;">';
                 html += '<div class="historial-fecha">' + fechaStr + '</div>';
+                html += '<button onclick="event.stopPropagation(); borrarDelHistorial(' + idx + ')" style="background:rgba(255,100,100,0.3); border:1px solid rgba(255,100,100,0.5); border-radius:5px; padding:3px 8px; cursor:pointer; font-size:0.8em;" title="Borrar">🗑️</button>';
+                html += '</div>';
+
                 html += '<div class="historial-titulo">' + (registro.cuento ? registro.cuento.titulo : 'Lectura') + '</div>';
                 html += '<div class="historial-stats">';
-                html += '<span class="historial-stat">🏆 ' + puntuacion + '/100</span>';
-                html += '<span class="historial-stat">❌ ' + errores + ' errores</span>';
+
+                if (evaluado) {
+                    html += '<span class="historial-stat">🏆 ' + puntuacion + '/100</span>';
+                    html += '<span class="historial-stat">❌ ' + errores + ' errores</span>';
+                } else {
+                    html += '<span class="historial-stat" style="color:#ffcc00;">⏳ Sin evaluar</span>';
+                }
+
                 if (registro.cuento && registro.cuento.idioma) {
                     var idiomaEmoji = { es: '🇪🇸', ca: '🏴', en: '🇬🇧' }[registro.cuento.idioma] || '🌐';
                     html += '<span class="historial-stat">' + idiomaEmoji + '</span>';
@@ -2574,7 +2713,8 @@
 
                 // Detalle expandible
                 html += '<div class="historial-detalle">';
-                if (registro.resultado) {
+
+                if (evaluado && registro.resultado) {
                     html += '<p><strong>Fluidez:</strong> ' + (registro.resultado.fluidez || '-') + '</p>';
                     html += '<p><strong>Entonacion:</strong> ' + (registro.resultado.entonacion || '-') + '</p>';
                     html += '<p><strong>Velocidad:</strong> ' + (registro.resultado.velocidad || '-') + '</p>';
@@ -2583,22 +2723,70 @@
                     }
                     if (errores > 0) {
                         html += '<div style="margin-top:10px;"><strong>Palabras a practicar:</strong><div style="margin-top:5px;">';
-                        registro.resultado.palabras_mal_pronunciadas.forEach(function(p) {
+                        registro.resultado.palabras_mal_pronunciadas.forEach(function(p, pIdx) {
                             var palabra = typeof p === 'object' ? p.palabra : p;
                             html += '<span style="display:inline-flex; align-items:center; gap:5px; margin:3px; padding:5px 10px; background:rgba(255,100,100,0.2); border-radius:5px;">';
                             html += palabra;
-                            html += '<button onclick="event.stopPropagation(); reproducirPalabra(\'' + palabra + '\')" style="background:none; border:none; cursor:pointer;">🔊</button>';
+                            // Usar audio guardado si existe, sino generar
+                            if (registro.audiosPalabras && registro.audiosPalabras[palabra]) {
+                                html += '<button onclick="event.stopPropagation(); reproducirAudioGuardado(' + idx + ', \'' + palabra + '\')" style="background:none; border:none; cursor:pointer;" title="Reproducir (guardado)">🔊</button>';
+                            } else {
+                                html += '<button onclick="event.stopPropagation(); reproducirPalabra(\'' + palabra + '\')" style="background:none; border:none; cursor:pointer;" title="Reproducir (generar)">🔊</button>';
+                            }
                             html += '</span>';
                         });
                         html += '</div></div>';
                     }
+
+                    // Botón para reproducir grabación del usuario si existe
+                    if (registro.audioGrabacion) {
+                        html += '<div style="margin-top:10px;"><button class="btn" onclick="event.stopPropagation(); reproducirGrabacionHistorial(' + idx + ')" style="width:100%; background:rgba(0,200,255,0.2);">🎤 Escuchar mi grabacion</button></div>';
+                    }
+                } else {
+                    html += '<p style="opacity:0.7;">Este cuento todavia no ha sido evaluado. Leelo y graba tu lectura para obtener una evaluacion.</p>';
                 }
-                html += '<button class="btn" onclick="event.stopPropagation(); releerCuento(' + idx + ')" style="margin-top:10px; width:100%;">📖 Volver a leer</button>';
+
+                html += '<button class="btn" onclick="event.stopPropagation(); releerCuento(' + idx + ')" style="margin-top:10px; width:100%;">📖 ' + (evaluado ? 'Volver a leer' : 'Leer ahora') + '</button>';
                 html += '</div>';
                 html += '</div>';
             });
 
             container.innerHTML = html;
+        }
+
+        function borrarDelHistorial(idx) {
+            if (!confirm('¿Seguro que quieres borrar este cuento del historial?')) {
+                return;
+            }
+            var historial = JSON.parse(localStorage.getItem('historialLecturas') || '[]');
+            historial.splice(idx, 1);
+            localStorage.setItem('historialLecturas', JSON.stringify(historial));
+            cargarHistorial(); // Recargar lista
+        }
+
+        // Reproducir audio TTS guardado del historial
+        function reproducirAudioGuardado(idx, palabra) {
+            var historial = JSON.parse(localStorage.getItem('historialLecturas') || '[]');
+            var registro = historial[idx];
+            if (registro && registro.audiosPalabras && registro.audiosPalabras[palabra]) {
+                var audio = new Audio(registro.audiosPalabras[palabra]);
+                audio.play();
+            } else {
+                // Si no está guardado, generar
+                reproducirPalabra(palabra, registro.cuento ? registro.cuento.idioma : 'ca');
+            }
+        }
+
+        // Reproducir grabación del usuario guardada
+        function reproducirGrabacionHistorial(idx) {
+            var historial = JSON.parse(localStorage.getItem('historialLecturas') || '[]');
+            var registro = historial[idx];
+            if (registro && registro.audioGrabacion) {
+                var audio = new Audio('data:audio/webm;base64,' + registro.audioGrabacion);
+                audio.play();
+            } else {
+                alert('No hay grabacion guardada');
+            }
         }
 
         function toggleHistorialDetalle(idx) {
@@ -2622,6 +2810,9 @@
                 frases = registro.cuento.frases;
                 tituloComic = registro.cuento.titulo;
                 origenLectura = 'comic';
+
+                // Establecer ID para actualizar este registro al evaluar
+                window.cuentoActualId = registro.id;
 
                 prepararTextoLectura(frases.join(' '));
                 mostrarPantalla('lecturaActiva');
