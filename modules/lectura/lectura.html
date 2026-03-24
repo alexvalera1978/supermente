@@ -347,6 +347,46 @@
         .error-item .paraula-error { color: #ff9999; font-weight: bold; }
         .error-item .paraula-correcta { color: #90EE90; font-weight: bold; }
         .error-item .regla { font-size: 0.9em; opacity: 0.9; margin-top: 8px; line-height: 1.4; }
+
+        /* ==================== HISTORIAL ==================== */
+        .historial-lista { max-width: 400px; margin: 0 auto; max-height: 60vh; overflow-y: auto; }
+        .historial-item {
+            background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 12px; padding: 15px; margin-bottom: 12px; cursor: pointer;
+        }
+        .historial-item:hover { background: rgba(255,255,255,0.15); }
+        .historial-fecha { font-size: 0.85em; opacity: 0.7; }
+        .historial-titulo { font-size: 1.2em; margin: 5px 0; }
+        .historial-stats { display: flex; gap: 15px; margin-top: 8px; font-size: 0.95em; }
+        .historial-stat { display: flex; align-items: center; gap: 5px; }
+        .historial-vacio { text-align: center; padding: 40px 20px; opacity: 0.7; }
+        .historial-detalle { background: rgba(0,0,0,0.2); border-radius: 10px; padding: 15px; margin-top: 10px; display: none; }
+        .historial-item.expandido .historial-detalle { display: block; }
+
+        /* ==================== PRONUNCIACION ==================== */
+        .pronunciacion-intro { text-align: center; padding: 20px; max-width: 350px; margin: 0 auto; }
+        .pronunciacion-header {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 10px 15px; background: rgba(255,255,255,0.1); border-radius: 10px; margin-bottom: 20px;
+        }
+        .pronunciacion-palabra-box {
+            background: rgba(255,255,255,0.95); border-radius: 15px; padding: 30px;
+            text-align: center; margin-bottom: 20px;
+        }
+        .palabra-grande { color: #333; font-size: 2.5em; font-family: Georgia, serif; margin-bottom: 20px; }
+        .btn-escuchar {
+            background: #2a5a2a; color: white; border: none; padding: 12px 25px;
+            border-radius: 25px; font-size: 1.1em; cursor: pointer; font-family: 'Indie Flower', cursive;
+        }
+        .btn-escuchar:hover { background: #3a7a3a; }
+        .pronunciacion-controles { display: flex; justify-content: center; align-items: center; gap: 15px; margin-bottom: 20px; }
+        .resultado-pronunciacion {
+            background: rgba(255,255,255,0.1); border-radius: 15px; padding: 20px; text-align: center;
+        }
+        .resultado-correcto { color: #90EE90; }
+        .resultado-incorrecto { color: #ff9999; }
+        .resultado-icono { font-size: 3em; margin-bottom: 10px; }
+        .btn-siguiente { margin-top: 15px; }
     </style>
 </head>
 <body>
@@ -368,6 +408,16 @@
                     <div class="icono">🇦🇩</div>
                     <h3>Aprenent Catala</h3>
                     <p>Practica ortografia catalana amb jocs</p>
+                </div>
+                <div class="opcion-lectura" onclick="mostrarHistorial()">
+                    <div class="icono">📚</div>
+                    <h3>Historial</h3>
+                    <p>Ver lecturas anteriores y resultados</p>
+                </div>
+                <div class="opcion-lectura" onclick="mostrarPronunciacion()">
+                    <div class="icono">🎯</div>
+                    <h3>Pronunciacion</h3>
+                    <p>Practica palabras dificiles en catalan</p>
                 </div>
             </div>
             <div class="botones-control">
@@ -606,6 +656,60 @@
         </div>
     </div>
 
+    <!-- ==================== HISTORIAL DE LECTURAS ==================== -->
+    <div id="historialLecturas" class="oculto">
+        <div class="menu-container">
+            <h1>📚 Historial de Lecturas</h1>
+            <div id="listaHistorial" class="historial-lista">
+                <!-- Se llena dinamicamente -->
+            </div>
+            <div class="botones-control">
+                <button class="btn" onclick="mostrarPantalla('menuLectura')">← Volver</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== PRONUNCIACION DE PALABRAS ==================== -->
+    <div id="pronunciacionPalabras" class="oculto">
+        <div class="menu-container">
+            <h1>🎯 Pronunciacion</h1>
+            <div id="menuPronunciacion" class="pronunciacion-intro">
+                <p>Practica la pronunciacion de palabras dificiles en catalan</p>
+                <div style="font-size:3em; margin:20px 0;">🗣️</div>
+                <p style="opacity:0.8;">Escucha la palabra, repitela y comprueba si lo has dicho bien!</p>
+                <button class="btn-menu" onclick="iniciarPronunciacion()">✨ Empezar</button>
+            </div>
+            <div id="ejercicioPronunciacion" style="display:none;">
+                <div class="pronunciacion-header">
+                    <span id="contadorPronunciacion">Palabra 1 de 10</span>
+                    <span id="puntsPronunciacion" style="color:#90EE90;">0 puntos</span>
+                </div>
+                <div class="pronunciacion-palabra-box">
+                    <div id="palabraPronunciacion" class="palabra-grande"></div>
+                    <button class="btn-escuchar" onclick="reproducirPalabraActual()">🔊 Escuchar</button>
+                </div>
+                <div class="pronunciacion-controles">
+                    <button class="btn-lectura" id="btnGrabarPronunciacion" onclick="toggleGrabacionPronunciacion()">
+                        <span>🎤</span><span id="textoGrabarPron">Grabar</span>
+                    </button>
+                    <div class="indicador-grabacion" id="indicadorGrabacionPron">
+                        <div class="punto"></div>
+                        <span id="tiempoGrabacionPron">00:00</span>
+                    </div>
+                </div>
+                <div id="resultadoPronunciacion" class="resultado-pronunciacion" style="display:none;">
+                    <!-- Resultado de la evaluacion -->
+                </div>
+            </div>
+            <div id="resultadosPronunciacionFinal" style="display:none;">
+                <!-- Resultados finales -->
+            </div>
+            <div class="botones-control">
+                <button class="btn" onclick="volverMenuPronunciacion()">← Volver</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // ==================== CONFIGURACION IA ====================
         var configIA = {
@@ -625,6 +729,7 @@
         // ==================== ESTADO GLOBAL ====================
         var idiomaComic = null;
         var comicActual = null;
+        var tituloComic = '';
         var textoPDF = '';
         var paginasPDF = [];
         var textoActual = '';
@@ -666,7 +771,7 @@
 
         // ==================== NAVEGACION ====================
         function mostrarPantalla(id) {
-            ['menuLectura', 'generadorComic', 'cargaPDF', 'generandoComic', 'vistaComic', 'lecturaActiva', 'evaluacion', 'menuAprenentCatala', 'lecturaAprenent', 'quizAprenent', 'resultatsAprenent'].forEach(function(pid) {
+            ['menuLectura', 'generadorComic', 'cargaPDF', 'generandoComic', 'vistaComic', 'lecturaActiva', 'evaluacion', 'menuAprenentCatala', 'lecturaAprenent', 'quizAprenent', 'resultatsAprenent', 'historialLecturas', 'pronunciacionPalabras'].forEach(function(pid) {
                 var el = document.getElementById(pid);
                 if (el) el.classList.add('oculto');
             });
@@ -846,6 +951,7 @@
 
         function mostrarComic(comic) {
             comicActual = comic;
+            tituloComic = comic.titulo;
             paginaActualLibro = 0;
             document.getElementById('tituloComic').textContent = comic.titulo;
             var container = document.getElementById('panelessComic');
@@ -1716,26 +1822,31 @@
                 var usuario = guardado ? JSON.parse(guardado) : { nombre: 'Estudiante', edad: 10 };
                 var textoOriginal = frases.join(' ');
 
-                var prompt = 'Eres un evaluador de lectura en voz alta para niños.\n\n' +
+                var prompt = 'Eres un profesor de lengua experto en evaluar lectura en voz alta de niños.\n\n' +
                     'TEXTO ORIGINAL que debía leer:\n"' + textoOriginal + '"\n\n' +
                     'AUDIO: El estudiante ' + usuario.nombre + ' (' + usuario.edad + ' años) ha leído el texto en ' + idioma + '.\n' +
-                    'Frases completadas: ' + frasesLeidas + '/' + frases.length + '\n' +
                     'Tiempo: ' + tiempoTotal + ' segundos\n\n' +
                     'TAREAS:\n' +
-                    '1. Escucha atentamente el audio y transcribe EXACTAMENTE lo que dice el niño\n' +
-                    '2. Compara la transcripción con el texto original palabra por palabra\n' +
-                    '3. Identifica palabras mal pronunciadas, omitidas o añadidas\n' +
-                    '4. Evalúa la pronunciación, fluidez y entonación\n\n' +
-                    'IMPORTANTE: Responde ÚNICAMENTE con este JSON (sin texto adicional):\n' +
+                    '1. Escucha atentamente y transcribe EXACTAMENTE lo que dice\n' +
+                    '2. Compara palabra por palabra con el texto original\n' +
+                    '3. Identifica palabras MAL PRONUNCIADAS indicando CÓMO las pronunció\n' +
+                    '4. Identifica palabras OMITIDAS y AÑADIDAS\n' +
+                    '5. Evalúa fluidez, entonación y velocidad\n\n' +
+                    'IMPORTANTE: Responde ÚNICAMENTE con este JSON:\n' +
                     '{\n' +
-                    '  "transcripcion": "lo que realmente dijo el niño",\n' +
+                    '  "transcripcion": "exactamente lo que dijo",\n' +
+                    '  "palabras_mal_pronunciadas": [\n' +
+                    '    {"palabra": "vegada", "como_lo_dijo": "begada", "correccion": "La v se pronuncia como v labiodental"},\n' +
+                    '    {"palabra": "botiga", "como_lo_dijo": "botija", "correccion": "La g intervocálica es suave"}\n' +
+                    '  ],\n' +
+                    '  "palabras_omitidas": ["palabra1"],\n' +
+                    '  "palabras_anadidas": ["palabra2"],\n' +
+                    '  "fluidez": "fluida/con pausas/entrecortada",\n' +
+                    '  "entonacion": "natural/monótona/exagerada",\n' +
+                    '  "velocidad": "adecuada/rápida/lenta",\n' +
                     '  "puntuacion": 85,\n' +
-                    '  "velocidad": "adecuada",\n' +
-                    '  "pronunciacion": "buena",\n' +
-                    '  "entonacion": "natural",\n' +
-                    '  "errores": ["palabra1", "palabra2"],\n' +
-                    '  "feedback": "Mensaje motivador",\n' +
-                    '  "consejos": ["Consejo 1"]\n' +
+                    '  "feedback": "Mensaje motivador específico",\n' +
+                    '  "consejos": ["Consejo específico 1", "Consejo 2"]\n' +
                     '}';
 
                 debugMsg('Enviando a Gemini...');
@@ -1797,7 +1908,7 @@
             document.getElementById('feedbackIA').innerHTML = '<p><strong>💬</strong> ' + evaluacion.feedback + '</p>' + (evaluacion.consejos ? '<p><strong>💡 Consejos:</strong></p><ul>' + evaluacion.consejos.map(function(c) { return '<li>' + c + '</li>'; }).join('') + '</ul>' : '');
         }
 
-        // Mostrar resultado completo con transcripción, pronunciación y entonación (Gemini)
+        // Mostrar resultado completo con análisis detallado de pronunciación
         function mostrarResultadoEvaluacionCompleta(resultado, tiempoTotal) {
             document.getElementById('evaluandoMsg').style.display = 'none';
             document.getElementById('resultadoEvaluacion').style.display = 'block';
@@ -1809,36 +1920,129 @@
             var mins = Math.floor(tiempoTotal / 60);
             var secs = tiempoTotal % 60;
 
-            // Detalles expandidos con pronunciación y entonación
-            var detallesHTML = '<div class="detalle-item"><span>Frases:</span><span>' + frasesLeidas + '/' + frases.length + '</span></div>';
-            detallesHTML += '<div class="detalle-item"><span>Tiempo:</span><span>' + mins + 'm ' + secs + 's</span></div>';
-            detallesHTML += '<div class="detalle-item"><span>Velocidad:</span><span>' + (resultado.velocidad || 'normal') + '</span></div>';
-            detallesHTML += '<div class="detalle-item"><span>Pronunciación:</span><span>' + (resultado.pronunciacion || '-') + '</span></div>';
+            // Detalles expandidos
+            var detallesHTML = '<div class="detalle-item"><span>Tiempo:</span><span>' + mins + 'm ' + secs + 's</span></div>';
+            detallesHTML += '<div class="detalle-item"><span>Fluidez:</span><span>' + (resultado.fluidez || '-') + '</span></div>';
             detallesHTML += '<div class="detalle-item"><span>Entonación:</span><span>' + (resultado.entonacion || '-') + '</span></div>';
+            detallesHTML += '<div class="detalle-item"><span>Velocidad:</span><span>' + (resultado.velocidad || '-') + '</span></div>';
             document.getElementById('detallesEvaluacion').innerHTML = detallesHTML;
 
-            // Feedback con transcripción y errores
             var feedbackHTML = '';
 
-            // Mostrar transcripción
+            // Transcripción
             if (resultado.transcripcion) {
-                feedbackHTML += '<p><strong>🎤 Lo que leíste:</strong></p><p style="font-style:italic; background:rgba(255,255,255,0.1); padding:8px; border-radius:5px;">"' + resultado.transcripcion + '"</p>';
+                feedbackHTML += '<div style="margin-bottom:15px;"><strong>🎤 Lo que leíste:</strong><p style="font-style:italic; background:rgba(255,255,255,0.1); padding:10px; border-radius:5px; margin-top:5px;">"' + resultado.transcripcion + '"</p></div>';
             }
 
-            // Mostrar errores de pronunciación si hay
-            if (resultado.errores && resultado.errores.length > 0) {
-                feedbackHTML += '<p><strong>⚠️ Palabras a practicar:</strong> ' + resultado.errores.join(', ') + '</p>';
+            // Palabras mal pronunciadas con detalle
+            var palabrasMal = resultado.palabras_mal_pronunciadas || resultado.errores || [];
+            if (palabrasMal.length > 0) {
+                feedbackHTML += '<div style="margin-bottom:15px;"><strong>❌ Palabras mal pronunciadas (' + palabrasMal.length + '):</strong>';
+                feedbackHTML += '<div style="background:rgba(255,100,100,0.1); padding:10px; border-radius:5px; margin-top:5px;">';
+
+                palabrasMal.forEach(function(p, idx) {
+                    if (typeof p === 'object' && p.palabra) {
+                        feedbackHTML += '<div style="margin-bottom:10px; padding-bottom:10px; border-bottom:1px solid rgba(255,255,255,0.1);">';
+                        feedbackHTML += '<div style="display:flex; align-items:center; gap:10px;">';
+                        feedbackHTML += '<strong style="color:#FFD700;">' + p.palabra + '</strong>';
+                        feedbackHTML += '<button onclick="reproducirPalabra(\'' + p.palabra + '\')" style="background:rgba(255,255,255,0.2); border:1px solid rgba(255,255,255,0.4); border-radius:50%; width:28px; height:28px; cursor:pointer; font-size:14px;" title="Escuchar pronunciación correcta">🔊</button>';
+                        feedbackHTML += '</div>';
+                        if (p.como_lo_dijo) {
+                            feedbackHTML += '<div style="font-size:0.9em; opacity:0.8;">Dijiste: "' + p.como_lo_dijo + '"</div>';
+                        }
+                        if (p.correccion) {
+                            feedbackHTML += '<div style="font-size:0.9em; color:#90EE90; margin-top:3px;">💡 ' + p.correccion + '</div>';
+                        }
+                        feedbackHTML += '</div>';
+                    } else {
+                        // Formato antiguo (solo string)
+                        feedbackHTML += '<span style="display:inline-flex; align-items:center; gap:5px; margin:3px; padding:3px 8px; background:rgba(255,255,255,0.1); border-radius:4px;">';
+                        feedbackHTML += p;
+                        feedbackHTML += '<button onclick="reproducirPalabra(\'' + p + '\')" style="background:none; border:none; cursor:pointer; font-size:12px;">🔊</button>';
+                        feedbackHTML += '</span>';
+                    }
+                });
+                feedbackHTML += '</div></div>';
+
+                // Guardar palabras para practicar
+                ultimasPalabrasMal = palabrasMal;
             }
 
-            // Feedback principal
-            feedbackHTML += '<p><strong>💬</strong> ' + (resultado.feedback || '¡Buen trabajo!') + '</p>';
+            // Palabras omitidas
+            if (resultado.palabras_omitidas && resultado.palabras_omitidas.length > 0) {
+                feedbackHTML += '<p><strong>⏭️ Palabras omitidas:</strong> ' + resultado.palabras_omitidas.join(', ') + '</p>';
+            }
+
+            // Palabras añadidas
+            if (resultado.palabras_anadidas && resultado.palabras_anadidas.length > 0) {
+                feedbackHTML += '<p><strong>➕ Palabras añadidas:</strong> ' + resultado.palabras_anadidas.join(', ') + '</p>';
+            }
+
+            // Feedback
+            feedbackHTML += '<p style="margin-top:15px;"><strong>💬</strong> ' + (resultado.feedback || '¡Buen trabajo!') + '</p>';
 
             // Consejos
             if (resultado.consejos && resultado.consejos.length > 0) {
-                feedbackHTML += '<p><strong>💡 Consejos:</strong></p><ul>' + resultado.consejos.map(function(c) { return '<li>' + c + '</li>'; }).join('') + '</ul>';
+                feedbackHTML += '<div style="margin-top:10px;"><strong>💡 Consejos:</strong><ul style="margin-top:5px;">';
+                resultado.consejos.forEach(function(c) {
+                    feedbackHTML += '<li>' + c + '</li>';
+                });
+                feedbackHTML += '</ul></div>';
             }
 
             document.getElementById('feedbackIA').innerHTML = feedbackHTML;
+
+            // Guardar resultado en historial
+            guardarResultadoLectura(resultado, tiempoTotal);
+        }
+
+        // Variable para guardar últimas palabras mal pronunciadas
+        var ultimasPalabrasMal = [];
+
+        // Reproducir pronunciación correcta usando TTS
+        function reproducirPalabra(palabra) {
+            if ('speechSynthesis' in window) {
+                var utterance = new SpeechSynthesisUtterance(palabra);
+                utterance.lang = idiomaComic === 'en' ? 'en-US' : idiomaComic === 'ca' ? 'ca-ES' : 'es-ES';
+                utterance.rate = 0.8; // Un poco más lento para aprender
+                speechSynthesis.speak(utterance);
+            } else {
+                alert('Tu navegador no soporta síntesis de voz');
+            }
+        }
+
+        // Guardar resultado de lectura en historial
+        function guardarResultadoLectura(resultado, tiempoTotal) {
+            var historial = JSON.parse(localStorage.getItem('historialLecturas') || '[]');
+
+            var registro = {
+                fecha: new Date().toISOString(),
+                cuento: {
+                    titulo: tituloComic || 'Sin título',
+                    frases: frases,
+                    idioma: idiomaComic
+                },
+                resultado: {
+                    puntuacion: resultado.puntuacion,
+                    transcripcion: resultado.transcripcion,
+                    palabras_mal_pronunciadas: resultado.palabras_mal_pronunciadas || [],
+                    fluidez: resultado.fluidez,
+                    entonacion: resultado.entonacion,
+                    velocidad: resultado.velocidad,
+                    feedback: resultado.feedback
+                },
+                tiempoTotal: tiempoTotal,
+                frasesLeidas: frasesLeidas
+            };
+
+            historial.unshift(registro); // Añadir al principio
+
+            // Limitar a últimos 50 registros
+            if (historial.length > 50) {
+                historial = historial.slice(0, 50);
+            }
+
+            localStorage.setItem('historialLecturas', JSON.stringify(historial));
         }
 
         function mostrarResultadoBasico(tiempoTotal, transcripcion) {
@@ -2206,6 +2410,361 @@
 
         function reiniciarAprenent() {
             iniciarAprenentCatala();
+        }
+
+        // ==================== HISTORIAL DE LECTURAS ====================
+        function mostrarHistorial() {
+            mostrarPantalla('historialLecturas');
+            cargarHistorial();
+        }
+
+        function cargarHistorial() {
+            var historial = JSON.parse(localStorage.getItem('historialLecturas') || '[]');
+            var container = document.getElementById('listaHistorial');
+
+            if (historial.length === 0) {
+                container.innerHTML = '<div class="historial-vacio"><div style="font-size:3em; margin-bottom:15px;">📭</div><p>No hay lecturas guardadas todavia.</p><p style="font-size:0.9em;">Crea un cuento o sube un PDF y evalua tu lectura!</p></div>';
+                return;
+            }
+
+            var html = '';
+            historial.forEach(function(registro, idx) {
+                var fecha = new Date(registro.fecha);
+                var fechaStr = fecha.toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+                var puntuacion = registro.resultado ? registro.resultado.puntuacion : 0;
+                var errores = registro.resultado && registro.resultado.palabras_mal_pronunciadas ? registro.resultado.palabras_mal_pronunciadas.length : 0;
+
+                html += '<div class="historial-item" onclick="toggleHistorialDetalle(' + idx + ')" data-idx="' + idx + '">';
+                html += '<div class="historial-fecha">' + fechaStr + '</div>';
+                html += '<div class="historial-titulo">' + (registro.cuento ? registro.cuento.titulo : 'Lectura') + '</div>';
+                html += '<div class="historial-stats">';
+                html += '<span class="historial-stat">🏆 ' + puntuacion + '/100</span>';
+                html += '<span class="historial-stat">❌ ' + errores + ' errores</span>';
+                if (registro.cuento && registro.cuento.idioma) {
+                    var idiomaEmoji = { es: '🇪🇸', ca: '🏴', en: '🇬🇧' }[registro.cuento.idioma] || '🌐';
+                    html += '<span class="historial-stat">' + idiomaEmoji + '</span>';
+                }
+                html += '</div>';
+
+                // Detalle expandible
+                html += '<div class="historial-detalle">';
+                if (registro.resultado) {
+                    html += '<p><strong>Fluidez:</strong> ' + (registro.resultado.fluidez || '-') + '</p>';
+                    html += '<p><strong>Entonacion:</strong> ' + (registro.resultado.entonacion || '-') + '</p>';
+                    html += '<p><strong>Velocidad:</strong> ' + (registro.resultado.velocidad || '-') + '</p>';
+                    if (registro.resultado.feedback) {
+                        html += '<p><strong>Feedback:</strong> ' + registro.resultado.feedback + '</p>';
+                    }
+                    if (errores > 0) {
+                        html += '<div style="margin-top:10px;"><strong>Palabras a practicar:</strong><div style="margin-top:5px;">';
+                        registro.resultado.palabras_mal_pronunciadas.forEach(function(p) {
+                            var palabra = typeof p === 'object' ? p.palabra : p;
+                            html += '<span style="display:inline-flex; align-items:center; gap:5px; margin:3px; padding:5px 10px; background:rgba(255,100,100,0.2); border-radius:5px;">';
+                            html += palabra;
+                            html += '<button onclick="event.stopPropagation(); reproducirPalabra(\'' + palabra + '\')" style="background:none; border:none; cursor:pointer;">🔊</button>';
+                            html += '</span>';
+                        });
+                        html += '</div></div>';
+                    }
+                }
+                html += '<button class="btn" onclick="event.stopPropagation(); releerCuento(' + idx + ')" style="margin-top:10px; width:100%;">📖 Volver a leer</button>';
+                html += '</div>';
+                html += '</div>';
+            });
+
+            container.innerHTML = html;
+        }
+
+        function toggleHistorialDetalle(idx) {
+            var items = document.querySelectorAll('.historial-item');
+            items.forEach(function(item, i) {
+                if (i === idx) {
+                    item.classList.toggle('expandido');
+                } else {
+                    item.classList.remove('expandido');
+                }
+            });
+        }
+
+        function releerCuento(idx) {
+            var historial = JSON.parse(localStorage.getItem('historialLecturas') || '[]');
+            var registro = historial[idx];
+
+            if (registro && registro.cuento && registro.cuento.frases) {
+                // Restaurar cuento
+                idiomaComic = registro.cuento.idioma || 'es';
+                frases = registro.cuento.frases;
+                tituloComic = registro.cuento.titulo;
+                origenLectura = 'comic';
+
+                prepararTextoLectura(frases.join(' '));
+                mostrarPantalla('lecturaActiva');
+                aplicarTipoLetra();
+            }
+        }
+
+
+        // ==================== PRONUNCIACION ====================
+        var palabrasComplejasCatalan = [
+            { palabra: 'desenvolupament', fonetica: 'des-en-vo-lu-pa-ment' },
+            { palabra: 'comunicacio', fonetica: 'co-mu-ni-ca-cio' },
+            { palabra: 'responsabilitat', fonetica: 'res-pon-sa-bi-li-tat' },
+            { palabra: 'circumstancies', fonetica: 'cir-cums-tan-ci-es' },
+            { palabra: 'extraordinari', fonetica: 'ex-tra-or-di-na-ri' },
+            { palabra: 'perpendicular', fonetica: 'per-pen-di-cu-lar' },
+            { palabra: 'simultaneament', fonetica: 'si-mul-ta-ni-a-ment' },
+            { palabra: 'aproximadament', fonetica: 'a-pro-xi-ma-da-ment' },
+            { palabra: 'caracteristiques', fonetica: 'ca-rac-te-ris-ti-ques' },
+            { palabra: 'tranquil·litat', fonetica: 'tran-quil-li-tat' },
+            { palabra: 'col·laboracio', fonetica: 'col-la-bo-ra-cio' },
+            { palabra: 'intel·ligencia', fonetica: 'in-tel-li-gen-ci-a' },
+            { palabra: 'consciencia', fonetica: 'cons-ci-en-ci-a' },
+            { palabra: 'agricultura', fonetica: 'a-gri-cul-tu-ra' },
+            { palabra: 'especificacio', fonetica: 'es-pe-ci-fi-ca-cio' },
+            { palabra: 'mediterrani', fonetica: 'me-di-te-rra-ni' },
+            { palabra: 'nacionalitat', fonetica: 'na-ci-o-na-li-tat' },
+            { palabra: 'multinacional', fonetica: 'mul-ti-na-ci-o-nal' },
+            { palabra: 'velocitat', fonetica: 've-lo-ci-tat' },
+            { palabra: 'oportunitat', fonetica: 'o-por-tu-ni-tat' }
+        ];
+
+        var pronunciacionActual = {
+            palabras: [],
+            indice: 0,
+            puntos: 0,
+            grabando: false,
+            mediaRecorder: null,
+            audioChunks: [],
+            tiempoInterval: null,
+            tiempoSegundos: 0
+        };
+
+        function mostrarPronunciacion() {
+            mostrarPantalla('pronunciacionPalabras');
+            document.getElementById('menuPronunciacion').style.display = 'block';
+            document.getElementById('ejercicioPronunciacion').style.display = 'none';
+            document.getElementById('resultadosPronunciacionFinal').style.display = 'none';
+        }
+
+        function volverMenuPronunciacion() {
+            if (pronunciacionActual.grabando) {
+                detenerGrabacionPronunciacion();
+            }
+            mostrarPantalla('menuLectura');
+        }
+
+        function iniciarPronunciacion() {
+            // Seleccionar 10 palabras aleatorias
+            var palabrasShuffled = palabrasComplejasCatalan.slice().sort(function() { return Math.random() - 0.5; });
+            pronunciacionActual.palabras = palabrasShuffled.slice(0, 10);
+            pronunciacionActual.indice = 0;
+            pronunciacionActual.puntos = 0;
+
+            document.getElementById('menuPronunciacion').style.display = 'none';
+            document.getElementById('ejercicioPronunciacion').style.display = 'block';
+            document.getElementById('resultadosPronunciacionFinal').style.display = 'none';
+            document.getElementById('resultadoPronunciacion').style.display = 'none';
+
+            mostrarPalabraPronunciacion();
+        }
+
+        function mostrarPalabraPronunciacion() {
+            var palabra = pronunciacionActual.palabras[pronunciacionActual.indice];
+            document.getElementById('palabraPronunciacion').textContent = palabra.palabra;
+            document.getElementById('contadorPronunciacion').textContent = 'Palabra ' + (pronunciacionActual.indice + 1) + ' de ' + pronunciacionActual.palabras.length;
+            document.getElementById('puntsPronunciacion').textContent = pronunciacionActual.puntos + ' puntos';
+            document.getElementById('resultadoPronunciacion').style.display = 'none';
+            document.getElementById('btnGrabarPronunciacion').classList.remove('grabando');
+            document.getElementById('textoGrabarPron').textContent = 'Grabar';
+        }
+
+        function reproducirPalabraActual() {
+            var palabra = pronunciacionActual.palabras[pronunciacionActual.indice];
+            if ('speechSynthesis' in window) {
+                var utterance = new SpeechSynthesisUtterance(palabra.palabra);
+                utterance.lang = 'ca-ES';
+                utterance.rate = 0.7;
+                speechSynthesis.speak(utterance);
+            }
+        }
+
+        function toggleGrabacionPronunciacion() {
+            if (pronunciacionActual.grabando) {
+                detenerGrabacionPronunciacion();
+            } else {
+                iniciarGrabacionPronunciacion();
+            }
+        }
+
+        async function iniciarGrabacionPronunciacion() {
+            try {
+                var stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                pronunciacionActual.mediaRecorder = new MediaRecorder(stream);
+                pronunciacionActual.audioChunks = [];
+
+                pronunciacionActual.mediaRecorder.ondataavailable = function(e) {
+                    pronunciacionActual.audioChunks.push(e.data);
+                };
+
+                pronunciacionActual.mediaRecorder.onstop = function() {
+                    var audioBlob = new Blob(pronunciacionActual.audioChunks, { type: 'audio/webm' });
+                    evaluarPronunciacionPalabra(audioBlob);
+                };
+
+                pronunciacionActual.mediaRecorder.start();
+                pronunciacionActual.grabando = true;
+                pronunciacionActual.tiempoSegundos = 0;
+
+                document.getElementById('btnGrabarPronunciacion').classList.add('grabando');
+                document.getElementById('textoGrabarPron').textContent = 'Parar';
+                document.getElementById('indicadorGrabacionPron').classList.add('activo');
+
+                pronunciacionActual.tiempoInterval = setInterval(function() {
+                    pronunciacionActual.tiempoSegundos++;
+                    var mins = Math.floor(pronunciacionActual.tiempoSegundos / 60);
+                    var secs = pronunciacionActual.tiempoSegundos % 60;
+                    document.getElementById('tiempoGrabacionPron').textContent =
+                        (mins < 10 ? '0' : '') + mins + ':' + (secs < 10 ? '0' : '') + secs;
+                }, 1000);
+
+            } catch (err) {
+                alert('No se pudo acceder al microfono');
+            }
+        }
+
+        function detenerGrabacionPronunciacion() {
+            if (pronunciacionActual.mediaRecorder && pronunciacionActual.grabando) {
+                pronunciacionActual.mediaRecorder.stop();
+                pronunciacionActual.grabando = false;
+
+                clearInterval(pronunciacionActual.tiempoInterval);
+                document.getElementById('indicadorGrabacionPron').classList.remove('activo');
+                document.getElementById('btnGrabarPronunciacion').classList.remove('grabando');
+                document.getElementById('textoGrabarPron').textContent = 'Grabar';
+
+                pronunciacionActual.mediaRecorder.stream.getTracks().forEach(function(track) { track.stop(); });
+            }
+        }
+
+        async function evaluarPronunciacionPalabra(audioBlob) {
+            var palabra = pronunciacionActual.palabras[pronunciacionActual.indice];
+
+            document.getElementById('resultadoPronunciacion').style.display = 'block';
+            document.getElementById('resultadoPronunciacion').innerHTML = '<div class="generando"><div class="spinner">🤖</div><p>Evaluando pronunciacion...</p></div>';
+
+            try {
+                var reader = new FileReader();
+                var base64Audio = await new Promise(function(resolve) {
+                    reader.onloadend = function() { resolve(reader.result.split(',')[1]); };
+                    reader.readAsDataURL(audioBlob);
+                });
+
+                var prompt = 'Escucha el audio y evalua si el estudiante ha pronunciado correctamente la palabra "' + palabra.palabra + '" en catalan.\n\n' +
+                    'Responde SOLO con JSON:\n' +
+                    '{\n' +
+                    '  "correcto": true/false,\n' +
+                    '  "transcripcion": "lo que dijo exactamente",\n' +
+                    '  "feedback": "explicacion breve"\n' +
+                    '}';
+
+                var response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=' + configIA.keys.gemini, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{
+                            parts: [
+                                { text: prompt },
+                                { inline_data: { mime_type: 'audio/webm', data: base64Audio } }
+                            ]
+                        }],
+                        generationConfig: { maxOutputTokens: 1024 }
+                    })
+                });
+
+                if (!response.ok) throw new Error('Error API');
+
+                var data = await response.json();
+                var texto = data.candidates[0].content.parts[0].text;
+                var resultado = parsearJSONSeguro(texto);
+
+                mostrarResultadoPronunciacionPalabra(resultado, palabra);
+
+            } catch (err) {
+                console.error('Error evaluando:', err);
+                document.getElementById('resultadoPronunciacion').innerHTML =
+                    '<div class="resultado-incorrecto"><div class="resultado-icono">⚠️</div><p>Error al evaluar. Intenta de nuevo.</p></div>' +
+                    '<button class="btn btn-siguiente" onclick="mostrarPalabraPronunciacion()">Reintentar</button>';
+            }
+        }
+
+        function mostrarResultadoPronunciacionPalabra(resultado, palabra) {
+            var correcto = resultado.correcto;
+
+            if (correcto) {
+                pronunciacionActual.puntos += 10;
+                document.getElementById('puntsPronunciacion').textContent = pronunciacionActual.puntos + ' puntos';
+            }
+
+            var html = '';
+            if (correcto) {
+                html += '<div class="resultado-correcto">';
+                html += '<div class="resultado-icono">✅</div>';
+                html += '<p style="font-size:1.3em;">Correcte!</p>';
+            } else {
+                html += '<div class="resultado-incorrecto">';
+                html += '<div class="resultado-icono">❌</div>';
+                html += '<p style="font-size:1.3em;">No es correcte</p>';
+            }
+
+            if (resultado.transcripcion) {
+                html += '<p>Dijiste: "' + resultado.transcripcion + '"</p>';
+            }
+            html += '<p>' + (resultado.feedback || '') + '</p>';
+
+            if (!correcto) {
+                html += '<div style="margin-top:10px;">';
+                html += '<button class="btn" onclick="reproducirPalabraActual()">🔊 Escuchar de nuevo</button>';
+                html += '</div>';
+            }
+
+            html += '</div>';
+
+            // Boton siguiente
+            if (pronunciacionActual.indice < pronunciacionActual.palabras.length - 1) {
+                html += '<button class="btn btn-menu btn-siguiente" onclick="siguientePalabraPronunciacion()">Siguiente →</button>';
+            } else {
+                html += '<button class="btn btn-menu btn-siguiente" onclick="finalizarPronunciacion()">Ver resultados</button>';
+            }
+
+            document.getElementById('resultadoPronunciacion').innerHTML = html;
+        }
+
+        function siguientePalabraPronunciacion() {
+            pronunciacionActual.indice++;
+            mostrarPalabraPronunciacion();
+        }
+
+        function finalizarPronunciacion() {
+            document.getElementById('ejercicioPronunciacion').style.display = 'none';
+
+            var total = pronunciacionActual.palabras.length * 10;
+            var porcentaje = Math.round((pronunciacionActual.puntos / total) * 100);
+            var emoji = porcentaje >= 90 ? '🏆' : porcentaje >= 70 ? '⭐' : porcentaje >= 50 ? '👍' : '📚';
+
+            var html = '<div class="evaluacion-resultado">';
+            html += '<h3>Resultados</h3>';
+            html += '<div class="puntuacion-grande">' + emoji + ' ' + porcentaje + '%</div>';
+            html += '<div class="detalles-evaluacion">';
+            html += '<div class="detalle-item"><span>Puntos:</span><span>' + pronunciacionActual.puntos + '/' + total + '</span></div>';
+            html += '<div class="detalle-item"><span>Palabras correctas:</span><span>' + (pronunciacionActual.puntos / 10) + '/' + pronunciacionActual.palabras.length + '</span></div>';
+            html += '</div>';
+            html += '<div style="margin-top:20px;">';
+            html += '<button class="btn-menu" onclick="iniciarPronunciacion()">🔄 Practicar de nuevo</button>';
+            html += '</div>';
+            html += '</div>';
+
+            document.getElementById('resultadosPronunciacionFinal').innerHTML = html;
+            document.getElementById('resultadosPronunciacionFinal').style.display = 'block';
         }
     </script>
 </body>
