@@ -101,7 +101,6 @@ function restart() {
     score = 0;
     waiting = false;
     solved.clear();
-    document.getElementById('hist').innerHTML = '';
     document.getElementById('ov').classList.remove('show');
     document.querySelectorAll('.map-label').forEach(l => l.remove());
     resetColors();
@@ -203,14 +202,9 @@ function handleClick(k) {
     }
 
     const fb = document.getElementById('fb');
-    fb.textContent = ok ? '✅ Correcte! · Capital: ' + CAPITALS[k] : '❌ Incorrecte!';
+    fb.textContent = ok ? '✅ Correcte!' : '❌ Incorrecte!';
     fb.className = 'fb ' + (ok ? 'fc' : 'fk');
     document.getElementById('sc').textContent = score;
-
-    const d = document.createElement('div');
-    d.className = 'hi';
-    d.innerHTML = '<span>' + q.ask + '</span><span class="' + (ok ? 'ok' : 'ko') + '">' + (ok ? '✓' : '✗') + '</span>';
-    document.getElementById('hist').insertBefore(d, document.getElementById('hist').firstChild);
 
     // Avanzar automáticamente después de 2 segundos
     setTimeout(() => {
