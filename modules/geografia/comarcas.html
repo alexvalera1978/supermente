@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Comarques de Catalunya - SuperMente</title>
+    <link rel="stylesheet" href="../../css/common.css">
+    <link href="https://fonts.googleapis.com/css2?family=Indie+Flower&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Indie Flower', cursive;
+            background: #2a5a2a;
+            color: #f0f0e8;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 10px;
+            gap: 10px;
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            color: #f0f0e8;
+            text-align: center;
+            text-shadow: 0 0 10px rgba(255,255,255,0.3);
+        }
+
+        .sub {
+            color: rgba(240,240,232,0.7);
+            font-size: 1rem;
+            text-align: center;
+        }
+
+        .legend {
+            display: flex;
+            gap: 14px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .leg {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.9rem;
+            color: rgba(240,240,232,0.7);
+        }
+
+        .lsq {
+            width: 13px;
+            height: 13px;
+            border-radius: 3px;
+            flex-shrink: 0;
+        }
+
+        .layout {
+            display: flex;
+            gap: 14px;
+            width: 100%;
+            max-width: 1100px;
+            align-items: flex-start;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .sb {
+            background: rgba(255,255,255,0.1);
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 14px;
+            padding: 16px;
+            width: 230px;
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .lbl {
+            font-size: 0.8rem;
+            color: rgba(240,240,232,0.6);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 4px;
+        }
+
+        .mode-row {
+            display: flex;
+            gap: 5px;
+        }
+
+        .mt {
+            flex: 1;
+            padding: 6px 2px;
+            border-radius: 7px;
+            border: 2px solid rgba(255,255,255,0.3);
+            background: transparent;
+            color: rgba(240,240,232,0.7);
+            font-size: 0.85rem;
+            font-family: 'Indie Flower', cursive;
+            cursor: pointer;
+            font-weight: 700;
+            transition: all 0.18s;
+        }
+
+        .mt.on {
+            background: #e8954a;
+            color: #1a3a1a;
+            border-color: #e8954a;
+        }
+
+        .qbox {
+            background: rgba(0,0,0,0.2);
+            border-radius: 10px;
+            padding: 14px;
+            text-align: center;
+            min-height: 88px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 3px;
+        }
+
+        .ql {
+            font-size: 0.8rem;
+            color: rgba(240,240,232,0.6);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .qt {
+            font-size: 1.4rem;
+            line-height: 1.2;
+            color: #f0f0e8;
+            text-shadow: 0 0 5px rgba(255,255,255,0.3);
+        }
+
+        .fb {
+            text-align: center;
+            font-weight: 800;
+            font-size: 0.95rem;
+            padding: 7px 10px;
+            border-radius: 8px;
+            min-height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.25s;
+            line-height: 1.3;
+        }
+
+        .fc {
+            background: rgba(144,238,144,0.2);
+            color: #90EE90;
+        }
+
+        .fk {
+            background: rgba(255,102,102,0.2);
+            color: #ff6666;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.95rem;
+            color: rgba(240,240,232,0.7);
+        }
+
+        .stats b {
+            color: #e8954a;
+        }
+
+        .pb-wrap {
+            background: rgba(0,0,0,0.3);
+            border-radius: 4px;
+            height: 5px;
+            overflow: hidden;
+        }
+
+        .pb {
+            height: 100%;
+            background: #e8954a;
+            border-radius: 4px;
+            transition: width 0.4s;
+        }
+
+        .btn-n {
+            width: 100%;
+            padding: 9px;
+            background: #e8954a;
+            color: #1a3a1a;
+            border: none;
+            border-radius: 9px;
+            font-family: 'Indie Flower', cursive;
+            font-size: 1rem;
+            font-weight: 800;
+            cursor: pointer;
+            display: none;
+            transition: background 0.15s;
+        }
+
+        .btn-n:hover {
+            background: #d08040;
+        }
+
+        .hist {
+            max-height: 200px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .hi {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            padding: 3px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            color: rgba(240,240,232,0.6);
+        }
+
+        .hi .ok { color: #90EE90; font-weight: 700; }
+        .hi .ko { color: #ff6666; font-weight: 700; }
+
+        .mw {
+            flex: 1;
+            min-width: 320px;
+            max-width: 750px;
+            position: relative;
+        }
+
+        svg {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        [data-comarca] {
+            transition: filter 0.1s;
+        }
+
+        [data-comarca]:hover {
+            filter: brightness(1.25);
+        }
+
+        .hint {
+            text-align: center;
+            color: rgba(240,240,232,0.5);
+            font-size: 0.85rem;
+            margin-top: 6px;
+        }
+
+        .map-label {
+            position: absolute;
+            pointer-events: none;
+            text-align: center;
+            transform: translate(-50%, -50%);
+            line-height: 1.2;
+        }
+
+        .map-label .nom {
+            font-family: 'Indie Flower', cursive;
+            font-size: 0.8rem;
+            font-weight: 800;
+            color: #fff;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            text-shadow: 0 1px 3px #000, 0 0 6px #000;
+        }
+
+        .map-label .cap {
+            font-family: 'Indie Flower', cursive;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #90EE90;
+            text-shadow: 0 1px 3px #000, 0 0 6px #000;
+        }
+
+        /* Overlay resultado final */
+        #ov {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.7);
+            z-index: 300;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #ov.show {
+            display: flex;
+        }
+
+        .rc {
+            background: rgba(42,90,42,0.95);
+            border: 3px solid #e8954a;
+            border-radius: 18px;
+            padding: 34px;
+            text-align: center;
+            max-width: 320px;
+        }
+
+        .rc h2 {
+            font-family: 'Indie Flower', cursive;
+            color: #e8954a;
+            font-size: 2rem;
+            margin-bottom: 6px;
+        }
+
+        .rs {
+            font-size: 3.2rem;
+            font-weight: 800;
+            color: #f0f0e8;
+            margin: 10px 0;
+        }
+
+        .rc p {
+            color: rgba(240,240,232,0.7);
+            margin-bottom: 16px;
+            font-size: 1rem;
+        }
+
+        .rc button {
+            padding: 11px 26px;
+            background: #e8954a;
+            color: #1a3a1a;
+            border: none;
+            border-radius: 10px;
+            font-family: 'Indie Flower', cursive;
+            font-size: 1.1rem;
+            font-weight: 800;
+            cursor: pointer;
+            margin: 5px;
+        }
+
+        .rc button:hover {
+            background: #d08040;
+        }
+
+        /* Botón volver */
+        .btn-volver {
+            position: fixed;
+            bottom: 15px;
+            left: 15px;
+            background: rgba(255,255,255,0.15);
+            border: 2px solid rgba(255,255,255,0.3);
+            color: #f0f0e8;
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-family: 'Indie Flower', cursive;
+            font-size: 1rem;
+            cursor: pointer;
+            z-index: 100;
+        }
+
+        .btn-volver:hover {
+            background: rgba(255,255,255,0.25);
+        }
+
+        /* Media queries para móvil */
+        @media screen and (max-width: 768px) {
+            .layout {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .sb {
+                width: 100%;
+                max-width: 400px;
+            }
+
+            .mw {
+                width: 100%;
+                min-width: auto;
+            }
+
+            h1 {
+                font-size: 1.4rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Comarques de Catalunya</h1>
+    <p class="sub">Fes clic a la comarca correcta al mapa</p>
+
+    <div class="legend">
+        <div class="leg"><div class="lsq" style="background:#90EE90"></div>Encertada</div>
+        <div class="leg"><div class="lsq" style="background:#e8954a"></div>Per encertar</div>
+        <div class="leg"><div class="lsq" style="background:#c8b48a"></div>Fora del temari</div>
+    </div>
+
+    <div class="layout">
+        <div class="sb">
+            <div>
+                <div class="lbl">Mode de joc</div>
+                <div class="mode-row">
+                    <button class="mt on" id="m-comarca" onclick="setMode('comarca')">Comarca</button>
+                    <button class="mt" id="m-capital" onclick="setMode('capital')">Capital</button>
+                    <button class="mt" id="m-mixed" onclick="setMode('mixed')">Mixt</button>
+                </div>
+            </div>
+
+            <div>
+                <div class="lbl">Pregunta actual</div>
+                <div class="qbox">
+                    <span class="ql" id="ql">Carregant mapa...</span>
+                    <span class="qt" id="qtext">—</span>
+                </div>
+            </div>
+
+            <div class="fb" id="fb"></div>
+
+            <div class="stats">
+                <span>✓ <b id="sc">0</b> encerts</span>
+                <span><b id="qn">0</b>/<b id="tot">0</b></span>
+            </div>
+
+            <div class="pb-wrap"><div class="pb" id="pb" style="width:0%"></div></div>
+
+            <div>
+                <div class="lbl">Historial</div>
+                <div class="hist" id="hist"></div>
+            </div>
+        </div>
+
+        <div class="mw" id="mapwrap">
+            <!-- El SVG se carga aquí dinámicamente -->
+            <p class="hint">Selecciona la comarca correcta</p>
+        </div>
+    </div>
+
+    <!-- Overlay resultado final -->
+    <div id="ov">
+        <div class="rc">
+            <h2>Resultat</h2>
+            <div class="rs" id="rs">0 / 0</div>
+            <p id="rm"></p>
+            <button onclick="restart()">Tornar a jugar</button>
+            <button onclick="volverMenu()">Tornar al menú</button>
+        </div>
+    </div>
+
+    <button class="btn-volver" onclick="volverMenu()">← Tornar</button>
+
+    <script src="comarcas.js"></script>
+</body>
+</html>

@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Geografia - SuperMente</title>
+    <link href="https://fonts.googleapis.com/css2?family=Indie+Flower&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body {
+            background: #2a5a2a;
+            color: #f0f0e8;
+            margin: 0;
+            padding: 0;
+            font-family: 'Indie Flower', cursive;
+        }
+
+        #nivel {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            align-items: center;
+            padding: 50px 20px 20px 20px;
+        }
+
+        #nivel h1 {
+            font-size: 2em;
+            margin-bottom: 15px;
+            text-shadow: 0 0 5px rgba(255,255,255,0.5);
+        }
+
+        #nivel > p {
+            font-size: 1.3em;
+            text-align: center;
+            opacity: 0.8;
+            margin-bottom: 20px;
+        }
+
+        .menu-opciones {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            width: 100%;
+            max-width: 300px;
+        }
+
+        .btn-menu {
+            background: rgba(255,255,255,0.1);
+            border: 3px solid rgba(255,255,255,0.4);
+            color: #f0f0e8;
+            padding: 20px;
+            font-size: 1.5em;
+            border-radius: 12px;
+            font-family: 'Indie Flower', cursive;
+            text-shadow: 0 0 5px rgba(255,255,255,0.5);
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s;
+        }
+
+        .btn-menu:active {
+            background: rgba(255,255,255,0.2);
+            transform: scale(0.98);
+        }
+
+        .btn-menu.volver {
+            margin-top: 15px;
+            opacity: 0.7;
+        }
+
+        .seccion-titulo {
+            font-size: 1.1em;
+            color: rgba(240,240,232,0.6);
+            margin-top: 20px;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .proximamente {
+            opacity: 0.4;
+            pointer-events: none;
+        }
+
+        .proximamente::after {
+            content: ' (Properament)';
+            font-size: 0.7em;
+        }
+    </style>
+</head>
+<body>
+    <div id="nivel">
+        <h1>Geografia</h1>
+        <p>Selecciona una activitat</p>
+
+        <div class="menu-opciones">
+            <p class="seccion-titulo">Catalunya</p>
+            <button class="btn-menu" onclick="window.location.href='comarcas.html'">Comarques Catalanes</button>
+
+            <p class="seccion-titulo">Espanya</p>
+            <button class="btn-menu proximamente">Comunitats Autonomes</button>
+            <button class="btn-menu proximamente">Provincies</button>
+
+            <p class="seccion-titulo">Europa</p>
+            <button class="btn-menu proximamente">Paisos d'Europa</button>
+            <button class="btn-menu proximamente">Capitals Europees</button>
+
+            <button class="btn-menu volver" onclick="window.location.href='/supermente/index.html'">← Tornar al menu</button>
+        </div>
+    </div>
+</body>
+</html>
