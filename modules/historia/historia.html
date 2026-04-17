@@ -1,0 +1,1212 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Historia - SuperMente</title>
+    <link href="https://fonts.googleapis.com/css2?family=Indie+Flower&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { background: #2a5a2a; color: #f0f0e8; margin: 0; padding: 0; font-family: 'Indie Flower', cursive; min-height: 100vh; overflow-x: hidden; }
+        .oculto { display: none !important; }
+
+        /* MENU PRINCIPAL */
+        #menuHistoria {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px 15px;
+            background: linear-gradient(180deg, #2a5a2a 0%, #1a4a1a 100%);
+        }
+        h1 {
+            font-size: 2.5em;
+            margin: 10px 0 5px 0;
+            text-shadow: 3px 3px 6px rgba(0,0,0,0.5), 0 0 20px rgba(255,255,255,0.3);
+        }
+        .subtitulo {
+            font-size: 1.2em;
+            opacity: 0.8;
+            text-align: center;
+            margin-bottom: 25px;
+        }
+        .menu-opciones {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            width: 100%;
+            max-width: 380px;
+        }
+        .opcion-menu {
+            background: linear-gradient(135deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.05) 100%);
+            border: 3px solid rgba(255,255,255,0.4);
+            border-radius: 20px;
+            padding: 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            transition: all 0.2s;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+        .opcion-menu:active {
+            transform: scale(0.98);
+            background: linear-gradient(135deg, rgba(255,255,255,0.25) 0%, rgba(255,255,255,0.1) 100%);
+        }
+        .opcion-menu .icono {
+            font-size: 3.5em;
+            filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.5));
+        }
+        .opcion-menu .texto h3 {
+            margin: 0 0 5px 0;
+            font-size: 1.4em;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
+        }
+        .opcion-menu .texto p {
+            margin: 0;
+            opacity: 0.8;
+            font-size: 1em;
+        }
+        .btn {
+            background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0.1) 100%);
+            border: 2px solid rgba(255,255,255,0.5);
+            color: #f0f0e8;
+            padding: 14px 25px;
+            border-radius: 12px;
+            font-size: 1.2em;
+            font-family: 'Indie Flower', cursive;
+            cursor: pointer;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.3);
+            transition: all 0.2s;
+        }
+        .btn:active {
+            transform: scale(0.97);
+            background: linear-gradient(135deg, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0.15) 100%);
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #e8954a 0%, #d4803a 100%);
+            border-color: #e8954a;
+            color: #1a1a1a;
+            font-weight: bold;
+        }
+        .btn-volver { margin-top: 20px; opacity: 0.8; }
+
+        /* ==================== 1. EXPLORADOR DEL TIEMPO ==================== */
+        #exploradorContainer {
+            padding: 15px;
+            min-height: 100vh;
+            background: linear-gradient(180deg, #1a3a3a 0%, #0a2a2a 100%);
+        }
+        .explorador-titulo {
+            text-align: center;
+            font-size: 1.8em;
+            margin: 10px 0 15px 0;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .timeline-visual {
+            display: flex;
+            overflow-x: auto;
+            gap: 12px;
+            padding: 15px 10px;
+            background: linear-gradient(180deg, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.2) 100%);
+            border-radius: 20px;
+            margin-bottom: 20px;
+            border: 2px solid rgba(255,255,255,0.2);
+        }
+        .timeline-visual::-webkit-scrollbar { height: 10px; }
+        .timeline-visual::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.4); border-radius: 5px; }
+
+        .epoca-card {
+            min-width: 100px;
+            padding: 12px 8px;
+            background: linear-gradient(180deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.05) 100%);
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+        .epoca-card:active, .epoca-card.activa {
+            border-color: #e8954a;
+            background: linear-gradient(180deg, rgba(232,149,74,0.4) 0%, rgba(232,149,74,0.2) 100%);
+            transform: scale(1.05);
+        }
+        .epoca-card .emoji { font-size: 2.8em; filter: drop-shadow(2px 2px 3px rgba(0,0,0,0.5)); }
+        .epoca-card .nombre { font-size: 0.9em; margin-top: 5px; font-weight: bold; }
+        .epoca-card .fecha { font-size: 0.7em; opacity: 0.6; }
+
+        .escena-epoca {
+            background: linear-gradient(180deg, #2d1b4e 0%, #1a1030 100%);
+            border-radius: 20px;
+            height: 380px;
+            position: relative;
+            overflow: hidden;
+            border: 4px solid rgba(255,255,255,0.3);
+            box-shadow: inset 0 0 50px rgba(0,0,0,0.5), 0 5px 20px rgba(0,0,0,0.5);
+        }
+        .escena-epoca .tip-inicial {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            font-size: 1.3em;
+            opacity: 0.6;
+        }
+        .elemento-clickable {
+            position: absolute;
+            cursor: pointer;
+            font-size: 3.5em;
+            transition: all 0.2s;
+            filter: drop-shadow(3px 3px 5px rgba(0,0,0,0.7));
+            animation: float 3s ease-in-out infinite;
+        }
+        .elemento-clickable:nth-child(2) { animation-delay: 0.5s; }
+        .elemento-clickable:nth-child(3) { animation-delay: 1s; }
+        .elemento-clickable:nth-child(4) { animation-delay: 1.5s; }
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+        .elemento-clickable:active { transform: scale(1.3); }
+        .elemento-clickable.visto { opacity: 0.4; }
+
+        .info-popup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(180deg, #2a5a2a 0%, #1a4a1a 100%);
+            border: 4px solid #e8954a;
+            border-radius: 25px;
+            padding: 25px;
+            max-width: 350px;
+            width: 92%;
+            z-index: 100;
+            text-align: center;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.7);
+        }
+        .info-popup .emoji { font-size: 4em; margin-bottom: 10px; filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.5)); }
+        .info-popup h3 { margin: 0 0 12px 0; color: #e8954a; font-size: 1.5em; }
+        .info-popup p { margin: 0 0 15px 0; line-height: 1.5; font-size: 1.15em; }
+        .info-popup .curiosidad {
+            background: rgba(255,255,255,0.1);
+            padding: 12px;
+            border-radius: 12px;
+            font-size: 1em;
+            margin-bottom: 15px;
+            border-left: 4px solid #ffcc00;
+        }
+        .overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); z-index: 99; }
+
+        .explorador-footer {
+            text-align: center;
+            padding: 15px;
+            font-size: 1.1em;
+            opacity: 0.7;
+        }
+
+        /* ==================== 2. TU REINO ==================== */
+        #reinoContainer {
+            padding: 10px;
+            min-height: 100vh;
+            padding-bottom: 200px;
+            background: linear-gradient(180deg, #3a2a1a 0%, #2a1a0a 100%);
+        }
+
+        .recursos-bar {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            background: linear-gradient(180deg, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.3) 100%);
+            padding: 12px;
+            border-radius: 15px;
+            margin-bottom: 12px;
+            border: 2px solid rgba(255,255,255,0.2);
+        }
+        .recurso {
+            text-align: center;
+            padding: 8px 5px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 10px;
+        }
+        .recurso .icono { font-size: 1.8em; }
+        .recurso .valor { font-size: 1.3em; font-weight: bold; margin: 3px 0; }
+        .recurso .nombre { font-size: 0.75em; opacity: 0.7; }
+        .recurso.bajo { background: rgba(255,0,0,0.2); }
+        .recurso.bajo .valor { color: #ff6666; }
+        .recurso.alto { background: rgba(0,255,0,0.15); }
+        .recurso.alto .valor { color: #90EE90; }
+
+        .reino-escena {
+            background: linear-gradient(180deg, #87CEEB 0%, #87CEEB 35%, #90EE90 35%, #228B22 70%, #1a4a1a 100%);
+            height: 200px;
+            border-radius: 20px;
+            position: relative;
+            margin-bottom: 12px;
+            overflow: hidden;
+            border: 4px solid #8B4513;
+            box-shadow: inset 0 0 30px rgba(0,0,0,0.3);
+        }
+        .edificio {
+            position: absolute;
+            font-size: 3em;
+            bottom: 25%;
+            filter: drop-shadow(2px 2px 3px rgba(0,0,0,0.5));
+        }
+        .poblacion-visual {
+            position: absolute;
+            bottom: 8%;
+            left: 5%;
+            font-size: 1.5em;
+            letter-spacing: 3px;
+        }
+        .sol {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            font-size: 2.5em;
+        }
+        .nubes {
+            position: absolute;
+            top: 5%;
+            left: 10%;
+            font-size: 1.8em;
+            opacity: 0.7;
+        }
+
+        .turno-info {
+            text-align: center;
+            margin-bottom: 12px;
+            font-size: 1.2em;
+            background: rgba(0,0,0,0.3);
+            padding: 8px;
+            border-radius: 10px;
+        }
+        .turno-info span { color: #e8954a; font-weight: bold; }
+
+        .decision-reino {
+            background: linear-gradient(180deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%);
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 15px;
+        }
+        .decision-reino h3 {
+            margin: 0 0 12px 0;
+            font-size: 1.4em;
+            color: #e8954a;
+        }
+        .decision-reino p { margin: 0 0 18px 0; font-size: 1.15em; line-height: 1.5; }
+
+        .opciones-reino {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .opcion-reino {
+            background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%);
+            border: 2px solid rgba(255,255,255,0.4);
+            border-radius: 15px;
+            padding: 15px;
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.2s;
+        }
+        .opcion-reino:active {
+            background: rgba(232,149,74,0.3);
+            border-color: #e8954a;
+            transform: scale(0.98);
+        }
+        .opcion-reino .titulo { font-weight: bold; font-size: 1.1em; margin-bottom: 5px; }
+        .opcion-reino .efectos { font-size: 0.9em; opacity: 0.8; color: #aaa; }
+
+        .consejo-sabio {
+            background: linear-gradient(135deg, rgba(232,149,74,0.3) 0%, rgba(232,149,74,0.1) 100%);
+            border-left: 5px solid #e8954a;
+            padding: 15px 18px;
+            border-radius: 0 15px 15px 0;
+            margin-top: 15px;
+            font-size: 1em;
+            line-height: 1.4;
+        }
+        .consejo-sabio::before { content: '📜 Dato historico: '; font-weight: bold; color: #e8954a; }
+
+        .reino-resultado {
+            text-align: center;
+            padding: 30px 20px;
+        }
+        .reino-resultado .emoji { font-size: 5em; margin-bottom: 15px; }
+        .reino-resultado h2 { margin: 0 0 15px 0; font-size: 1.8em; }
+        .reino-resultado .stats {
+            margin-bottom: 25px;
+            font-size: 1.2em;
+            background: rgba(0,0,0,0.3);
+            padding: 15px;
+            border-radius: 15px;
+        }
+
+        /* ==================== 3. AVENTURAS EN EL TIEMPO ==================== */
+        #aventuraContainer {
+            padding: 15px;
+            min-height: 100vh;
+            padding-bottom: 100px;
+            background: linear-gradient(180deg, #1a2a3a 0%, #0a1a2a 100%);
+        }
+
+        .aventura-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 18px;
+            background: rgba(0,0,0,0.4);
+            border-radius: 15px;
+            margin-bottom: 15px;
+            border: 2px solid rgba(255,255,255,0.2);
+        }
+        .aventura-epoca {
+            background: linear-gradient(135deg, #e8954a 0%, #d4803a 100%);
+            color: #1a1a1a;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 1em;
+            font-weight: bold;
+        }
+        .aventura-capitulo { opacity: 0.8; font-size: 1.1em; }
+
+        .aventura-escena {
+            background: linear-gradient(180deg, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.2) 100%);
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 20px;
+            border: 3px solid rgba(255,255,255,0.2);
+        }
+        .aventura-imagen {
+            text-align: center;
+            font-size: 5em;
+            margin-bottom: 20px;
+            filter: drop-shadow(3px 3px 6px rgba(0,0,0,0.5));
+        }
+        .aventura-texto {
+            font-size: 1.25em;
+            line-height: 1.7;
+            margin-bottom: 20px;
+        }
+        .aventura-texto .dialogo {
+            background: linear-gradient(135deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.05) 100%);
+            padding: 15px 20px;
+            border-radius: 15px;
+            margin: 15px 0;
+            font-style: italic;
+            border-left: 4px solid #e8954a;
+        }
+
+        .aventura-opciones {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .aventura-opcion {
+            background: linear-gradient(135deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.05) 100%);
+            border: 3px solid rgba(255,255,255,0.4);
+            border-radius: 15px;
+            padding: 18px;
+            cursor: pointer;
+            text-align: left;
+            font-size: 1.15em;
+            transition: all 0.2s;
+        }
+        .aventura-opcion:active {
+            background: rgba(232,149,74,0.3);
+            border-color: #e8954a;
+            transform: scale(0.98);
+        }
+
+        .aventura-aprendizaje {
+            background: linear-gradient(135deg, rgba(144,238,144,0.25) 0%, rgba(144,238,144,0.1) 100%);
+            border: 3px solid #90EE90;
+            border-radius: 15px;
+            padding: 15px 18px;
+            margin-top: 20px;
+            font-size: 1.05em;
+            line-height: 1.5;
+        }
+        .aventura-aprendizaje::before { content: '💡 '; font-size: 1.2em; }
+
+        .aventura-final {
+            text-align: center;
+            padding: 25px;
+        }
+        .aventura-final .emoji { font-size: 5em; margin-bottom: 15px; }
+        .aventura-final h2 { margin: 0 0 15px 0; color: #e8954a; font-size: 1.8em; }
+
+        /* ==================== 4. ARENA HISTORICA ==================== */
+        #arenaContainer {
+            padding: 10px;
+            min-height: 100vh;
+            background: linear-gradient(180deg, #3a2a1a 0%, #1a1005 100%);
+        }
+
+        .arena-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 18px;
+            background: rgba(0,0,0,0.4);
+            border-radius: 15px;
+            margin-bottom: 12px;
+            border: 2px solid rgba(255,255,255,0.2);
+        }
+        .arena-score { color: #e8954a; font-size: 1.3em; font-weight: bold; }
+        .arena-vidas { font-size: 1.5em; }
+
+        .arena-game-container {
+            position: relative;
+            width: 100%;
+            border-radius: 20px;
+            overflow: hidden;
+            border: 4px solid #8B4513;
+            box-shadow: 0 5px 25px rgba(0,0,0,0.5);
+        }
+        #arenaCanvas {
+            width: 100%;
+            height: 400px;
+            display: block;
+            background: linear-gradient(180deg, #DEB887 0%, #D2691E 70%, #8B4513 100%);
+        }
+
+        .arena-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.85);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 25px;
+            text-align: center;
+        }
+        .arena-overlay h2 { font-size: 2em; margin-bottom: 15px; }
+        .arena-overlay p { margin-bottom: 20px; font-size: 1.15em; opacity: 0.8; line-height: 1.5; }
+        .arena-overlay .emoji { font-size: 4em; margin-bottom: 15px; }
+        .arena-overlay .puntuacion { font-size: 2.5em; color: #e8954a; margin-bottom: 15px; }
+
+        .arena-controles {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-top: 20px;
+        }
+        .arena-btn {
+            width: 90px;
+            height: 90px;
+            border-radius: 50%;
+            background: linear-gradient(180deg, rgba(255,255,255,0.25) 0%, rgba(255,255,255,0.1) 100%);
+            border: 4px solid rgba(255,255,255,0.5);
+            font-size: 2.5em;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.4);
+            transition: all 0.1s;
+        }
+        .arena-btn:active {
+            transform: scale(0.9);
+            background: linear-gradient(180deg, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0.2) 100%);
+        }
+
+        .datos-aprendidos {
+            background: rgba(0,0,0,0.4);
+            border-radius: 15px;
+            padding: 18px;
+            margin-top: 20px;
+            border: 2px solid rgba(255,255,255,0.2);
+            max-height: 150px;
+            overflow-y: auto;
+        }
+        .datos-aprendidos h4 { margin: 0 0 12px 0; font-size: 1.1em; color: #e8954a; }
+        .datos-aprendidos ul { margin: 0; padding-left: 20px; font-size: 1em; line-height: 1.6; }
+        .datos-aprendidos li { margin-bottom: 8px; }
+
+        /* Panel inferior */
+        .panel-inferior {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(180deg, #1a3a1a 0%, #0a2a0a 100%);
+            padding: 12px;
+            border-top: 3px solid rgba(255,255,255,0.3);
+            text-align: center;
+            z-index: 50;
+        }
+    </style>
+</head>
+<body>
+    <!-- MENU PRINCIPAL -->
+    <div id="menuHistoria">
+        <h1>📜 Historia</h1>
+        <p class="subtitulo">Viaja por el tiempo y aprende jugando</p>
+        <div class="menu-opciones">
+            <div class="opcion-menu" onclick="iniciarExplorador()">
+                <div class="icono">🔭</div>
+                <div class="texto">
+                    <h3>Explorador del Tiempo</h3>
+                    <p>Navega por las epocas y descubre curiosidades</p>
+                </div>
+            </div>
+            <div class="opcion-menu" onclick="iniciarReino()">
+                <div class="icono">🏰</div>
+                <div class="texto">
+                    <h3>Tu Reino</h3>
+                    <p>Gestiona un reino medieval con consecuencias reales</p>
+                </div>
+            </div>
+            <div class="opcion-menu" onclick="iniciarAventura()">
+                <div class="icono">📖</div>
+                <div class="texto">
+                    <h3>Aventuras en el Tiempo</h3>
+                    <p>Vive historias interactivas en diferentes epocas</p>
+                </div>
+            </div>
+            <div class="opcion-menu" onclick="iniciarArena()">
+                <div class="icono">⚔️</div>
+                <div class="texto">
+                    <h3>Arena Historica</h3>
+                    <p>Sobrevive como gladiador mientras aprendes</p>
+                </div>
+            </div>
+        </div>
+        <button class="btn btn-volver" onclick="window.location.href='../../index.html'">🏠 Volver al menu</button>
+    </div>
+
+    <!-- 1. EXPLORADOR DEL TIEMPO -->
+    <div id="exploradorContainer" class="oculto">
+        <h1 class="explorador-titulo">🔭 Explorador del Tiempo</h1>
+        <div class="timeline-visual" id="timelineEpocas"></div>
+        <div class="escena-epoca" id="escenaEpoca">
+            <div class="tip-inicial">👆 Selecciona una epoca para explorar</div>
+        </div>
+        <p class="explorador-footer">Toca los elementos para descubrir informacion</p>
+        <div class="panel-inferior">
+            <button class="btn" onclick="volverMenu()">🏠 Menu</button>
+        </div>
+    </div>
+
+    <!-- 2. TU REINO -->
+    <div id="reinoContainer" class="oculto">
+        <div class="recursos-bar" id="recursosBar"></div>
+        <div class="turno-info">Ano <span id="anoReino">1000</span> · Turno <span id="turnoReino">1</span> de 10</div>
+        <div class="reino-escena" id="reinoEscena"></div>
+        <div id="decisionReino"></div>
+        <div class="panel-inferior">
+            <button class="btn" onclick="volverMenu()">🏠 Menu</button>
+        </div>
+    </div>
+
+    <!-- 3. AVENTURAS EN EL TIEMPO -->
+    <div id="aventuraContainer" class="oculto">
+        <div class="aventura-header">
+            <span class="aventura-epoca" id="aventuraEpoca">Egipto</span>
+            <span class="aventura-capitulo" id="aventuraCapitulo">Capitulo 1</span>
+        </div>
+        <div id="aventuraContenido"></div>
+        <div class="panel-inferior">
+            <button class="btn" onclick="volverMenu()">🏠 Menu</button>
+        </div>
+    </div>
+
+    <!-- 4. ARENA HISTORICA -->
+    <div id="arenaContainer" class="oculto">
+        <div class="arena-header">
+            <span class="arena-score">⭐ <span id="arenaPuntos">0</span></span>
+            <span class="arena-vidas" id="arenaVidas">❤️❤️❤️</span>
+        </div>
+        <div class="arena-game-container">
+            <canvas id="arenaCanvas"></canvas>
+            <div class="arena-overlay" id="arenaOverlay">
+                <h2>⚔️ Arena Romana</h2>
+                <p>Esquiva los leones 🦁 y recoge los escudos 🛡️ para aprender datos historicos</p>
+                <button class="btn btn-primary" onclick="empezarArena()">🎮 Empezar</button>
+            </div>
+        </div>
+        <div class="arena-controles">
+            <button class="arena-btn" id="btnIzq">⬅️</button>
+            <button class="arena-btn" id="btnDer">➡️</button>
+        </div>
+        <div class="datos-aprendidos">
+            <h4>📚 Datos descubiertos:</h4>
+            <ul id="listaDatos"><li>Juega para descubrir datos!</li></ul>
+        </div>
+        <div class="panel-inferior">
+            <button class="btn" onclick="pararArena(); volverMenu()">🏠 Menu</button>
+        </div>
+    </div>
+
+    <script>
+        // ==================== NAVEGACION ====================
+        function mostrarPantalla(id) {
+            ['menuHistoria', 'exploradorContainer', 'reinoContainer', 'aventuraContainer', 'arenaContainer'].forEach(function(pid) {
+                document.getElementById(pid).classList.add('oculto');
+            });
+            document.getElementById(id).classList.remove('oculto');
+        }
+        function volverMenu() {
+            pararArena();
+            mostrarPantalla('menuHistoria');
+        }
+
+        // ==================== 1. EXPLORADOR DEL TIEMPO ====================
+        var EPOCAS = [
+            {
+                id: 'prehistoria', nombre: 'Prehistoria', fecha: '2M - 3000 a.C.', emoji: '🦣',
+                fondo: 'linear-gradient(180deg, #87CEEB 0%, #87CEEB 40%, #8B7355 40%, #654321 100%)',
+                elementos: [
+                    { emoji: '🔥', x: '15%', y: '55%', nombre: 'El Fuego', info: 'Los humanos aprendieron a controlar el fuego hace 400.000 anos. Les permitio cocinar, calentarse y protegerse de depredadores.', curiosidad: 'Cocinar los alimentos ayudo al cerebro humano a crecer porque eran mas faciles de digerir.' },
+                    { emoji: '🦣', x: '55%', y: '35%', nombre: 'Mamut', info: 'Los mamuts eran elefantes gigantes con pelo que vivian en la Era del Hielo. Podian pesar hasta 6 toneladas!', curiosidad: 'El ultimo mamut vivio hace solo 4.000 anos, cuando las piramides de Egipto ya existian!' },
+                    { emoji: '🪨', x: '35%', y: '70%', nombre: 'Herramientas', info: 'Las primeras herramientas eran piedras afiladas llamadas bifaces. Se usaban para cortar carne y raspar pieles.', curiosidad: 'La Edad de Piedra duro mas de 3 millones de anos, el 99% de la historia humana.' },
+                    { emoji: '🎨', x: '80%', y: '30%', nombre: 'Arte rupestre', info: 'Los humanos pintaban animales en las cuevas hace 40.000 anos. Las pinturas de Altamira en Espana son famosas.', curiosidad: 'Usaban sus manos como plantillas, soplando pintura alrededor para dejar su huella!' }
+                ]
+            },
+            {
+                id: 'egipto', nombre: 'Egipto', fecha: '3000 - 30 a.C.', emoji: '🏛️',
+                fondo: 'linear-gradient(180deg, #FFD700 0%, #FFA500 25%, #DEB887 50%, #D2691E 100%)',
+                elementos: [
+                    { emoji: '🔺', x: '20%', y: '30%', nombre: 'Piramides', info: 'La Gran Piramide de Giza tiene 2.3 millones de bloques de piedra. Cada bloque pesa tanto como un elefante!', curiosidad: 'Fue el edificio mas alto del mundo durante 3.800 anos, hasta que se construyeron las catedrales.' },
+                    { emoji: '🐱', x: '50%', y: '50%', nombre: 'Gatos sagrados', info: 'Los egipcios adoraban a los gatos porque cazaban ratones y serpientes. Matar uno se castigaba con la muerte.', curiosidad: 'Cuando un gato familiar moria, toda la familia se afeitaba las cejas para mostrar su tristeza.' },
+                    { emoji: '📜', x: '75%', y: '35%', nombre: 'Jeroglificos', info: 'La escritura egipcia tenia mas de 700 simbolos diferentes. Solo los escribas sabian leer y escribir.', curiosidad: 'Nadie pudo leerlos durante 1.500 anos hasta que se descubrio la Piedra Rosetta en 1799.' },
+                    { emoji: '💀', x: '40%', y: '70%', nombre: 'Momias', info: 'Los egipcios momificaban los cuerpos para la vida despues de la muerte. El proceso tardaba 70 dias.', curiosidad: 'Les sacaban el cerebro por la nariz con un gancho de metal. Creian que el corazon era lo importante!' }
+                ]
+            },
+            {
+                id: 'grecia', nombre: 'Grecia', fecha: '800 - 31 a.C.', emoji: '🏺',
+                fondo: 'linear-gradient(180deg, #87CEEB 0%, #87CEEB 35%, #E8E8E8 35%, #90EE90 65%, #228B22 100%)',
+                elementos: [
+                    { emoji: '🏛️', x: '25%', y: '30%', nombre: 'Partenon', info: 'El Partenon era un templo dedicado a Atenea, diosa de la sabiduria. Tiene columnas con curvas secretas.', curiosidad: 'Originalmente estaba pintado con colores brillantes: rojo, azul y dorado. No era blanco!' },
+                    { emoji: '🏅', x: '55%', y: '45%', nombre: 'Olimpiadas', info: 'Los primeros Juegos Olimpicos fueron en 776 a.C. Los atletas competian completamente desnudos!', curiosidad: 'Durante los juegos se paraban todas las guerras. Era una tregua sagrada que todos respetaban.' },
+                    { emoji: '🎭', x: '80%', y: '30%', nombre: 'Teatro', info: 'Los griegos inventaron el teatro. Las obras se veian en anfiteatros gigantes para 15.000 personas.', curiosidad: 'Solo los hombres podian actuar, incluso los papeles de mujer. Usaban mascaras grandes.' },
+                    { emoji: '📐', x: '15%', y: '65%', nombre: 'Matematicas', info: 'Pitagoras, Euclides y Arquimedes fueron genios griegos. Sus teoremas se estudian hoy en el cole!', curiosidad: 'Arquimedes descubrio su principio en la banera y salio corriendo desnudo gritando Eureka!' }
+                ]
+            },
+            {
+                id: 'roma', nombre: 'Roma', fecha: '753 a.C. - 476 d.C.', emoji: '🏟️',
+                fondo: 'linear-gradient(180deg, #87CEEB 0%, #87CEEB 30%, #DEB887 30%, #CD853F 65%, #8B4513 100%)',
+                elementos: [
+                    { emoji: '🏟️', x: '30%', y: '25%', nombre: 'Coliseo', info: 'El Coliseo cabia 50.000 personas! Se usaba para luchas de gladiadores y hasta batallas navales.', curiosidad: 'A veces llenaban la arena de agua para recrear batallas entre barcos. Era increible!' },
+                    { emoji: '⚔️', x: '60%', y: '45%', nombre: 'Gladiadores', info: 'Los gladiadores eran luchadores entrenados. Muchos eran esclavos, pero algunos se hicieron ricos y famosos.', curiosidad: 'Muchos gladiadores eran vegetarianos! Comian cebada y legumbres para estar fuertes.' },
+                    { emoji: '🛣️', x: '15%', y: '70%', nombre: 'Calzadas', info: 'Los romanos construyeron 80.000 km de carreteras perfectas. Algunas todavia se usan hoy.', curiosidad: 'De ahi viene el dicho: Todos los caminos llevan a Roma. Y era verdad!' },
+                    { emoji: '🚿', x: '75%', y: '60%', nombre: 'Acueductos', info: 'Los acueductos llevaban agua desde las montanas usando solo la gravedad. Eran super ingenieros!', curiosidad: 'Roma tenia 1.000 fuentes publicas y 11 termas gigantes. Los romanos se banaban mucho!' }
+                ]
+            },
+            {
+                id: 'medieval', nombre: 'Edad Media', fecha: '476 - 1492', emoji: '🏰',
+                fondo: 'linear-gradient(180deg, #696969 0%, #808080 25%, #90EE90 45%, #228B22 75%, #006400 100%)',
+                elementos: [
+                    { emoji: '🏰', x: '25%', y: '20%', nombre: 'Castillos', info: 'Los castillos tenian muros de 3 metros de grosor, torres, fosos y puentes levadizos para defenderse.', curiosidad: 'Los banos eran agujeros en el muro exterior. Todo caia directamente al foso. Puaj!' },
+                    { emoji: '⚔️', x: '55%', y: '40%', nombre: 'Caballeros', info: 'Los caballeros entrenaban desde los 7 anos como pajes, luego escuderos, y a los 21 eran nombrados.', curiosidad: 'Una armadura pesaba 25 kg. Si se caian del caballo, necesitaban ayuda para levantarse!' },
+                    { emoji: '👸', x: '40%', y: '60%', nombre: 'Vida medieval', info: 'Los castillos eran frios, oscuros y no tenian banos. Solo habia chimeneas y velas.', curiosidad: 'La gente se banaba muy poco, quiza 2-3 veces al ano. Por eso usaban mucho perfume!' },
+                    { emoji: '📚', x: '80%', y: '30%', nombre: 'Monasterios', info: 'Los monjes copiaban libros a mano durante anos. Un solo libro era un tesoro.', curiosidad: 'Los monasterios inventaron la cerveza y muchos tipos de queso que comemos hoy!' }
+                ]
+            },
+            {
+                id: 'exploracion', nombre: 'Descubrimientos', fecha: '1492 - 1600', emoji: '🚢',
+                fondo: 'linear-gradient(180deg, #87CEEB 0%, #4169E1 40%, #1E90FF 70%, #000080 100%)',
+                elementos: [
+                    { emoji: '🚢', x: '35%', y: '35%', nombre: 'Carabelas', info: 'Colon uso tres barcos pequenos: la Nina, la Pinta y la Santa Maria. Viajaron 2 meses sin ver tierra.', curiosidad: 'La Santa Maria encallo en America y usaron su madera para construir un fuerte.' },
+                    { emoji: '🧭', x: '70%', y: '25%', nombre: 'Brujula', info: 'La brujula permitia navegar sin ver las estrellas. Fue inventada en China y llego por la Ruta de la Seda.', curiosidad: 'Antes de la brujula, los vikingos usaban piedras solares magicas para orientarse!' },
+                    { emoji: '🗺️', x: '15%', y: '55%', nombre: 'Mapas', info: 'Los mapas antiguos mostraban monstruos marinos en los oceanos desconocidos. Daban mucho miedo!', curiosidad: 'America se llama asi por Americo Vespucio, no por Colon. El fue quien dijo que era un continente nuevo.' },
+                    { emoji: '🌽', x: '55%', y: '65%', nombre: 'Nuevos alimentos', info: 'De America llegaron tomates, patatas, maiz, chocolate y pimientos. De Europa fueron caballos y vacas.', curiosidad: 'Antes de 1492, en Europa NO habia tomates! Imagina pizza o ketchup sin tomate!' }
+                ]
+            }
+        ];
+
+        function iniciarExplorador() {
+            mostrarPantalla('exploradorContainer');
+            var timeline = document.getElementById('timelineEpocas');
+            timeline.innerHTML = EPOCAS.map(function(ep) {
+                return '<div class="epoca-card" data-id="' + ep.id + '">' +
+                    '<div class="emoji">' + ep.emoji + '</div>' +
+                    '<div class="nombre">' + ep.nombre + '</div>' +
+                    '<div class="fecha">' + ep.fecha + '</div>' +
+                '</div>';
+            }).join('');
+
+            document.querySelectorAll('.epoca-card').forEach(function(card) {
+                card.onclick = function() { mostrarEpoca(this.dataset.id); };
+            });
+        }
+
+        function mostrarEpoca(id) {
+            var epoca = EPOCAS.find(function(e) { return e.id === id; });
+            if (!epoca) return;
+
+            document.querySelectorAll('.epoca-card').forEach(function(c) { c.classList.remove('activa'); });
+            document.querySelector('.epoca-card[data-id="' + id + '"]').classList.add('activa');
+
+            var escena = document.getElementById('escenaEpoca');
+            escena.style.background = epoca.fondo;
+            escena.innerHTML = epoca.elementos.map(function(el, i) {
+                return '<div class="elemento-clickable" data-idx="' + i + '" data-epoca="' + id + '" style="left:' + el.x + ';top:' + el.y + ';">' + el.emoji + '</div>';
+            }).join('');
+
+            document.querySelectorAll('.elemento-clickable').forEach(function(elem) {
+                elem.onclick = function(e) {
+                    var epocaId = this.dataset.epoca;
+                    var idx = parseInt(this.dataset.idx);
+                    var ep = EPOCAS.find(function(x) { return x.id === epocaId; });
+                    var el = ep.elementos[idx];
+                    this.classList.add('visto');
+                    mostrarInfoPopup(el);
+                };
+            });
+        }
+
+        function mostrarInfoPopup(el) {
+            var overlay = document.createElement('div');
+            overlay.className = 'overlay';
+            overlay.onclick = cerrarInfo;
+            document.body.appendChild(overlay);
+
+            var popup = document.createElement('div');
+            popup.className = 'info-popup';
+            popup.innerHTML =
+                '<div class="emoji">' + el.emoji + '</div>' +
+                '<h3>' + el.nombre + '</h3>' +
+                '<p>' + el.info + '</p>' +
+                '<div class="curiosidad">🤓 ' + el.curiosidad + '</div>' +
+                '<button class="btn btn-primary" onclick="cerrarInfo()">Entendido!</button>';
+            document.body.appendChild(popup);
+        }
+
+        function cerrarInfo() {
+            var overlay = document.querySelector('.overlay');
+            var popup = document.querySelector('.info-popup');
+            if (overlay) overlay.remove();
+            if (popup) popup.remove();
+        }
+
+        // ==================== 2. TU REINO ====================
+        var reino = { oro: 50, comida: 50, pueblo: 50, ejercito: 30, turno: 1, ano: 1000, edificios: ['🏰'] };
+
+        var DECISIONES_REINO = [
+            { titulo: 'Cosecha abundante', texto: 'Este ano la cosecha ha sido increible. ¿Que hacemos con el excedente de grano?',
+              opciones: [
+                { texto: 'Vender en el mercado', efectos: { oro: 25, comida: -10 }, desc: '+25 💰  -10 🌾' },
+                { texto: 'Guardar para el invierno', efectos: { comida: 30 }, desc: '+30 🌾' },
+                { texto: 'Repartir al pueblo', efectos: { pueblo: 25, comida: -15 }, desc: '+25 👥  -15 🌾' }
+              ],
+              sabio: 'Una buena cosecha podia salvar una aldea entera durante el duro invierno medieval.' },
+            { titulo: 'Mercaderes arabes', texto: 'Una caravana de comerciantes del lejano oriente quiere vender especias y sedas en tu reino.',
+              opciones: [
+                { texto: 'Bienvenidos!', efectos: { oro: 20, pueblo: 15 }, desc: '+20 💰  +15 👥' },
+                { texto: 'Cobrar impuestos altos', efectos: { oro: 35, pueblo: -10 }, desc: '+35 💰  -10 👥' },
+                { texto: 'Expulsarlos', efectos: { ejercito: 10, pueblo: -5 }, desc: '+10 ⚔️  -5 👥' }
+              ],
+              sabio: 'La Ruta de la Seda traia especias, telas y conocimientos desde China hasta Europa.' },
+            { titulo: 'Bandidos!', texto: 'Un grupo de bandidos ataca a los viajeros en los bosques cercanos. El pueblo tiene miedo.',
+              opciones: [
+                { texto: 'Enviar soldados', efectos: { ejercito: -15, pueblo: 20 }, desc: '-15 ⚔️  +20 👥' },
+                { texto: 'Ofrecerles amnistia', efectos: { ejercito: 20, pueblo: -10 }, desc: '+20 ⚔️  -10 👥' },
+                { texto: 'Ignorar el problema', efectos: { pueblo: -25, oro: -15 }, desc: '-25 👥  -15 💰' }
+              ],
+              sabio: 'Robin Hood es una leyenda basada en los bandidos que vivian en los bosques medievales.' },
+            { titulo: 'Sequia terrible', texto: 'No ha llovido en meses. Los cultivos se mueren y la gente tiene sed.',
+              opciones: [
+                { texto: 'Construir un pozo', efectos: { oro: -25, comida: 15, pueblo: 15 }, desc: '-25 💰  +15 🌾  +15 👥', edificio: '⛲' },
+                { texto: 'Racionar el agua', efectos: { pueblo: -20 }, desc: '-20 👥' },
+                { texto: 'Rezar por lluvia', efectos: { pueblo: 10 }, desc: '+10 👥' }
+              ],
+              sabio: 'Los monjes medievales construyeron sistemas de agua muy avanzados en sus monasterios.' },
+            { titulo: 'Guerra!', texto: 'El rey necesita soldados para una guerra en el norte. Debes enviar hombres.',
+              opciones: [
+                { texto: 'Enviar muchos', efectos: { ejercito: -25, oro: 20 }, desc: '-25 ⚔️  +20 💰' },
+                { texto: 'Enviar pocos', efectos: { ejercito: -10, pueblo: -10 }, desc: '-10 ⚔️  -10 👥' },
+                { texto: 'Pagar para no enviar', efectos: { oro: -40 }, desc: '-40 💰' }
+              ],
+              sabio: 'El feudalismo obligaba a los senores a dar soldados al rey cuando este los pedia.' },
+            { titulo: 'La Peste Negra', texto: 'La terrible peste ha llegado al reino vecino. Refugiados llegan a tus puertas.',
+              opciones: [
+                { texto: 'Acogerlos', efectos: { pueblo: 25, comida: -20 }, desc: '+25 👥  -20 🌾' },
+                { texto: 'Cerrar fronteras', efectos: { pueblo: -15, ejercito: 10 }, desc: '-15 👥  +10 ⚔️' },
+                { texto: 'Enviar ayuda medica', efectos: { oro: -20, comida: -15, pueblo: 20 }, desc: '-20 💰  -15 🌾  +20 👥' }
+              ],
+              sabio: 'La Peste Negra mato a 1 de cada 3 personas en Europa entre 1347 y 1351.' },
+            { titulo: 'Gran torneo', texto: 'Los nobles quieren un torneo de caballeros. Es caro pero muy popular.',
+              opciones: [
+                { texto: 'Torneo grandioso', efectos: { oro: -30, pueblo: 30, ejercito: 15 }, desc: '-30 💰  +30 👥  +15 ⚔️' },
+                { texto: 'Torneo modesto', efectos: { oro: -15, pueblo: 15 }, desc: '-15 💰  +15 👥' },
+                { texto: 'Cancelarlo', efectos: { pueblo: -20 }, desc: '-20 👥' }
+              ],
+              sabio: 'Los torneos medievales eran peligrosos. Muchos caballeros morian o quedaban heridos.' },
+            { titulo: 'Monjes visitantes', texto: 'Un grupo de monjes quiere construir un monasterio en tus tierras.',
+              opciones: [
+                { texto: 'Dar buenas tierras', efectos: { comida: -15, pueblo: 25 }, desc: '-15 🌾  +25 👥', edificio: '⛪' },
+                { texto: 'Dar tierras malas', efectos: { pueblo: 10 }, desc: '+10 👥' },
+                { texto: 'Rechazarlos', efectos: { pueblo: -15 }, desc: '-15 👥' }
+              ],
+              sabio: 'Los monasterios eran centros de cultura donde se copiaban libros y se hacia cerveza.' },
+            { titulo: 'Impuestos', texto: 'Las arcas del reino estan casi vacias. Necesitamos dinero.',
+              opciones: [
+                { texto: 'Subir impuestos', efectos: { oro: 40, pueblo: -30 }, desc: '+40 💰  -30 👥' },
+                { texto: 'Mantenerlos', efectos: {}, desc: 'Sin cambios' },
+                { texto: 'Bajarlos', efectos: { oro: -20, pueblo: 25 }, desc: '-20 💰  +25 👥' }
+              ],
+              sabio: 'Los campesinos pagaban al senor, a la Iglesia y al rey. Casi no les quedaba nada.' },
+            { titulo: 'Expansion', texto: 'Hay un bosque cercano. Podriamos talarlo para tener mas campos de cultivo.',
+              opciones: [
+                { texto: 'Talar todo', efectos: { comida: 30, pueblo: -10 }, desc: '+30 🌾  -10 👥' },
+                { texto: 'Talar la mitad', efectos: { comida: 15 }, desc: '+15 🌾' },
+                { texto: 'Proteger el bosque', efectos: { pueblo: 15 }, desc: '+15 👥' }
+              ],
+              sabio: 'En la Edad Media se talaron enormes bosques en Europa para crear campos de cultivo.' }
+        ];
+
+        function iniciarReino() {
+            reino = { oro: 50, comida: 50, pueblo: 50, ejercito: 30, turno: 1, ano: 1000, edificios: ['🏰'] };
+            mostrarPantalla('reinoContainer');
+            actualizarReino();
+            siguienteTurnoReino();
+        }
+
+        function actualizarReino() {
+            var bar = document.getElementById('recursosBar');
+            bar.innerHTML = [
+                { icono: '💰', nombre: 'Oro', valor: reino.oro },
+                { icono: '🌾', nombre: 'Comida', valor: reino.comida },
+                { icono: '👥', nombre: 'Pueblo', valor: reino.pueblo },
+                { icono: '⚔️', nombre: 'Ejercito', valor: reino.ejercito }
+            ].map(function(r) {
+                var v = Math.max(0, Math.min(100, r.valor));
+                var clase = v < 20 ? 'bajo' : v > 70 ? 'alto' : '';
+                return '<div class="recurso ' + clase + '"><div class="icono">' + r.icono + '</div><div class="valor">' + v + '</div><div class="nombre">' + r.nombre + '</div></div>';
+            }).join('');
+
+            document.getElementById('anoReino').textContent = reino.ano;
+            document.getElementById('turnoReino').textContent = reino.turno;
+
+            var escena = document.getElementById('reinoEscena');
+            var edificiosHTML = reino.edificios.map(function(e, i) {
+                return '<div class="edificio" style="left:' + (5 + i * 18) + '%;">' + e + '</div>';
+            }).join('');
+            var poblacion = Math.max(1, Math.floor(reino.pueblo / 15));
+            escena.innerHTML = '<div class="sol">☀️</div><div class="nubes">☁️ ☁️</div>' + edificiosHTML + '<div class="poblacion-visual">' + '👤'.repeat(poblacion) + '</div>';
+        }
+
+        function siguienteTurnoReino() {
+            if (reino.turno > 10 || reino.pueblo <= 0 || (reino.oro <= 0 && reino.comida <= 0)) {
+                finReino();
+                return;
+            }
+            var decision = DECISIONES_REINO[Math.floor(Math.random() * DECISIONES_REINO.length)];
+            var div = document.getElementById('decisionReino');
+            div.innerHTML =
+                '<div class="decision-reino">' +
+                    '<h3>' + decision.titulo + '</h3>' +
+                    '<p>' + decision.texto + '</p>' +
+                    '<div class="opciones-reino">' +
+                        decision.opciones.map(function(op, i) {
+                            return '<div class="opcion-reino" data-idx="' + i + '"><div class="titulo">' + op.texto + '</div><div class="efectos">' + op.desc + '</div></div>';
+                        }).join('') +
+                    '</div>' +
+                '</div>' +
+                '<div class="consejo-sabio">' + decision.sabio + '</div>';
+            div.dataset.decision = JSON.stringify(decision);
+
+            document.querySelectorAll('.opcion-reino').forEach(function(el) {
+                el.onclick = function() { elegirOpcionReino(parseInt(this.dataset.idx)); };
+            });
+        }
+
+        function elegirOpcionReino(idx) {
+            var decision = JSON.parse(document.getElementById('decisionReino').dataset.decision);
+            var opcion = decision.opciones[idx];
+            for (var key in opcion.efectos) {
+                reino[key] = Math.max(0, Math.min(100, (reino[key] || 0) + opcion.efectos[key]));
+            }
+            if (opcion.edificio && reino.edificios.length < 5) reino.edificios.push(opcion.edificio);
+            reino.turno++;
+            reino.ano += 10;
+            actualizarReino();
+            setTimeout(siguienteTurnoReino, 400);
+        }
+
+        function finReino() {
+            var emoji = reino.pueblo > 60 ? '👑' : reino.pueblo > 30 ? '🏰' : '💀';
+            var msg = reino.pueblo > 60 ? 'Tu reino prospera!' : reino.pueblo > 30 ? 'Tu reino sobrevive' : 'Tu reino ha caido...';
+            document.getElementById('decisionReino').innerHTML =
+                '<div class="reino-resultado"><div class="emoji">' + emoji + '</div><h2>' + msg + '</h2>' +
+                '<div class="stats">Ano final: ' + reino.ano + '<br>💰 ' + reino.oro + ' · 🌾 ' + reino.comida + '<br>👥 ' + reino.pueblo + ' · ⚔️ ' + reino.ejercito + '</div>' +
+                '<button class="btn btn-primary" onclick="iniciarReino()">Jugar de nuevo</button> ' +
+                '<button class="btn" onclick="volverMenu()">Menu</button></div>';
+        }
+
+        // ==================== 3. AVENTURAS EN EL TIEMPO ====================
+        var aventuraActual = null, nodoActual = 0;
+
+        var AVENTURAS = [
+            { titulo: 'El Secreto de la Piramide', epoca: 'Egipto Antiguo', nodos: [
+                { imagen: '🏛️', texto: 'Eres un joven escriba en el antiguo Egipto. El faraon te ha llamado a palacio. Un guardia te detiene en la puerta.', dialogo: '"El faraon esta en la sala del trono. Ten cuidado, hoy no esta de buen humor..."', opciones: [{ texto: 'Entrar directamente', siguiente: 1 }, { texto: 'Preguntar que pasa', siguiente: 2 }], aprendizaje: 'Los escribas eran muy respetados. Eran de los pocos que sabian leer y escribir jeroglificos.' },
+                { imagen: '👑', texto: 'El faraon te mira desde su trono de oro, rodeado de sirvientes con abanicos de plumas.', dialogo: '"Escriba! Ve a la Gran Piramide. Los constructores han encontrado algo... extraño."', opciones: [{ texto: 'Aceptar la mision', siguiente: 3 }, { texto: 'Pedir mas detalles', siguiente: 4 }], aprendizaje: 'El faraon era considerado un dios. Nadie podia mirarlo directamente a los ojos.' },
+                { imagen: '💂', texto: 'El guardia mira a los lados y susurra...', dialogo: '"Han encontrado una camara secreta. El faraon cree que contiene magia antigua."', opciones: [{ texto: 'Entrar a ver al faraon', siguiente: 1 }], aprendizaje: 'Las piramides tenian camaras secretas y trampas para proteger los tesoros del faraon.' },
+                { imagen: '🔺', texto: 'Viajas en barca por el Nilo hasta Giza. La Gran Piramide brilla bajo el sol. Te guian a una entrada oculta.', dialogo: '"Por aqui, escriba. Necesitaras una antorcha, esta muy oscuro."', opciones: [{ texto: 'Entrar solo', siguiente: 5 }, { texto: 'Pedir compañia', siguiente: 6 }], aprendizaje: 'La Gran Piramide mide 147 metros. Fue el edificio mas alto del mundo durante 3.800 años.' },
+                { imagen: '📜', texto: 'El faraon te explica mas...', dialogo: '"Hay jeroglificos que nadie puede leer. Son de antes de los faraones. Necesito que los descifres."', opciones: [{ texto: 'Acepto el reto', siguiente: 3 }], aprendizaje: 'Los jeroglificos se descifraron en 1822 gracias a la Piedra Rosetta.' },
+                { imagen: '🔦', texto: 'Avanzas por el pasadizo. Las paredes tienen pinturas de Anubis, Osiris, Ra... Llegas a una camara con un sarcofago dorado.', dialogo: 'En la pared hay simbolos que brillan. Sientes un escalofrio...', opciones: [{ texto: 'Examinar los simbolos', siguiente: 7 }, { texto: 'Abrir el sarcofago', siguiente: 8 }], aprendizaje: 'Anubis tenia cabeza de chacal. Era el dios de la momificacion.' },
+                { imagen: '👥', texto: 'Un joven trabajador te acompaña. Te cuenta leyendas sobre maldiciones...', dialogo: '"Dicen que quien moleste al faraon sera maldecido para siempre..."', opciones: [{ texto: 'Seguir adelante', siguiente: 5 }], aprendizaje: 'La maldicion de los faraones es un mito. Surgio cuando arqueologos murieron tras abrir tumbas.' },
+                { imagen: '✨', texto: 'Los simbolos cuentan una historia antigua sobre los primeros reyes, cuando el Nilo era mas grande y la tierra mas verde.', dialogo: 'Copias cada simbolo en tu papiro. Este descubrimiento cambiara la historia!', opciones: [{ texto: 'Volver con el faraon', siguiente: 9 }], aprendizaje: 'Hace miles de años, el Sahara era verde y fertil. El clima lo convirtio en desierto.' },
+                { imagen: '💀', texto: 'Dentro del sarcofago hay tablillas de arcilla con escritura desconocida. Son mas antiguas que los faraones!', dialogo: '"Esto es de antes de los faraones... de los dioses mismos."', opciones: [{ texto: 'Llevar las tablillas', siguiente: 9 }], aprendizaje: 'Antes de los faraones, Egipto ya tenia civilizaciones de hace 7.000 años.' },
+                { imagen: '🎉', texto: 'El faraon te recibe como heroe. Te nombra escriba real y te regala una casa junto al Nilo.', dialogo: '"Has servido bien a Egipto. Tu nombre sera recordado para siempre."', opciones: [], aprendizaje: 'Los escribas importantes eran enterrados con honores y todo su equipo de escritura.', final: true }
+            ]},
+            { titulo: 'El Gladiador', epoca: 'Roma Antigua', nodos: [
+                { imagen: '⛓️', texto: 'Eres un prisionero capturado por las legiones romanas. Te venden a una escuela de gladiadores.', dialogo: '"Fuerte y joven... seras un buen gladiador. Si sobrevives al entrenamiento."', opciones: [{ texto: 'Mostrar valor', siguiente: 1 }, { texto: 'Preguntar como escapar', siguiente: 2 }], aprendizaje: 'Los gladiadores solian ser esclavos o prisioneros. Algunos hombres libres lo hacian por fama.' },
+                { imagen: '⚔️', texto: 'Entrenas durante meses con espada y escudo. Aprendes a luchar como murmillo.', dialogo: '"No luches para matar. Lucha para entretener. El publico decide quien vive."', opciones: [{ texto: 'Practicar espectaculo', siguiente: 3 }, { texto: 'Centrarme en sobrevivir', siguiente: 4 }], aprendizaje: 'Habia muchos tipos de gladiadores: murmillo, retiarius con red, secutor...' },
+                { imagen: '🏃', texto: 'El veterano niega con la cabeza.', dialogo: '"Escapar es imposible. Los que lo intentan son crucificados. Tu unica salida es ganar tu libertad en la arena."', opciones: [{ texto: 'Aceptar mi destino', siguiente: 1 }], aprendizaje: 'Espartaco lidero una rebelion de gladiadores. 6.000 rebeldes fueron crucificados.' },
+                { imagen: '🎭', texto: 'Aprendes a hacer la lucha emocionante. El publico quiere drama!', dialogo: 'Llega tu primer combate. El Coliseo tiene 50.000 personas gritando.', opciones: [{ texto: 'Entrar con confianza', siguiente: 5 }], aprendizaje: 'Los combates no siempre eran a muerte. Los gladiadores entrenados eran muy valiosos.' },
+                { imagen: '🛡️', texto: 'Te concentras en defensa y resistencia. Sobrevivir es lo primero.', dialogo: 'Llega tu primer combate. Tienes miedo pero estas preparado.', opciones: [{ texto: 'Entrar a la arena', siguiente: 5 }], aprendizaje: 'Los gladiadores comian cebada y legumbres. La grasa les protegia de cortes.' },
+                { imagen: '🏟️', texto: 'La arena es inmensa. Tu oponente es un retiarius con red y tridente. Se mueve rapido!', dialogo: 'El emperador observa. Si ganas, podria darte la libertad...', opciones: [{ texto: 'Atacar!', siguiente: 6 }, { texto: 'Esperar y contraatacar', siguiente: 7 }], aprendizaje: 'El Coliseo cabia 50.000 personas. Tenia un toldo gigante llamado velarium.' },
+                { imagen: '💥', texto: 'Atacas pero el retiarius lanza su red. Quedas atrapado! Luchas por liberarte...', dialogo: 'Levanta su tridente... pero el publico pide clemencia! Les has entretenido!', opciones: [{ texto: 'Aceptar la derrota con honor', siguiente: 8 }], aprendizaje: 'El gesto del pulgar no era como en las peliculas. Los historiadores aun debaten cual era.' },
+                { imagen: '🎯', texto: 'Esperas pacientemente. El retiarius lanza su red pero la esquivas! Contraatacas y lo desarmas!', dialogo: 'El emperador se levanta. Te ha concedido la victoria!', opciones: [{ texto: 'Agradecer al publico', siguiente: 9 }], aprendizaje: 'Los gladiadores famosos eran celebridades. Sus nombres aparecian en graffitis.' },
+                { imagen: '🙏', texto: 'Vives para luchar otro dia. En meses ganas fama. Finalmente, te dan el rudis, la espada de madera de la libertad.', dialogo: '"Has luchado bien. Eres libre."', opciones: [], aprendizaje: 'El rudis era una espada de madera que daban a los gladiadores que ganaban su libertad.', final: true },
+                { imagen: '🏆', texto: 'Te conviertes en leyenda. Tras docenas de combates, el emperador te da libertad y oro.', dialogo: 'Usas tu fortuna para liberar a otros gladiadores. Tu nombre sera recordado.', opciones: [], aprendizaje: 'Algunos gladiadores libertos se hacian entrenadores o abrian negocios.', final: true }
+            ]}
+        ];
+
+        function iniciarAventura() {
+            aventuraActual = AVENTURAS[Math.floor(Math.random() * AVENTURAS.length)];
+            nodoActual = 0;
+            mostrarPantalla('aventuraContainer');
+            mostrarNodoAventura();
+        }
+
+        function mostrarNodoAventura() {
+            var nodo = aventuraActual.nodos[nodoActual];
+            document.getElementById('aventuraEpoca').textContent = aventuraActual.epoca;
+            document.getElementById('aventuraCapitulo').textContent = 'Parte ' + (nodoActual + 1);
+            var contenido = document.getElementById('aventuraContenido');
+            if (nodo.final) {
+                contenido.innerHTML = '<div class="aventura-final"><div class="emoji">' + nodo.imagen + '</div><h2>Fin!</h2>' +
+                    '<div class="aventura-escena"><p class="aventura-texto">' + nodo.texto + '</p>' + (nodo.dialogo ? '<div class="dialogo">' + nodo.dialogo + '</div>' : '') + '</div>' +
+                    '<div class="aventura-aprendizaje">' + nodo.aprendizaje + '</div>' +
+                    '<button class="btn btn-primary" onclick="iniciarAventura()" style="margin-top:15px;">Otra aventura</button></div>';
+            } else {
+                contenido.innerHTML = '<div class="aventura-escena"><div class="aventura-imagen">' + nodo.imagen + '</div>' +
+                    '<div class="aventura-texto">' + nodo.texto + (nodo.dialogo ? '<div class="dialogo">' + nodo.dialogo + '</div>' : '') + '</div></div>' +
+                    '<div class="aventura-opciones">' + nodo.opciones.map(function(op, i) {
+                        return '<div class="aventura-opcion" data-sig="' + op.siguiente + '">' + op.texto + '</div>';
+                    }).join('') + '</div>' +
+                    '<div class="aventura-aprendizaje">' + nodo.aprendizaje + '</div>';
+                document.querySelectorAll('.aventura-opcion').forEach(function(el) {
+                    el.onclick = function() { nodoActual = parseInt(this.dataset.sig); mostrarNodoAventura(); };
+                });
+            }
+        }
+
+        // ==================== 4. ARENA HISTORICA ====================
+        var canvas, ctx;
+        var arenaLoop = null;
+        var gladiador = { x: 0, y: 0, w: 50, h: 50 };
+        var obstaculos = [];
+        var puntos = 0, vidas = 3;
+        var datosVistos = [];
+        var moviendo = { izq: false, der: false };
+
+        var DATOS_ARENA = [
+            'Los gladiadores comian cebada y legumbres para estar fuertes',
+            'El Coliseo tenia 80 entradas para que entrara la gente rapido',
+            'Habia gladiadoras mujeres aunque eran muy raras',
+            'A veces llenaban el Coliseo de agua para batallas navales!',
+            'Los gladiadores tenian sus propios medicos especializados',
+            'Un gladiador podia ganar su libertad si ganaba muchos combates',
+            'Los leones del Coliseo venian desde Africa del Norte',
+            'El emperador podia perdonar a un gladiador perdedor',
+            'El Coliseo tardo 8 años en construirse',
+            'Los espectaculos podian durar todo el dia con comida gratis',
+            'Antes de los combates habia desfiles con musica',
+            'Debajo de la arena habia tuneles y jaulas para animales',
+            'Los gladiadores eran como las estrellas de rock de su epoca',
+            'La palabra arena viene del latin para referirse a la sand'
+        ];
+
+        function iniciarArena() {
+            mostrarPantalla('arenaContainer');
+            canvas = document.getElementById('arenaCanvas');
+            ctx = canvas.getContext('2d');
+
+            var rect = canvas.getBoundingClientRect();
+            canvas.width = rect.width * 2;
+            canvas.height = 400 * 2;
+            ctx.scale(2, 2);
+
+            gladiador.x = rect.width / 2 - 25;
+            gladiador.y = 320;
+
+            document.getElementById('arenaOverlay').style.display = 'flex';
+            document.getElementById('arenaPuntos').textContent = '0';
+            document.getElementById('arenaVidas').textContent = '❤️❤️❤️';
+            document.getElementById('listaDatos').innerHTML = '<li>Juega para descubrir datos!</li>';
+
+            // Controles
+            var btnIzq = document.getElementById('btnIzq');
+            var btnDer = document.getElementById('btnDer');
+
+            btnIzq.ontouchstart = btnIzq.onmousedown = function(e) { e.preventDefault(); moviendo.izq = true; };
+            btnIzq.ontouchend = btnIzq.onmouseup = btnIzq.onmouseleave = function() { moviendo.izq = false; };
+            btnDer.ontouchstart = btnDer.onmousedown = function(e) { e.preventDefault(); moviendo.der = true; };
+            btnDer.ontouchend = btnDer.onmouseup = btnDer.onmouseleave = function() { moviendo.der = false; };
+        }
+
+        function empezarArena() {
+            document.getElementById('arenaOverlay').style.display = 'none';
+            puntos = 0;
+            vidas = 3;
+            obstaculos = [];
+            datosVistos = [];
+
+            var rect = canvas.getBoundingClientRect();
+            gladiador.x = rect.width / 2 - 25;
+
+            actualizarUI();
+            if (arenaLoop) cancelAnimationFrame(arenaLoop);
+            loopArena();
+        }
+
+        function pararArena() {
+            if (arenaLoop) cancelAnimationFrame(arenaLoop);
+            arenaLoop = null;
+        }
+
+        function loopArena() {
+            if (!canvas) return;
+
+            var w = canvas.width / 2;
+            var h = 400;
+
+            // Mover gladiador
+            if (moviendo.izq) gladiador.x = Math.max(10, gladiador.x - 8);
+            if (moviendo.der) gladiador.x = Math.min(w - 60, gladiador.x + 8);
+
+            // Crear obstaculos
+            if (Math.random() < 0.025) {
+                var esBueno = Math.random() < 0.25;
+                obstaculos.push({
+                    x: Math.random() * (w - 50) + 10,
+                    y: -50,
+                    w: 45,
+                    h: 45,
+                    bueno: esBueno,
+                    emoji: esBueno ? '🛡️' : '🦁'
+                });
+            }
+
+            // Mover y colisionar
+            for (var i = obstaculos.length - 1; i >= 0; i--) {
+                var o = obstaculos[i];
+                o.y += 4;
+
+                // Colision
+                if (o.y + o.h > gladiador.y && o.y < gladiador.y + gladiador.h &&
+                    o.x + o.w > gladiador.x && o.x < gladiador.x + gladiador.w) {
+
+                    if (o.bueno) {
+                        puntos += 15;
+                        agregarDato();
+                    } else {
+                        vidas--;
+                        actualizarUI();
+                        if (vidas <= 0) {
+                            finArena();
+                            return;
+                        }
+                    }
+                    obstaculos.splice(i, 1);
+                    continue;
+                }
+
+                // Fuera de pantalla
+                if (o.y > h + 50) {
+                    obstaculos.splice(i, 1);
+                }
+            }
+
+            puntos += 0.1;
+            actualizarUI();
+            dibujarArena(w, h);
+            arenaLoop = requestAnimationFrame(loopArena);
+        }
+
+        function dibujarArena(w, h) {
+            // Fondo
+            var grad = ctx.createLinearGradient(0, 0, 0, h);
+            grad.addColorStop(0, '#DEB887');
+            grad.addColorStop(0.7, '#D2691E');
+            grad.addColorStop(1, '#8B4513');
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, w, h);
+
+            // Suelo
+            ctx.fillStyle = '#5D4037';
+            ctx.fillRect(0, h - 50, w, 50);
+
+            // Columnas decorativas
+            ctx.font = '40px serif';
+            ctx.fillText('🏛️', 20, h - 60);
+            ctx.fillText('🏛️', w/2 - 20, h - 60);
+            ctx.fillText('🏛️', w - 60, h - 60);
+
+            // Obstaculos
+            ctx.font = '40px serif';
+            obstaculos.forEach(function(o) {
+                ctx.fillText(o.emoji, o.x, o.y + 40);
+            });
+
+            // Gladiador
+            ctx.font = '50px serif';
+            ctx.fillText('🤺', gladiador.x, gladiador.y + 45);
+        }
+
+        function actualizarUI() {
+            document.getElementById('arenaPuntos').textContent = Math.floor(puntos);
+            document.getElementById('arenaVidas').textContent = '❤️'.repeat(Math.max(0, vidas)) + '🖤'.repeat(Math.max(0, 3 - vidas));
+        }
+
+        function agregarDato() {
+            var disponibles = DATOS_ARENA.filter(function(d) { return datosVistos.indexOf(d) === -1; });
+            if (disponibles.length === 0) return;
+            var dato = disponibles[Math.floor(Math.random() * disponibles.length)];
+            datosVistos.push(dato);
+            document.getElementById('listaDatos').innerHTML = datosVistos.map(function(d) { return '<li>' + d + '</li>'; }).join('');
+        }
+
+        function finArena() {
+            pararArena();
+            var overlay = document.getElementById('arenaOverlay');
+            overlay.innerHTML = '<div class="emoji">⚔️</div><h2>Fin del combate!</h2>' +
+                '<div class="puntuacion">' + Math.floor(puntos) + ' puntos</div>' +
+                '<p>Descubriste ' + datosVistos.length + ' datos historicos</p>' +
+                '<button class="btn btn-primary" onclick="reiniciarArenaUI()">Jugar de nuevo</button> ' +
+                '<button class="btn" onclick="volverMenu()">Menu</button>';
+            overlay.style.display = 'flex';
+        }
+
+        function reiniciarArenaUI() {
+            document.getElementById('arenaOverlay').innerHTML = '<h2>⚔️ Arena Romana</h2><p>Esquiva los leones 🦁 y recoge los escudos 🛡️ para aprender datos historicos</p><button class="btn btn-primary" onclick="empezarArena()">🎮 Empezar</button>';
+            empezarArena();
+        }
+
+        // Teclado
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'ArrowLeft') moviendo.izq = true;
+            if (e.key === 'ArrowRight') moviendo.der = true;
+        });
+        document.addEventListener('keyup', function(e) {
+            if (e.key === 'ArrowLeft') moviendo.izq = false;
+            if (e.key === 'ArrowRight') moviendo.der = false;
+        });
+    </script>
+</body>
+</html>

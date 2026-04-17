@@ -443,8 +443,222 @@ async function generarTextoGemini(prompt, key) {
     return parsearJSONSeguro(texto);
 }
 
+// ==================== WEB SPEECH API - TTS ====================
+// Utilidades para Text-to-Speech usando Web Speech API nativo del navegador
+
+const speechSynthesis = window.speechSynthesis;
+let vocesDisponibles = [];
+let vozActual = null;
+
+// Cargar voces disponibles
+function cargarVoces() {
+    vocesDisponibles = speechSynthesis.getVoices();
+    console.log('[TTS] Voces disponibles:', vocesDisponibles.length);
+}
+
+// Chrome carga voces de forma asincrona
+if (speechSynthesis.onvoiceschanged !== undefined) {
+    speechSynthesis.onvoiceschanged = cargarVoces;
+}
+cargarVoces();
+
+// Obtener la mejor voz para un idioma
+function obtenerVoz(idioma) {
+    if (vocesDisponibles.length === 0) {
+        cargarVoces();
+    }
+
+    // Mapeo de codigos de idioma
+    const codigos = {
+        'es': ['es-ES', 'es-MX', 'es-AR', 'es'],
+        'ca': ['ca-ES', 'ca'],
+        'en': ['en-US', 'en-GB', 'en-AU', 'en']
+    };
+
+    const preferidos = codigos[idioma] || codigos['es'];
+
+    // Buscar voz que coincida con preferencias
+    for (const codigo of preferidos) {
+        const voz = vocesDisponibles.find(v =>
+            v.lang.toLowerCase().startsWith(codigo.toLowerCase())
+        );
+        if (voz) return voz;
+    }
+
+    // Fallback: primera voz disponible
+    return vocesDisponibles[0] || null;
+}
+
+// Hablar texto con Web Speech API
+function hablar(texto, opciones = {}) {
+    return new Promise((resolve, reject) => {
+        if (!speechSynthesis) {
+            reject(new Error('Web Speech API no soportada'));
+            return;
+        }
+
+        // Cancelar cualquier speech en curso
+        speechSynthesis.cancel();
+
+        const utterance = new SpeechSynthesisUtterance(texto);
+
+        // Configurar voz segun idioma
+        const idioma = opciones.idioma || 'es';
+        const voz = obtenerVoz(idioma);
+        if (voz) {
+            utterance.voice = voz;
+            utterance.lang = voz.lang;
+        } else {
+            utterance.lang = idioma === 'ca' ? 'ca-ES' : idioma === 'en' ? 'en-US' : 'es-ES';
+        }
+
+        // Configurar velocidad y tono
+        utterance.rate = opciones.velocidad || 0.9; // Ligeramente mas lento para ninos
+        utterance.pitch = opciones.tono || 1;
+        utterance.volume = opciones.volumen || 1;
+
+        // Eventos
+        utterance.onend = () => resolve();
+        utterance.onerror = (e) => {
+            console.error('[TTS] Error:', e);
+            reject(e);
+        };
+
+        // Callback mientras habla (para resaltar palabras)
+        if (opciones.onBoundary) {
+            utterance.onboundary = opciones.onBoundary;
+        }
+
+        speechSynthesis.speak(utterance);
+    });
+}
+
+// Detener speech en curso
+function detenerHabla() {
+    if (speechSynthesis) {
+        speechSynthesis.cancel();
+    }
+}
+
+// Verificar si TTS esta disponible
+function ttsDisponible() {
+    return 'speechSynthesis' in window;
+}
+
+// Listar voces disponibles para debug
+function listarVoces() {
+    cargarVoces();
+    return vocesDisponibles.map(v => ({
+        nombre: v.name,
+        idioma: v.lang,
+        local: v.localService
+    }));
+}
+
+// ==================== WEB SPEECH API - STT (Reconocimiento de voz) ====================
+// Utilidades para Speech-to-Text usando Web Speech API
+
+let reconocimientoActivo = null;
+
+// Verificar si STT esta disponible
+function sttDisponible() {
+    return 'webkitSpeechRecognition' in window || 'SpeechRecognition' in window;
+}
+
+// Crear instancia de reconocimiento
+function crearReconocimiento(opciones = {}) {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+        throw new Error('Web Speech Recognition no soportado');
+    }
+
+    const recognition = new SpeechRecognition();
+
+    // Configuracion
+    recognition.continuous = opciones.continuo || false;
+    recognition.interimResults = opciones.resultadosIntermedios || true;
+    recognition.maxAlternatives = opciones.alternativas || 1;
+
+    // Idioma
+    const idioma = opciones.idioma || 'es';
+    recognition.lang = idioma === 'ca' ? 'ca-ES' : idioma === 'en' ? 'en-US' : 'es-ES';
+
+    return recognition;
+}
+
+// Transcribir con Web Speech API (alternativa a Groq)
+function transcribirConWebSpeech(opciones = {}) {
+    return new Promise((resolve, reject) => {
+        if (!sttDisponible()) {
+            reject(new Error('Web Speech Recognition no soportado'));
+            return;
+        }
+
+        try {
+            const recognition = crearReconocimiento(opciones);
+            let textoFinal = '';
+            let textoInterim = '';
+
+            recognition.onresult = (event) => {
+                textoInterim = '';
+                for (let i = event.resultIndex; i < event.results.length; i++) {
+                    const transcript = event.results[i][0].transcript;
+                    if (event.results[i].isFinal) {
+                        textoFinal += transcript + ' ';
+                    } else {
+                        textoInterim += transcript;
+                    }
+                }
+
+                // Callback para resultados intermedios
+                if (opciones.onInterim) {
+                    opciones.onInterim(textoFinal + textoInterim);
+                }
+            };
+
+            recognition.onerror = (event) => {
+                console.error('[STT] Error:', event.error);
+                if (event.error === 'no-speech') {
+                    resolve(textoFinal.trim() || '');
+                } else {
+                    reject(new Error(event.error));
+                }
+            };
+
+            recognition.onend = () => {
+                reconocimientoActivo = null;
+                resolve(textoFinal.trim());
+            };
+
+            reconocimientoActivo = recognition;
+            recognition.start();
+
+            // Timeout opcional
+            if (opciones.timeout) {
+                setTimeout(() => {
+                    if (reconocimientoActivo) {
+                        reconocimientoActivo.stop();
+                    }
+                }, opciones.timeout);
+            }
+
+        } catch (error) {
+            reject(error);
+        }
+    });
+}
+
+// Detener reconocimiento de voz
+function detenerReconocimiento() {
+    if (reconocimientoActivo) {
+        reconocimientoActivo.stop();
+        reconocimientoActivo = null;
+    }
+}
+
 // ==================== INICIALIZACION ====================
 document.addEventListener('DOMContentLoaded', () => {
     cargarUsuario();
     cargarConfiguracion();
+    cargarVoces(); // Pre-cargar voces TTS
 });

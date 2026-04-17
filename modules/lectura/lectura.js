@@ -677,6 +677,11 @@ function reiniciarLectura() {
 }
 
 // ==================== GRABACION DE VOZ ====================
+// Web Speech API para transcripcion en tiempo real
+let reconocimiento = null;
+let transcripcionEnVivo = '';
+let usarWebSpeech = true; // Preferir Web Speech API
+
 async function toggleGrabacion() {
     if (grabando) {
         detenerGrabacion();
@@ -685,8 +690,19 @@ async function toggleGrabacion() {
     }
 }
 
+// Verificar si Web Speech API esta disponible
+function webSpeechDisponible() {
+    return 'webkitSpeechRecognition' in window || 'SpeechRecognition' in window;
+}
+
 async function iniciarGrabacion() {
     try {
+        // Intentar Web Speech API primero (transcripcion en tiempo real)
+        if (usarWebSpeech && webSpeechDisponible()) {
+            iniciarWebSpeech();
+        }
+
+        // Tambien grabar audio como backup (para Groq si falla Web Speech)
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
         mediaRecorder = new MediaRecorder(stream);
         audioChunks = [];
@@ -702,11 +718,15 @@ async function iniciarGrabacion() {
 
         mediaRecorder.start();
         grabando = true;
+        transcripcionEnVivo = '';
 
         // UI
         document.getElementById('btnGrabar').classList.add('grabando');
         document.getElementById('textoBotonGrabar').textContent = 'Detener';
         document.getElementById('indicadorGrabacion').classList.add('activo');
+
+        // Mostrar area de transcripcion en vivo
+        mostrarTranscripcionEnVivo();
 
         // Timer
         tiempoGrabacionSegundos = 0;
@@ -719,10 +739,108 @@ async function iniciarGrabacion() {
     }
 }
 
+function iniciarWebSpeech() {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    reconocimiento = new SpeechRecognition();
+
+    // Configuracion
+    reconocimiento.continuous = true;
+    reconocimiento.interimResults = true;
+    reconocimiento.maxAlternatives = 1;
+
+    // Idioma segun el comic
+    const lang = idiomaComic === 'en' ? 'en-US' : idiomaComic === 'ca' ? 'ca-ES' : 'es-ES';
+    reconocimiento.lang = lang;
+
+    reconocimiento.onresult = (event) => {
+        let textoFinal = '';
+        let textoInterim = '';
+
+        for (let i = 0; i < event.results.length; i++) {
+            const transcript = event.results[i][0].transcript;
+            if (event.results[i].isFinal) {
+                textoFinal += transcript + ' ';
+            } else {
+                textoInterim += transcript;
+            }
+        }
+
+        transcripcionEnVivo = textoFinal + textoInterim;
+        actualizarTranscripcionEnVivo();
+    };
+
+    reconocimiento.onerror = (event) => {
+        console.warn('Web Speech error:', event.error);
+        // No mostrar error si es "no-speech" (silencio)
+        if (event.error !== 'no-speech' && event.error !== 'aborted') {
+            console.log('Usando Groq como fallback');
+        }
+    };
+
+    reconocimiento.onend = () => {
+        // Reiniciar si aun estamos grabando
+        if (grabando && reconocimiento) {
+            try {
+                reconocimiento.start();
+            } catch (e) {
+                // Ignorar error si ya esta corriendo
+            }
+        }
+    };
+
+    try {
+        reconocimiento.start();
+        console.log('Web Speech iniciado - idioma:', lang);
+    } catch (e) {
+        console.warn('Error iniciando Web Speech:', e);
+    }
+}
+
+function mostrarTranscripcionEnVivo() {
+    // Crear contenedor de transcripcion en vivo si no existe
+    let container = document.getElementById('transcripcionEnVivo');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'transcripcionEnVivo';
+        container.style.cssText = 'background:rgba(0,0,0,0.3);border:2px solid rgba(255,255,255,0.3);border-radius:10px;padding:10px;margin:10px 0;max-height:100px;overflow-y:auto;font-size:0.95em;color:#90EE90;';
+        container.innerHTML = '<div style="opacity:0.7;font-size:0.9em;margin-bottom:5px;">Transcripcion en vivo:</div><div id="textoTranscripcion" style="font-style:italic;min-height:20px;">Esperando...</div>';
+
+        // Insertar antes de los controles
+        const controles = document.querySelector('.controles-lectura');
+        if (controles) {
+            controles.parentNode.insertBefore(container, controles);
+        }
+    }
+    container.style.display = 'block';
+}
+
+function actualizarTranscripcionEnVivo() {
+    const textoEl = document.getElementById('textoTranscripcion');
+    if (textoEl) {
+        textoEl.textContent = transcripcionEnVivo || 'Escuchando...';
+        textoEl.parentNode.scrollTop = textoEl.parentNode.scrollHeight;
+    }
+}
+
+function ocultarTranscripcionEnVivo() {
+    const container = document.getElementById('transcripcionEnVivo');
+    if (container) {
+        container.style.display = 'none';
+    }
+}
+
 function detenerGrabacion() {
     if (mediaRecorder && grabando) {
         mediaRecorder.stop();
         grabando = false;
+
+        // Detener Web Speech
+        if (reconocimiento) {
+            try {
+                reconocimiento.stop();
+            } catch (e) {}
+            reconocimiento = null;
+        }
 
         clearInterval(tiempoGrabacionInterval);
 
@@ -740,10 +858,74 @@ function actualizarTiempoGrabacion() {
     document.getElementById('tiempoGrabacion').textContent = `${mins}:${secs}`;
 }
 
+// ==================== TEXT-TO-SPEECH ====================
+let leyendoEnVoz = false;
+let speechSynthesis = window.speechSynthesis;
+
+function leerEnVozAlta() {
+    if (leyendoEnVoz) {
+        detenerLecturaVoz();
+        return;
+    }
+
+    if (!speechSynthesis) {
+        alert('Tu navegador no soporta lectura en voz alta');
+        return;
+    }
+
+    // Obtener texto de la frase actual o todo el texto
+    let textoALeer = '';
+    const fraseActiva = document.querySelector('.frase.activa');
+    if (fraseActiva) {
+        textoALeer = fraseActiva.textContent;
+    } else {
+        textoALeer = textoActual.substring(0, 500); // Primeras 500 chars
+    }
+
+    const utterance = new SpeechSynthesisUtterance(textoALeer);
+
+    // Configurar idioma
+    const lang = idiomaComic === 'en' ? 'en-US' : idiomaComic === 'ca' ? 'ca-ES' : 'es-ES';
+    utterance.lang = lang;
+    utterance.rate = 0.85; // Un poco mas lento para ninos
+    utterance.pitch = 1;
+
+    utterance.onend = () => {
+        leyendoEnVoz = false;
+        actualizarBotonLeerVoz();
+    };
+
+    utterance.onerror = (e) => {
+        console.error('Error TTS:', e);
+        leyendoEnVoz = false;
+        actualizarBotonLeerVoz();
+    };
+
+    speechSynthesis.speak(utterance);
+    leyendoEnVoz = true;
+    actualizarBotonLeerVoz();
+}
+
+function detenerLecturaVoz() {
+    if (speechSynthesis) {
+        speechSynthesis.cancel();
+    }
+    leyendoEnVoz = false;
+    actualizarBotonLeerVoz();
+}
+
+function actualizarBotonLeerVoz() {
+    const btn = document.getElementById('btnLeerVoz');
+    if (btn) {
+        btn.textContent = leyendoEnVoz ? '⏹️ Parar' : '🔊 Escuchar';
+    }
+}
+
 // ==================== EVALUACION ====================
 async function terminarLectura() {
     detenerLectura();
     detenerGrabacion();
+    ocultarTranscripcionEnVivo();
 
     mostrarPantalla('evaluacion');
     document.getElementById('evaluandoMsg').style.display = 'block';
@@ -752,9 +934,15 @@ async function terminarLectura() {
     const tiempoTotal = tiempoInicioLectura ? Math.round((Date.now() - tiempoInicioLectura) / 1000) : 0;
 
     try {
-        // Transcribir audio con Groq si hay grabacion
         let transcripcion = null;
-        if (audioBlob && configIA.keys.groq) {
+
+        // Usar transcripcion de Web Speech si esta disponible (instantanea)
+        if (transcripcionEnVivo && transcripcionEnVivo.trim().length > 10) {
+            console.log('Usando transcripcion de Web Speech');
+            transcripcion = transcripcionEnVivo.trim();
+        }
+        // Fallback a Groq si no hay transcripcion de Web Speech
+        else if (audioBlob && configIA.keys.groq) {
             document.getElementById('evaluandoMsg').querySelector('p').textContent = 'Transcribiendo tu voz con IA...';
             transcripcion = await transcribirConGroq(audioBlob);
         }

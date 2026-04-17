@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Matematicas - SuperMente</title>
+    <link href="https://fonts.googleapis.com/css2?family=Indie+Flower&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { background: #2a5a2a; color: #f0f0e8; margin: 0; padding: 0; font-family: 'Indie Flower', cursive; min-height: 100vh; }
+
+        .menu-container {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            align-items: center;
+            padding: 40px 20px 20px 20px;
+        }
+
+        h1 {
+            font-size: 2.2em;
+            margin-bottom: 10px;
+            text-shadow: 0 0 5px rgba(255,255,255,0.5);
+            text-align: center;
+        }
+
+        .subtitulo {
+            font-size: 1.1em;
+            opacity: 0.7;
+            margin-bottom: 25px;
+            text-align: center;
+        }
+
+        .menu-opciones {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            width: 100%;
+            max-width: 320px;
+        }
+
+        .btn-menu {
+            background: rgba(255,255,255,0.1);
+            border: 3px solid rgba(255,255,255,0.4);
+            color: #f0f0e8;
+            padding: 16px;
+            font-size: 1.3em;
+            border-radius: 12px;
+            font-family: 'Indie Flower', cursive;
+            text-shadow: 0 0 5px rgba(255,255,255,0.5);
+            cursor: pointer;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .btn-menu:active { background: rgba(255,255,255,0.2); }
+
+        .btn-menu small {
+            display: block;
+            font-size: 0.6em;
+            opacity: 0.7;
+            margin-top: 3px;
+        }
+
+        .btn-menu .emoji {
+            font-size: 1.3em;
+        }
+
+        .seccion-titulo {
+            font-size: 1em;
+            opacity: 0.6;
+            margin-top: 15px;
+            margin-bottom: 5px;
+            text-align: center;
+        }
+
+        .btn-volver {
+            margin-top: 20px;
+            opacity: 0.7;
+            font-size: 1.1em;
+        }
+    </style>
+</head>
+<body>
+    <div class="menu-container">
+        <h1>Matematicas</h1>
+        <p class="subtitulo">Practica operaciones y resolucion de problemas</p>
+
+        <div class="menu-opciones">
+            <div class="seccion-titulo">Operaciones basicas</div>
+
+            <button class="btn-menu" onclick="irA('../suma/suma.html')">
+                <span class="emoji">➕</span>
+                <span>Suma</span>
+            </button>
+
+            <button class="btn-menu" onclick="irA('../resta/resta.html')">
+                <span class="emoji">➖</span>
+                <span>Resta</span>
+            </button>
+
+            <button class="btn-menu" onclick="irA('../multiplicacion/multiplicacion.html')">
+                <span class="emoji">✖️</span>
+                <span>Multiplicacion</span>
+            </button>
+
+            <button class="btn-menu" onclick="irA('../division/division.html')">
+                <span class="emoji">➗</span>
+                <span>Division</span>
+            </button>
+
+            <div class="seccion-titulo">Practica avanzada</div>
+
+            <button class="btn-menu" onclick="irA('../tablas/tablas.html')">
+                <span class="emoji">📋</span>
+                <span>Tablas de multiplicar</span>
+            </button>
+
+            <button class="btn-menu" onclick="irA('../problemas/problemas.html')">
+                <span class="emoji">🧩</span>
+                <span>Problemas</span>
+            </button>
+
+            <button class="btn-menu btn-volver" onclick="irA('../../index.html')">
+                <span class="emoji">🏠</span>
+                <span>Volver al menu</span>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        function irA(url) {
+            window.location.href = url;
+        }
+    </script>
+</body>
+</html>

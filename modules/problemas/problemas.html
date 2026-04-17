@@ -1,0 +1,907 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Problemas Matematicos - SuperMente</title>
+    <link href="https://fonts.googleapis.com/css2?family=Indie+Flower&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { background: #2a5a2a; color: #f0f0e8; margin: 0; padding: 0; font-family: 'Indie Flower', cursive; min-height: 100vh; }
+        .oculto { display: none !important; }
+
+        /* Menu de nivel */
+        #nivel {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            align-items: center;
+            padding: 50px 20px 20px 20px;
+        }
+        #nivel h1 { font-size: 2em; margin-bottom: 15px; text-shadow: 0 0 5px rgba(255,255,255,0.5); }
+        #nivel > p { font-size: 1.2em; text-align: center; opacity: 0.8; margin-bottom: 20px; }
+        .menu-opciones { display: flex; flex-direction: column; gap: 15px; width: 100%; max-width: 320px; }
+        .btn-menu {
+            background: rgba(255,255,255,0.1);
+            border: 3px solid rgba(255,255,255,0.4);
+            color: #f0f0e8;
+            padding: 18px;
+            font-size: 1.4em;
+            border-radius: 12px;
+            font-family: 'Indie Flower', cursive;
+            text-shadow: 0 0 5px rgba(255,255,255,0.5);
+            cursor: pointer;
+        }
+        .btn-menu:active { background: rgba(255,255,255,0.2); }
+        .btn-menu small { display: block; font-size: 0.6em; opacity: 0.7; margin-top: 5px; }
+
+        /* Pantalla de problema */
+        #problema {
+            padding: 10px;
+            padding-bottom: 160px;
+        }
+
+        .problema-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 10px;
+            margin-bottom: 10px;
+        }
+        .problema-progreso { font-size: 1.1em; }
+        .problema-puntos { color: #e8954a; font-size: 1.2em; }
+
+        /* Enunciado del problema */
+        .problema-enunciado {
+            background: rgba(255,255,255,0.1);
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 10px;
+            font-size: 1.3em;
+            line-height: 1.5;
+        }
+        .problema-enunciado .contexto {
+            font-size: 0.85em;
+            opacity: 0.7;
+            margin-bottom: 8px;
+        }
+        .problema-enunciado .pregunta {
+            font-weight: bold;
+            color: #e8954a;
+        }
+
+        /* Canvas de pizarra */
+        .pizarra-wrapper {
+            background: #1e4a1e;
+            border: 4px solid #8B4513;
+            border-radius: 10px;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+        .pizarra-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        .pizarra-titulo { font-size: 1em; opacity: 0.8; }
+        .pizarra-tools {
+            display: flex;
+            gap: 5px;
+        }
+        .tool-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: 2px solid rgba(255,255,255,0.5);
+            background: rgba(255,255,255,0.1);
+            cursor: pointer;
+            font-size: 0.9em;
+        }
+        .tool-btn.activo { background: rgba(255,255,255,0.3); border-color: #e8954a; }
+
+        #canvasPizarra {
+            width: 100%;
+            height: 180px;
+            background: #1a3a1a;
+            border-radius: 8px;
+            cursor: crosshair;
+            touch-action: none;
+        }
+
+        /* Campo de respuesta */
+        .respuesta-container {
+            background: rgba(255,255,255,0.1);
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 12px;
+            padding: 15px;
+            text-align: center;
+        }
+        .respuesta-label { font-size: 1.1em; margin-bottom: 10px; }
+        .respuesta-input-wrap {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        #inputRespuesta {
+            width: 120px;
+            padding: 12px;
+            font-size: 1.8em;
+            text-align: center;
+            background: rgba(255,255,255,0.15);
+            border: 3px solid rgba(255,255,255,0.4);
+            border-radius: 10px;
+            color: #f0f0e8;
+            font-family: 'Indie Flower', cursive;
+        }
+        #inputRespuesta:focus { outline: none; border-color: #e8954a; }
+        .unidad { font-size: 1.2em; opacity: 0.8; }
+
+        /* Panel inferior */
+        .panel-inferior {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: #1a3a1a;
+            padding: 12px;
+            border-top: 3px solid #8B4513;
+        }
+        #mensaje {
+            text-align: center;
+            font-size: 1.2em;
+            min-height: 1.5em;
+            margin-bottom: 8px;
+        }
+        .mensaje-correcto { color: #90EE90; }
+        .mensaje-incorrecto { color: #ff6666; }
+        .botones-accion {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .btn {
+            background: rgba(255,255,255,0.15);
+            border: 2px solid rgba(255,255,255,0.5);
+            color: #f0f0e8;
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-size: 1.1em;
+            font-family: 'Indie Flower', cursive;
+            cursor: pointer;
+        }
+        .btn:active { background: rgba(255,255,255,0.25); }
+        .btn-primary { background: #e8954a; color: #1a3a1a; border-color: #e8954a; }
+
+        /* Explicacion */
+        .explicacion {
+            background: rgba(255,204,0,0.15);
+            border: 2px solid #ffcc00;
+            border-radius: 10px;
+            padding: 12px;
+            margin-top: 10px;
+            font-size: 1em;
+            line-height: 1.4;
+        }
+        .explicacion-titulo { color: #ffcc00; font-weight: bold; margin-bottom: 5px; }
+
+        /* Cargando */
+        .cargando {
+            text-align: center;
+            padding: 40px;
+            font-size: 1.3em;
+        }
+        .cargando .spinner {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(255,255,255,0.3);
+            border-top-color: #e8954a;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Resultado final */
+        .resultado-final {
+            text-align: center;
+            padding: 30px;
+        }
+        .resultado-final .emoji { font-size: 4em; margin-bottom: 15px; }
+        .resultado-final .puntuacion { font-size: 2em; color: #e8954a; margin-bottom: 10px; }
+        .resultado-final .mensaje { font-size: 1.2em; opacity: 0.8; margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+    <!-- Menu de nivel -->
+    <div id="nivel">
+        <h1>Problemas Matematicos</h1>
+        <p>Resuelve problemas contextualizados con operaciones combinadas</p>
+        <div class="menu-opciones">
+            <button class="btn-menu" onclick="iniciarNivel('facil')">
+                Facil
+                <small>Suma y resta - 1 operacion</small>
+            </button>
+            <button class="btn-menu" onclick="iniciarNivel('medio')">
+                Medio
+                <small>Multiplicacion/division + suma/resta</small>
+            </button>
+            <button class="btn-menu" onclick="iniciarNivel('dificil')">
+                Dificil
+                <small>Multi-paso - 3-4 operaciones complejas</small>
+            </button>
+            <button class="btn-menu" onclick="window.location.href='/supermente/index.html'" style="margin-top:15px; opacity:0.7;">
+                <- Volver al Menu
+            </button>
+        </div>
+    </div>
+
+    <!-- Pantalla de problema -->
+    <div id="problema" class="oculto">
+        <div class="problema-header">
+            <span class="problema-progreso" id="progreso">1 / 5</span>
+            <span class="problema-puntos" id="puntos">0 puntos</span>
+        </div>
+
+        <div class="problema-enunciado" id="enunciado">
+            <div class="cargando">
+                <div class="spinner"></div>
+                <p>Generando problema...</p>
+            </div>
+        </div>
+
+        <div class="pizarra-wrapper">
+            <div class="pizarra-header">
+                <span class="pizarra-titulo">Pizarra de calculos</span>
+                <div class="pizarra-tools">
+                    <button class="tool-btn activo" onclick="setHerramienta('lapiz')" title="Lapiz">&#9998;</button>
+                    <button class="tool-btn" onclick="setHerramienta('borrador')" title="Borrador">&#9003;</button>
+                    <button class="tool-btn" onclick="limpiarCanvas()" title="Limpiar">&#128465;</button>
+                </div>
+            </div>
+            <canvas id="canvasPizarra"></canvas>
+        </div>
+
+        <div class="respuesta-container">
+            <div class="respuesta-label">Tu respuesta:</div>
+            <div class="respuesta-input-wrap">
+                <input type="number" id="inputRespuesta" placeholder="?" step="any">
+                <span class="unidad" id="unidad"></span>
+            </div>
+        </div>
+
+        <div id="explicacionContainer" class="oculto"></div>
+
+        <div class="panel-inferior">
+            <div id="mensaje"></div>
+            <div class="botones-accion">
+                <button class="btn btn-primary" onclick="comprobarRespuesta()">Comprobar</button>
+                <button class="btn" onclick="verExplicacion()" id="btnExplicacion" style="display:none;">Ver Explicacion</button>
+                <button class="btn" onclick="siguienteProblema()" id="btnSiguiente" style="display:none;">Siguiente</button>
+                <button class="btn" onclick="volverMenu()">Menu</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==================== CONFIGURACION IA ====================
+        var configIA = { keys: { gemini: '', claude: '' } };
+
+        function cargarConfigIA() {
+            var saved = localStorage.getItem('configIA');
+            if (saved) {
+                var savedConfig = JSON.parse(saved);
+                configIA.keys = savedConfig.keys || {};
+            }
+        }
+
+        // ==================== ESTADO DEL JUEGO ====================
+        var nivelActual = 'facil';
+        var problemaActual = 0;
+        var totalProblemas = 5;
+        var puntos = 0;
+        var problemas = [];
+        var respondido = false;
+        var edadUsuario = 10;
+
+        // Canvas
+        var canvas, ctx;
+        var dibujando = false;
+        var herramienta = 'lapiz';
+        var ultimoX = 0, ultimoY = 0;
+
+        // ==================== INICIALIZACION ====================
+        document.addEventListener('DOMContentLoaded', function() {
+            cargarConfigIA();
+            var guardado = localStorage.getItem('usuarioAprendizaje');
+            if (guardado) {
+                var usuario = JSON.parse(guardado);
+                edadUsuario = usuario.edad || 10;
+            }
+        });
+
+        function mostrarPantalla(id) {
+            ['nivel', 'problema'].forEach(function(pid) {
+                var el = document.getElementById(pid);
+                if (el) el.classList.add('oculto');
+            });
+            var pantalla = document.getElementById(id);
+            if (pantalla) pantalla.classList.remove('oculto');
+        }
+
+        function volverMenu() {
+            mostrarPantalla('nivel');
+        }
+
+        // ==================== INICIO DEL JUEGO ====================
+        async function iniciarNivel(nivel) {
+            nivelActual = nivel;
+            problemaActual = 0;
+            puntos = 0;
+            problemas = [];
+
+            mostrarPantalla('problema');
+            inicializarCanvas();
+            actualizarUI();
+
+            await generarProblemas();
+            mostrarProblema();
+        }
+
+        function actualizarUI() {
+            document.getElementById('progreso').textContent = (problemaActual + 1) + ' / ' + totalProblemas;
+            document.getElementById('puntos').textContent = puntos + ' puntos';
+        }
+
+        // ==================== GENERACION DE PROBLEMAS ====================
+        async function generarProblemas() {
+            var enunciado = document.getElementById('enunciado');
+            enunciado.innerHTML = '<div class="cargando"><div class="spinner"></div><p>Generando problemas...</p></div>';
+
+            var key = configIA.keys.gemini;
+            if (!key) {
+                problemas = generarProblemasLocales();
+                return;
+            }
+
+            try {
+                var prompt = construirPrompt();
+                var response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=' + key, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: prompt }] }],
+                        generationConfig: { maxOutputTokens: 4096 }
+                    })
+                });
+
+                if (response.ok) {
+                    var data = await response.json();
+                    var texto = data.candidates[0].content.parts[0].text;
+                    problemas = parsearJSON(texto);
+                    if (!problemas || problemas.length < totalProblemas) {
+                        problemas = generarProblemasLocales();
+                    }
+                } else {
+                    problemas = generarProblemasLocales();
+                }
+            } catch (error) {
+                console.error('Error generando problemas:', error);
+                problemas = generarProblemasLocales();
+            }
+        }
+
+        function construirPrompt() {
+            var operaciones = '';
+            var complejidad = '';
+            var ejemplos = '';
+
+            if (nivelActual === 'facil') {
+                operaciones = 'solo suma y resta';
+                complejidad = 'una sola operacion, numeros del 1 al 50';
+                ejemplos = 'Ejemplo: Maria tiene 23 manzanas y compra 15 mas. ¿Cuantas tiene?';
+            } else if (nivelActual === 'medio') {
+                operaciones = 'OBLIGATORIO usar multiplicacion o division combinada con suma/resta';
+                complejidad = 'MINIMO 2 operaciones DIFERENTES (no solo sumas y restas), numeros del 10 al 150';
+                ejemplos = 'EJEMPLOS DE DIFICULTAD MINIMA ESPERADA (NO MAS FACIL QUE ESTO):\n' +
+                    '1. "Hay 6 cajas con 12 galletas cada una. Si se comen 18 galletas, ¿cuantas quedan?" (6x12=72, 72-18=54)\n' +
+                    '2. "Una entrada de cine cuesta 8€. Si van 5 amigos y pagan con 50€, ¿cuanto les devuelven?" (5x8=40, 50-40=10)\n' +
+                    '3. "Tenemos 96 cromos para repartir entre 4 ninos. Luego cada uno consigue 7 mas. ¿Cuantos tiene cada uno?" (96/4=24, 24+7=31)\n' +
+                    '4. "En 3 estanterias hay 15 libros en cada una. Llegan 2 cajas con 12 libros cada una. ¿Cuantos libros hay ahora?" (3x15=45, 2x12=24, 45+24=69)\n\n' +
+                    'PROHIBIDO: Problemas que solo usen suma y resta como "tiene X, le dan Y, gasta Z"';
+            } else {
+                operaciones = 'todas las operaciones combinadas incluyendo porcentajes simples (10%, 20%, 25%, 50%)';
+                complejidad = '3-4 operaciones OBLIGATORIAS por problema, escenarios complejos de varios pasos';
+                ejemplos = 'EJEMPLOS DE DIFICULTAD ESPERADA:\n' +
+                    '1. "Una tienda vende 3 tipos de juguetes: coches a 12€, munecas a 15€ y pelotas a 8€. Pedro compra 2 coches, 3 munecas y 4 pelotas. Si paga con un billete de 100€, ¿cuanto le devuelven?" (Requiere: 3 multiplicaciones + 1 suma + 1 resta)\n' +
+                    '2. "En un autobus hay 45 pasajeros. En la primera parada bajan 12 y suben 8. En la segunda bajan 15 y suben 20. ¿Cuantos pasajeros hay ahora?" (Requiere: 4 operaciones secuenciales)\n' +
+                    '3. "Una camiseta cuesta 40€ pero tiene un 25% de descuento. Si compras 3 camisetas, ¿cuanto pagas en total?" (Requiere: calcular descuento + precio final + multiplicar)\n' +
+                    '4. "Un granjero tiene 120 manzanas. Reparte 1/4 entre sus 3 hijos a partes iguales. ¿Cuantas manzanas recibe cada hijo?" (Requiere: fraccion + division)';
+            }
+
+            return 'Genera ' + totalProblemas + ' problemas matematicos contextualizados para un nino de ' + edadUsuario + ' anos.\n\n' +
+                'NIVEL: ' + nivelActual.toUpperCase() + '\n' +
+                'OPERACIONES: ' + operaciones + '\n' +
+                'COMPLEJIDAD: ' + complejidad + '\n\n' +
+                ejemplos + '\n\n' +
+                'Cada problema debe tener un contexto cotidiano (tienda, escuela, deportes, comida, juguetes, viajes, etc).\n\n' +
+                'Responde SOLO con un JSON array:\n' +
+                '[\n' +
+                '  {\n' +
+                '    "contexto": "Breve descripcion de la situacion",\n' +
+                '    "pregunta": "La pregunta especifica a resolver",\n' +
+                '    "respuesta": 42,\n' +
+                '    "unidad": "euros|unidades|kg|metros|etc",\n' +
+                '    "explicacion": "Paso 1: ... = X\\nPaso 2: ... = Y\\nPaso 3: ... = Z\\nRespuesta: Z"\n' +
+                '  }\n' +
+                ']\n\n' +
+                'IMPORTANTE:\n' +
+                '- La respuesta debe ser un numero entero o decimal simple (maximo 2 decimales)\n' +
+                '- La explicacion debe mostrar CADA operacion en pasos separados\n' +
+                '- Para nivel MEDIO: OBLIGATORIO incluir multiplicacion o division, NO solo sumas/restas\n' +
+                '- Para nivel DIFICIL: MINIMO 3 operaciones diferentes por problema\n' +
+                '- NO generes problemas mas faciles que los ejemplos dados\n' +
+                '- Usa contextos variados y divertidos\n' +
+                '- RESPONDE SOLO CON JSON VALIDO';
+        }
+
+        function parsearJSON(texto) {
+            var clean = texto.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+            try {
+                return JSON.parse(clean);
+            } catch (e) {
+                clean = clean.replace(/,\s*$/, '');
+                var ob = (clean.match(/\[/g) || []).length;
+                var cb = (clean.match(/\]/g) || []).length;
+                for (var i = 0; i < ob - cb; i++) clean += ']';
+                return JSON.parse(clean);
+            }
+        }
+
+        // Problemas locales de respaldo
+        function generarProblemasLocales() {
+            var lista = [];
+            for (var i = 0; i < totalProblemas; i++) {
+                lista.push(crearProblemaLocal());
+            }
+            return lista;
+        }
+
+        function crearProblemaLocal() {
+            var contextos = [
+                { tipo: 'tienda', items: ['manzanas', 'caramelos', 'cromos', 'lapices', 'galletas'] },
+                { tipo: 'escuela', items: ['libros', 'cuadernos', 'colores', 'gomas', 'reglas'] },
+                { tipo: 'deportes', items: ['pelotas', 'medallas', 'puntos', 'goles', 'carreras'] }
+            ];
+            var ctx = contextos[Math.floor(Math.random() * contextos.length)];
+            var item = ctx.items[Math.floor(Math.random() * ctx.items.length)];
+
+            var n1, n2, respuesta, operacion, pregunta, explicacion;
+
+            if (nivelActual === 'facil') {
+                n1 = Math.floor(Math.random() * 30) + 5;
+                n2 = Math.floor(Math.random() * 20) + 1;
+                if (Math.random() > 0.5) {
+                    respuesta = n1 + n2;
+                    pregunta = 'Maria tiene ' + n1 + ' ' + item + '. Su amigo le da ' + n2 + ' mas. ¿Cuantos ' + item + ' tiene ahora?';
+                    explicacion = 'Sumamos: ' + n1 + ' + ' + n2 + ' = ' + respuesta;
+                } else {
+                    if (n1 < n2) { var t = n1; n1 = n2; n2 = t; }
+                    respuesta = n1 - n2;
+                    pregunta = 'Pedro tiene ' + n1 + ' ' + item + '. Regala ' + n2 + '. ¿Cuantos le quedan?';
+                    explicacion = 'Restamos: ' + n1 + ' - ' + n2 + ' = ' + respuesta;
+                }
+            } else if (nivelActual === 'medio') {
+                var tipoMedio = Math.floor(Math.random() * 6);
+
+                if (tipoMedio === 0) {
+                    // Multiplicar y sumar
+                    n1 = Math.floor(Math.random() * 6) + 3; // 3-8 grupos
+                    n2 = Math.floor(Math.random() * 8) + 4; // 4-11 por grupo
+                    var n3 = Math.floor(Math.random() * 15) + 5;
+                    var parcial = n1 * n2;
+                    respuesta = parcial + n3;
+                    pregunta = 'Hay ' + n1 + ' bolsas con ' + n2 + ' ' + item + ' cada una. Ademas hay ' + n3 + ' ' + item + ' sueltos. ¿Cuantos ' + item + ' hay en total?';
+                    explicacion = 'Paso 1: En bolsas = ' + n1 + ' x ' + n2 + ' = ' + parcial + '\nPaso 2: Total = ' + parcial + ' + ' + n3 + ' = ' + respuesta;
+
+                } else if (tipoMedio === 1) {
+                    // Multiplicar y restar
+                    n1 = Math.floor(Math.random() * 5) + 4; // 4-8 cajas
+                    n2 = Math.floor(Math.random() * 10) + 6; // 6-15 por caja
+                    var perdidos = Math.floor(Math.random() * 10) + 5;
+                    var total = n1 * n2;
+                    respuesta = total - perdidos;
+                    pregunta = 'Una tienda recibe ' + n1 + ' cajas con ' + n2 + ' ' + item + ' cada una. Pero ' + perdidos + ' estan rotos. ¿Cuantos ' + item + ' buenos hay?';
+                    explicacion = 'Paso 1: Total recibido = ' + n1 + ' x ' + n2 + ' = ' + total + '\nPaso 2: Buenos = ' + total + ' - ' + perdidos + ' = ' + respuesta;
+
+                } else if (tipoMedio === 2) {
+                    // Division y suma
+                    var divisor = [2, 3, 4, 5][Math.floor(Math.random() * 4)];
+                    var totalDividir = divisor * (Math.floor(Math.random() * 10) + 5);
+                    var extra = Math.floor(Math.random() * 8) + 2;
+                    var parteDiv = totalDividir / divisor;
+                    respuesta = parteDiv + extra;
+                    pregunta = 'Repartimos ' + totalDividir + ' ' + item + ' entre ' + divisor + ' ninos. Luego cada nino recibe ' + extra + ' ' + item + ' mas de regalo. ¿Cuantos tiene cada nino?';
+                    explicacion = 'Paso 1: Reparto = ' + totalDividir + ' / ' + divisor + ' = ' + parteDiv + '\nPaso 2: Con regalo = ' + parteDiv + ' + ' + extra + ' = ' + respuesta;
+
+                } else if (tipoMedio === 3) {
+                    // Doble operacion con resta
+                    n1 = Math.floor(Math.random() * 40) + 30; // 30-69
+                    n2 = Math.floor(Math.random() * 15) + 5;
+                    var n3 = Math.floor(Math.random() * 10) + 5;
+                    var n4 = Math.floor(Math.random() * 8) + 2;
+                    respuesta = n1 - n2 - n3 + n4;
+                    pregunta = 'Pedro tiene ' + n1 + ' ' + item + '. Da ' + n2 + ' a Ana y ' + n3 + ' a Luis. Luego encuentra ' + n4 + ' mas. ¿Cuantos tiene ahora?';
+                    explicacion = 'Paso 1: Despues de dar a Ana = ' + n1 + ' - ' + n2 + ' = ' + (n1-n2) + '\nPaso 2: Despues de dar a Luis = ' + (n1-n2) + ' - ' + n3 + ' = ' + (n1-n2-n3) + '\nPaso 3: Con los encontrados = ' + (n1-n2-n3) + ' + ' + n4 + ' = ' + respuesta;
+
+                } else if (tipoMedio === 4) {
+                    // Precio total con varias unidades
+                    var precio = Math.floor(Math.random() * 5) + 3; // 3-7€
+                    var unidades = Math.floor(Math.random() * 6) + 4; // 4-9 unidades
+                    var billete = 50;
+                    var gasto = precio * unidades;
+                    respuesta = billete - gasto;
+                    pregunta = 'Cada ' + item.slice(0,-1) + ' cuesta ' + precio + '€. Si compras ' + unidades + ' y pagas con ' + billete + '€, ¿cuanto te devuelven?';
+                    explicacion = 'Paso 1: Total compra = ' + precio + ' x ' + unidades + ' = ' + gasto + '€\nPaso 2: Cambio = ' + billete + ' - ' + gasto + ' = ' + respuesta + '€';
+                    item = 'euros';
+
+                } else {
+                    // Grupos y sobras
+                    var porGrupo = [3, 4, 5, 6][Math.floor(Math.random() * 4)];
+                    var grupos = Math.floor(Math.random() * 6) + 4;
+                    var sobran = Math.floor(Math.random() * (porGrupo - 1)) + 1;
+                    respuesta = (porGrupo * grupos) + sobran;
+                    pregunta = 'En clase hay ' + grupos + ' grupos de ' + porGrupo + ' alumnos cada uno, mas ' + sobran + ' alumnos sin grupo. ¿Cuantos alumnos hay en total?';
+                    explicacion = 'Paso 1: En grupos = ' + grupos + ' x ' + porGrupo + ' = ' + (porGrupo * grupos) + '\nPaso 2: Total = ' + (porGrupo * grupos) + ' + ' + sobran + ' = ' + respuesta;
+                    item = 'alumnos';
+                }
+            } else {
+                // NIVEL DIFICIL: Problemas complejos de 3-4 operaciones
+                var tipoDificil = Math.floor(Math.random() * 8);
+
+                if (tipoDificil === 0) {
+                    // Compra multiple con cambio
+                    var precio1 = Math.floor(Math.random() * 10) + 5; // 5-14€
+                    var cant1 = Math.floor(Math.random() * 3) + 2; // 2-4 unidades
+                    var precio2 = Math.floor(Math.random() * 8) + 3; // 3-10€
+                    var cant2 = Math.floor(Math.random() * 4) + 2; // 2-5 unidades
+                    var precio3 = Math.floor(Math.random() * 6) + 2; // 2-7€
+                    var cant3 = Math.floor(Math.random() * 3) + 1; // 1-3 unidades
+                    var billete = 100;
+                    var subtotal1 = precio1 * cant1;
+                    var subtotal2 = precio2 * cant2;
+                    var subtotal3 = precio3 * cant3;
+                    var total = subtotal1 + subtotal2 + subtotal3;
+                    respuesta = billete - total;
+                    pregunta = 'En una tienda, los coches cuestan ' + precio1 + '€, las pelotas ' + precio2 + '€ y los puzzles ' + precio3 + '€. Maria compra ' + cant1 + ' coches, ' + cant2 + ' pelotas y ' + cant3 + ' puzzles. Si paga con ' + billete + '€, ¿cuanto le devuelven?';
+                    explicacion = 'Paso 1: Coches = ' + cant1 + ' x ' + precio1 + ' = ' + subtotal1 + '€\nPaso 2: Pelotas = ' + cant2 + ' x ' + precio2 + ' = ' + subtotal2 + '€\nPaso 3: Puzzles = ' + cant3 + ' x ' + precio3 + ' = ' + subtotal3 + '€\nPaso 4: Total = ' + subtotal1 + ' + ' + subtotal2 + ' + ' + subtotal3 + ' = ' + total + '€\nPaso 5: Cambio = ' + billete + ' - ' + total + ' = ' + respuesta + '€';
+                    item = 'euros';
+
+                } else if (tipoDificil === 1) {
+                    // Autobus con varias paradas
+                    var inicial = Math.floor(Math.random() * 20) + 30; // 30-49 pasajeros
+                    var bajan1 = Math.floor(Math.random() * 10) + 5;
+                    var suben1 = Math.floor(Math.random() * 8) + 3;
+                    var bajan2 = Math.floor(Math.random() * 12) + 4;
+                    var suben2 = Math.floor(Math.random() * 10) + 5;
+                    var bajan3 = Math.floor(Math.random() * 8) + 2;
+                    var p1 = inicial - bajan1 + suben1;
+                    var p2 = p1 - bajan2 + suben2;
+                    respuesta = p2 - bajan3;
+                    pregunta = 'Un autobus sale con ' + inicial + ' pasajeros. En la 1ª parada bajan ' + bajan1 + ' y suben ' + suben1 + '. En la 2ª bajan ' + bajan2 + ' y suben ' + suben2 + '. En la 3ª bajan ' + bajan3 + '. ¿Cuantos pasajeros quedan?';
+                    explicacion = 'Paso 1: Tras parada 1 = ' + inicial + ' - ' + bajan1 + ' + ' + suben1 + ' = ' + p1 + '\nPaso 2: Tras parada 2 = ' + p1 + ' - ' + bajan2 + ' + ' + suben2 + ' = ' + p2 + '\nPaso 3: Tras parada 3 = ' + p2 + ' - ' + bajan3 + ' = ' + respuesta;
+                    item = 'pasajeros';
+
+                } else if (tipoDificil === 2) {
+                    // Descuento porcentual
+                    var precioOriginal = [40, 60, 80, 100, 120][Math.floor(Math.random() * 5)];
+                    var descuento = [10, 20, 25, 50][Math.floor(Math.random() * 4)];
+                    var cantidad = Math.floor(Math.random() * 3) + 2; // 2-4 unidades
+                    var descuentoValor = precioOriginal * descuento / 100;
+                    var precioFinal = precioOriginal - descuentoValor;
+                    respuesta = precioFinal * cantidad;
+                    pregunta = 'Una camiseta cuesta ' + precioOriginal + '€ pero tiene un ' + descuento + '% de descuento. Si compras ' + cantidad + ' camisetas, ¿cuanto pagas en total?';
+                    explicacion = 'Paso 1: Descuento = ' + precioOriginal + ' x ' + descuento + '% = ' + descuentoValor + '€\nPaso 2: Precio rebajado = ' + precioOriginal + ' - ' + descuentoValor + ' = ' + precioFinal + '€\nPaso 3: Total = ' + precioFinal + ' x ' + cantidad + ' = ' + respuesta + '€';
+                    item = 'euros';
+
+                } else if (tipoDificil === 3) {
+                    // Reparto con fraccion
+                    var totalItems = [60, 80, 100, 120, 150][Math.floor(Math.random() * 5)];
+                    var fraccion = [2, 4, 5][Math.floor(Math.random() * 3)]; // 1/2, 1/4, 1/5
+                    var personas = [2, 3, 4, 5][Math.floor(Math.random() * 4)];
+                    var parteTotal = totalItems / fraccion;
+                    respuesta = parteTotal / personas;
+                    pregunta = 'Un agricultor tiene ' + totalItems + ' manzanas. Decide repartir 1/' + fraccion + ' de ellas entre ' + personas + ' vecinos a partes iguales. ¿Cuantas manzanas recibe cada vecino?';
+                    explicacion = 'Paso 1: Parte a repartir = ' + totalItems + ' / ' + fraccion + ' = ' + parteTotal + ' manzanas\nPaso 2: Por persona = ' + parteTotal + ' / ' + personas + ' = ' + respuesta + ' manzanas';
+                    item = 'manzanas';
+
+                } else if (tipoDificil === 4) {
+                    // Produccion en varios dias
+                    var porDia = Math.floor(Math.random() * 20) + 15; // 15-34 por dia
+                    var dias = Math.floor(Math.random() * 3) + 3; // 3-5 dias
+                    var vendidos = Math.floor(Math.random() * 30) + 20;
+                    var regalados = Math.floor(Math.random() * 15) + 5;
+                    var produccion = porDia * dias;
+                    var quedan = produccion - vendidos - regalados;
+                    respuesta = quedan;
+                    pregunta = 'Una pasteleria hace ' + porDia + ' pasteles cada dia. Despues de ' + dias + ' dias, han vendido ' + vendidos + ' y han regalado ' + regalados + '. ¿Cuantos pasteles les quedan?';
+                    explicacion = 'Paso 1: Total producido = ' + porDia + ' x ' + dias + ' = ' + produccion + ' pasteles\nPaso 2: Vendidos + regalados = ' + vendidos + ' + ' + regalados + ' = ' + (vendidos + regalados) + '\nPaso 3: Quedan = ' + produccion + ' - ' + (vendidos + regalados) + ' = ' + respuesta;
+                    item = 'pasteles';
+
+                } else if (tipoDificil === 5) {
+                    // Dinero entre amigos
+                    var amigos = [3, 4, 5][Math.floor(Math.random() * 3)];
+                    var cadaUno = Math.floor(Math.random() * 15) + 10; // 10-24€
+                    var extra = Math.floor(Math.random() * 20) + 10;
+                    var gasto = Math.floor(Math.random() * 30) + 20;
+                    var totalReunido = (amigos * cadaUno) + extra;
+                    respuesta = (totalReunido - gasto) / amigos;
+                    pregunta = amigos + ' amigos ponen ' + cadaUno + '€ cada uno para comprar un regalo. Ademas, encuentran ' + extra + '€ en una hucha vieja. El regalo cuesta ' + gasto + '€. Si se reparten lo que sobra, ¿cuanto recibe cada uno?';
+                    explicacion = 'Paso 1: Dinero reunido = ' + amigos + ' x ' + cadaUno + ' = ' + (amigos * cadaUno) + '€\nPaso 2: Total con extra = ' + (amigos * cadaUno) + ' + ' + extra + ' = ' + totalReunido + '€\nPaso 3: Sobra = ' + totalReunido + ' - ' + gasto + ' = ' + (totalReunido - gasto) + '€\nPaso 4: Cada uno = ' + (totalReunido - gasto) + ' / ' + amigos + ' = ' + respuesta + '€';
+                    item = 'euros';
+
+                } else if (tipoDificil === 6) {
+                    // Filas y columnas con operaciones
+                    var filas = Math.floor(Math.random() * 4) + 4; // 4-7 filas
+                    var columnas = Math.floor(Math.random() * 5) + 5; // 5-9 columnas
+                    var salas = Math.floor(Math.random() * 3) + 2; // 2-4 salas
+                    var ocupadas = Math.floor(Math.random() * 20) + 10;
+                    var porSala = filas * columnas;
+                    var totalSillas = porSala * salas;
+                    respuesta = totalSillas - ocupadas;
+                    pregunta = 'Un cine tiene ' + salas + ' salas. Cada sala tiene ' + filas + ' filas con ' + columnas + ' butacas por fila. Si hay ' + ocupadas + ' personas viendo peliculas, ¿cuantas butacas estan vacias?';
+                    explicacion = 'Paso 1: Butacas por sala = ' + filas + ' x ' + columnas + ' = ' + porSala + '\nPaso 2: Total butacas = ' + porSala + ' x ' + salas + ' = ' + totalSillas + '\nPaso 3: Vacias = ' + totalSillas + ' - ' + ocupadas + ' = ' + respuesta;
+                    item = 'butacas';
+
+                } else {
+                    // Viaje con paradas
+                    var distTotal = [120, 150, 180, 200, 240][Math.floor(Math.random() * 5)];
+                    var tramo1 = Math.floor(distTotal * 0.3);
+                    var tramo2 = Math.floor(distTotal * 0.25);
+                    var tramo3 = Math.floor(distTotal * 0.2);
+                    var recorrido = tramo1 + tramo2 + tramo3;
+                    respuesta = distTotal - recorrido;
+                    pregunta = 'Una familia hace un viaje de ' + distTotal + ' km. Paran a descansar despues de ' + tramo1 + ' km, luego avanzan ' + tramo2 + ' km y paran a comer, despues hacen ' + tramo3 + ' km mas. ¿Cuantos km les faltan para llegar?';
+                    explicacion = 'Paso 1: Primer tramo = ' + tramo1 + ' km\nPaso 2: Acumulado = ' + tramo1 + ' + ' + tramo2 + ' = ' + (tramo1 + tramo2) + ' km\nPaso 3: Acumulado = ' + (tramo1 + tramo2) + ' + ' + tramo3 + ' = ' + recorrido + ' km\nPaso 4: Faltan = ' + distTotal + ' - ' + recorrido + ' = ' + respuesta + ' km';
+                    item = 'km';
+                }
+            }
+
+            return {
+                contexto: 'Problema de ' + ctx.tipo,
+                pregunta: pregunta,
+                respuesta: respuesta,
+                unidad: item,
+                explicacion: explicacion
+            };
+        }
+
+        // ==================== MOSTRAR PROBLEMA ====================
+        function mostrarProblema() {
+            if (problemaActual >= problemas.length) {
+                mostrarResultadoFinal();
+                return;
+            }
+
+            var p = problemas[problemaActual];
+            respondido = false;
+
+            var enunciado = document.getElementById('enunciado');
+            enunciado.innerHTML =
+                '<div class="contexto">' + (p.contexto || '') + '</div>' +
+                '<div class="pregunta">' + p.pregunta + '</div>';
+
+            document.getElementById('unidad').textContent = p.unidad || '';
+            document.getElementById('inputRespuesta').value = '';
+            document.getElementById('inputRespuesta').disabled = false;
+            document.getElementById('mensaje').textContent = '';
+            document.getElementById('mensaje').className = '';
+            document.getElementById('btnExplicacion').style.display = 'none';
+            document.getElementById('btnSiguiente').style.display = 'none';
+            document.getElementById('explicacionContainer').classList.add('oculto');
+
+            limpiarCanvas();
+            actualizarUI();
+        }
+
+        // ==================== COMPROBAR RESPUESTA ====================
+        function comprobarRespuesta() {
+            if (respondido) return;
+
+            var input = document.getElementById('inputRespuesta');
+            var respuestaUsuario = parseFloat(input.value);
+            var p = problemas[problemaActual];
+            var respuestaCorrecta = parseFloat(p.respuesta);
+
+            if (isNaN(respuestaUsuario)) {
+                document.getElementById('mensaje').textContent = 'Escribe un numero';
+                return;
+            }
+
+            respondido = true;
+            input.disabled = true;
+
+            var mensaje = document.getElementById('mensaje');
+            var esCorrecta = Math.abs(respuestaUsuario - respuestaCorrecta) < 0.01;
+
+            if (esCorrecta) {
+                puntos += 20;
+                mensaje.textContent = '¡Correcto! +20 puntos';
+                mensaje.className = 'mensaje-correcto';
+            } else {
+                mensaje.innerHTML = 'Incorrecto. La respuesta es: ' + respuestaCorrecta + ' ' + (p.unidad || '');
+                mensaje.className = 'mensaje-incorrecto';
+                document.getElementById('btnExplicacion').style.display = 'inline-block';
+            }
+
+            document.getElementById('btnSiguiente').style.display = 'inline-block';
+            actualizarUI();
+        }
+
+        function verExplicacion() {
+            var p = problemas[problemaActual];
+            var container = document.getElementById('explicacionContainer');
+            container.innerHTML =
+                '<div class="explicacion">' +
+                    '<div class="explicacion-titulo">Como se resuelve:</div>' +
+                    '<div>' + p.explicacion + '</div>' +
+                '</div>';
+            container.classList.remove('oculto');
+        }
+
+        function siguienteProblema() {
+            problemaActual++;
+            mostrarProblema();
+        }
+
+        // ==================== RESULTADO FINAL ====================
+        function mostrarResultadoFinal() {
+            var porcentaje = Math.round((puntos / (totalProblemas * 20)) * 100);
+            var emoji = porcentaje >= 80 ? '&#127942;' : porcentaje >= 60 ? '&#11088;' : '&#128218;';
+            var mensajeFinal = porcentaje >= 80 ? '¡Excelente trabajo!' :
+                              porcentaje >= 60 ? '¡Muy bien! Sigue practicando.' :
+                              '¡Buen intento! Practica un poco mas.';
+
+            var container = document.getElementById('problema');
+            container.innerHTML =
+                '<div class="resultado-final">' +
+                    '<div class="emoji">' + emoji + '</div>' +
+                    '<div class="puntuacion">' + puntos + ' puntos</div>' +
+                    '<div class="mensaje">' + mensajeFinal + '</div>' +
+                    '<div>' + porcentaje + '% de aciertos</div>' +
+                    '<div style="margin-top:20px;">' +
+                        '<button class="btn btn-primary" onclick="iniciarNivel(\'' + nivelActual + '\')">Jugar de nuevo</button>' +
+                        '<button class="btn" onclick="location.reload()">Cambiar nivel</button>' +
+                    '</div>' +
+                '</div>';
+        }
+
+        // ==================== CANVAS / PIZARRA ====================
+        function inicializarCanvas() {
+            canvas = document.getElementById('canvasPizarra');
+            ctx = canvas.getContext('2d');
+
+            // Ajustar tamano real del canvas
+            var rect = canvas.getBoundingClientRect();
+            canvas.width = rect.width * 2;
+            canvas.height = rect.height * 2;
+            ctx.scale(2, 2);
+
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 2;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+
+            // Eventos mouse
+            canvas.addEventListener('mousedown', iniciarDibujo);
+            canvas.addEventListener('mousemove', dibujar);
+            canvas.addEventListener('mouseup', finDibujo);
+            canvas.addEventListener('mouseout', finDibujo);
+
+            // Eventos touch
+            canvas.addEventListener('touchstart', iniciarDibujoTouch);
+            canvas.addEventListener('touchmove', dibujarTouch);
+            canvas.addEventListener('touchend', finDibujo);
+        }
+
+        function getPos(e) {
+            var rect = canvas.getBoundingClientRect();
+            return {
+                x: e.clientX - rect.left,
+                y: e.clientY - rect.top
+            };
+        }
+
+        function getPosTouch(e) {
+            var rect = canvas.getBoundingClientRect();
+            var touch = e.touches[0];
+            return {
+                x: touch.clientX - rect.left,
+                y: touch.clientY - rect.top
+            };
+        }
+
+        function iniciarDibujo(e) {
+            dibujando = true;
+            var pos = getPos(e);
+            ultimoX = pos.x;
+            ultimoY = pos.y;
+        }
+
+        function iniciarDibujoTouch(e) {
+            e.preventDefault();
+            dibujando = true;
+            var pos = getPosTouch(e);
+            ultimoX = pos.x;
+            ultimoY = pos.y;
+        }
+
+        function dibujar(e) {
+            if (!dibujando) return;
+            var pos = getPos(e);
+
+            ctx.beginPath();
+            ctx.moveTo(ultimoX, ultimoY);
+            ctx.lineTo(pos.x, pos.y);
+
+            if (herramienta === 'borrador') {
+                ctx.strokeStyle = '#1a3a1a';
+                ctx.lineWidth = 20;
+            } else {
+                ctx.strokeStyle = '#ffffff';
+                ctx.lineWidth = 2;
+            }
+
+            ctx.stroke();
+            ultimoX = pos.x;
+            ultimoY = pos.y;
+        }
+
+        function dibujarTouch(e) {
+            if (!dibujando) return;
+            e.preventDefault();
+            var pos = getPosTouch(e);
+
+            ctx.beginPath();
+            ctx.moveTo(ultimoX, ultimoY);
+            ctx.lineTo(pos.x, pos.y);
+
+            if (herramienta === 'borrador') {
+                ctx.strokeStyle = '#1a3a1a';
+                ctx.lineWidth = 20;
+            } else {
+                ctx.strokeStyle = '#ffffff';
+                ctx.lineWidth = 2;
+            }
+
+            ctx.stroke();
+            ultimoX = pos.x;
+            ultimoY = pos.y;
+        }
+
+        function finDibujo() {
+            dibujando = false;
+        }
+
+        function setHerramienta(h) {
+            herramienta = h;
+            document.querySelectorAll('.tool-btn').forEach(function(btn) {
+                btn.classList.remove('activo');
+            });
+            event.target.classList.add('activo');
+        }
+
+        function limpiarCanvas() {
+            if (ctx) {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+            }
+        }
+    </script>
+</body>
+</html>

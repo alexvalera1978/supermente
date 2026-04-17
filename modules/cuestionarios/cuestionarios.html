@@ -117,6 +117,161 @@
         .mensaje-juego { text-align: center; margin-top: 15px; font-size: 1.2em; min-height: 30px; }
         .estado-generacion { text-align: center; margin-top: 15px; font-size: 1.1em; }
 
+        /* Juego Naves Arcade */
+        .naves-container {
+            position: relative;
+            width: 100%;
+            max-width: 400px;
+            height: 500px;
+            margin: 0 auto;
+            background: linear-gradient(180deg, #0a0a2e 0%, #1a1a4e 50%, #2a2a6e 100%);
+            border-radius: 15px;
+            overflow: hidden;
+            border: 3px solid rgba(255,255,255,0.3);
+        }
+        .naves-pregunta {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.7);
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            max-width: 90%;
+            text-align: center;
+            z-index: 10;
+        }
+        .naves-nave {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 2.5em;
+            cursor: pointer;
+            transition: left 0.1s;
+            z-index: 5;
+        }
+        .naves-disparo {
+            position: absolute;
+            width: 4px;
+            height: 15px;
+            background: #00ff00;
+            border-radius: 2px;
+            animation: disparoAnim 0.5s linear forwards;
+        }
+        @keyframes disparoAnim {
+            from { bottom: 70px; }
+            to { bottom: 100%; opacity: 0; }
+        }
+        .naves-respuesta {
+            position: absolute;
+            padding: 10px 15px;
+            background: rgba(255,100,100,0.8);
+            border-radius: 10px;
+            font-size: 1em;
+            cursor: crosshair;
+            transition: transform 0.1s;
+            animation: caerAnim 8s linear forwards;
+        }
+        .naves-respuesta.correcta-resp { background: rgba(100,255,100,0.8); }
+        .naves-respuesta.destruida {
+            animation: explotar 0.3s forwards;
+        }
+        @keyframes caerAnim {
+            from { top: -50px; }
+            to { top: 100%; }
+        }
+        @keyframes explotar {
+            to { transform: scale(1.5); opacity: 0; }
+        }
+        .naves-score {
+            position: absolute;
+            top: 60px;
+            right: 10px;
+            background: rgba(0,0,0,0.5);
+            padding: 5px 10px;
+            border-radius: 10px;
+            font-size: 0.9em;
+        }
+        .naves-vidas {
+            position: absolute;
+            top: 60px;
+            left: 10px;
+            font-size: 1.2em;
+        }
+
+        /* Juego Aventura Grafica */
+        .aventura-container {
+            max-width: 450px;
+            margin: 0 auto;
+        }
+        .aventura-escena {
+            background: rgba(0,0,0,0.3);
+            border-radius: 15px;
+            overflow: hidden;
+            border: 3px solid rgba(255,255,255,0.3);
+        }
+        .aventura-imagen {
+            width: 100%;
+            height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 4em;
+        }
+        .aventura-texto {
+            padding: 15px;
+            font-size: 1.1em;
+            line-height: 1.5;
+            min-height: 80px;
+        }
+        .aventura-pregunta {
+            padding: 10px 15px;
+            background: rgba(255,255,255,0.1);
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+        .aventura-opciones {
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .aventura-opcion {
+            background: rgba(255,255,255,0.1);
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 10px;
+            padding: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .aventura-opcion:hover {
+            background: rgba(255,255,255,0.2);
+        }
+        .aventura-opcion.correcta { border-color: #90EE90; background: rgba(144,238,144,0.3); }
+        .aventura-opcion.incorrecta { border-color: #ff6666; background: rgba(255,102,102,0.3); }
+        .aventura-feedback {
+            padding: 10px 15px;
+            text-align: center;
+            font-size: 1.1em;
+            min-height: 40px;
+        }
+        .aventura-progreso {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            padding: 10px;
+        }
+        .aventura-punto {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.3);
+        }
+        .aventura-punto.actual { background: #00c9ff; }
+        .aventura-punto.completado { background: #90EE90; }
+
         /* Letra ligada */
         .letra-ligada .pregunta-texto,
         .letra-ligada .opcion,
@@ -156,6 +311,19 @@
                 <div class="form-group">
                     <label>Nombre del tema:</label>
                     <input type="text" id="nombreTema" class="form-input" placeholder="Ej: Ciencias Naturales..." oninput="actualizarBotonGenerar()">
+                </div>
+                <div class="form-group">
+                    <label>Tipo de juego:</label>
+                    <select id="tipoJuego" class="form-input">
+                        <option value="relacionar">Relacionar (unir conceptos)</option>
+                        <option value="ordenar">Ordenar (secuencias)</option>
+                        <option value="naves">Naves Arcade (disparar respuestas)</option>
+                        <option value="aventura">Aventura Grafica (explorar y resolver)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Instrucciones adicionales (opcional):</label>
+                    <textarea id="promptPersonalizado" class="form-input" rows="3" placeholder="Ej: Enfocate en las fechas importantes, genera preguntas dificiles, usa vocabulario sencillo..."></textarea>
                 </div>
                 <div class="upload-zona" onclick="document.getElementById('inputFotos').click()">
                     <div class="icono">📷</div>
@@ -357,7 +525,24 @@
         }
 
         async function generarContenidoConIA(nombre, imagenes, key) {
-            var prompt = 'Analiza estas imagenes de un libro sobre "' + nombre + '".\n\nGenera un JSON con:\n{\n  "cuestionario": [\n    {"pregunta": "...", "opciones": ["A", "B", "C", "D"], "correcta": 0}\n  ],\n  "lectura": "Resumen del contenido...",\n  "juego": {\n    "tipo": "relacionar",\n    "titulo": "...",\n    "instrucciones": "Une cada elemento",\n    "elementos": [{"izq": "Termino", "der": "Definicion"}]\n  }\n}\n\nGenera 10 preguntas. RESPONDE SOLO CON JSON.';
+            var tipoJuego = document.getElementById('tipoJuego').value;
+            var promptPersonalizado = document.getElementById('promptPersonalizado').value.trim();
+
+            var juegoEstructura = '';
+            if (tipoJuego === 'relacionar') {
+                juegoEstructura = '"juego": {\n    "tipo": "relacionar",\n    "titulo": "...",\n    "instrucciones": "Une cada termino con su definicion",\n    "elementos": [{"izq": "Termino1", "der": "Definicion1"}, {"izq": "Termino2", "der": "Definicion2"}]\n  }';
+            } else if (tipoJuego === 'ordenar') {
+                juegoEstructura = '"juego": {\n    "tipo": "ordenar",\n    "titulo": "...",\n    "instrucciones": "Ordena los elementos correctamente",\n    "elementos": ["Primer paso", "Segundo paso", "Tercer paso"]\n  }';
+            } else if (tipoJuego === 'naves') {
+                juegoEstructura = '"juego": {\n    "tipo": "naves",\n    "titulo": "Destruye las respuestas incorrectas",\n    "instrucciones": "Dispara a las respuestas INCORRECTAS y deja pasar las correctas",\n    "oleadas": [\n      {\n        "pregunta": "Pregunta sobre el tema",\n        "respuestas": [\n          {"texto": "Respuesta correcta", "correcta": true},\n          {"texto": "Respuesta incorrecta 1", "correcta": false},\n          {"texto": "Respuesta incorrecta 2", "correcta": false}\n        ]\n      }\n    ]\n  }';
+            } else if (tipoJuego === 'aventura') {
+                juegoEstructura = '"juego": {\n    "tipo": "aventura",\n    "titulo": "Aventura de conocimiento",\n    "escenas": [\n      {\n        "id": 1,\n        "descripcion": "Descripcion de la escena inicial relacionada con el tema",\n        "imagen": "biblioteca",\n        "pregunta": "Pregunta para avanzar",\n        "opciones": [\n          {"texto": "Opcion correcta", "correcta": true, "siguiente": 2, "feedback": "Muy bien!"},\n          {"texto": "Opcion incorrecta", "correcta": false, "siguiente": 1, "feedback": "Incorrecto, intenta de nuevo"}\n        ]\n      },\n      {\n        "id": 2,\n        "descripcion": "Segunda escena",\n        "imagen": "laboratorio",\n        "pregunta": "Siguiente pregunta",\n        "opciones": [...]\n      }\n    ]\n  }';
+            }
+
+            var promptExtra = promptPersonalizado ? '\n\nINSTRUCCIONES ADICIONALES DEL USUARIO: ' + promptPersonalizado : '';
+
+            var prompt = 'Analiza estas imagenes de un libro sobre "' + nombre + '".' + promptExtra + '\n\nGenera un JSON con:\n{\n  "cuestionario": [\n    {"pregunta": "Pregunta basada en el contenido", "opciones": ["Opcion A", "Opcion B", "Opcion C", "Opcion D"], "correcta": 0, "explicacion": "Breve explicacion de por que esta es la respuesta correcta"}\n  ],\n  "lectura": "Resumen educativo del contenido adaptado para ninos...",\n  ' + juegoEstructura + '\n}\n\nREQUISITOS:\n- Genera EXACTAMENTE 10 preguntas de cuestionario\n- Cada pregunta DEBE incluir "explicacion" para mostrar cuando el usuario falle\n- El juego debe tener al menos 5-6 elementos/oleadas/escenas\n- Basa TODO en el contenido REAL de las imagenes\n- RESPONDE SOLO CON JSON VALIDO.';
+
             return await generarConGemini(prompt, imagenes, key);
         }
 
@@ -475,7 +660,8 @@
                 mensaje.textContent = '✅ ¡Correcto!';
                 mensaje.className = 'mensaje-cuest mensaje-ok';
             } else {
-                mensaje.textContent = '❌ Incorrecto - Correcta: ' + q.opciones[q.correcta];
+                var explicacion = q.explicacion ? '\n💡 ' + q.explicacion : '';
+                mensaje.innerHTML = '❌ Incorrecto<br>✓ Correcta: ' + q.opciones[q.correcta] + (explicacion ? '<br><small style="opacity:0.8;">' + explicacion + '</small>' : '');
                 mensaje.className = 'mensaje-cuest mensaje-error';
             }
 
@@ -537,6 +723,10 @@
                 renderizarJuegoRelacionar(area);
             } else if (juegoActual.tipo === 'ordenar') {
                 renderizarJuegoOrdenar(area);
+            } else if (juegoActual.tipo === 'naves') {
+                renderizarJuegoNaves(area);
+            } else if (juegoActual.tipo === 'aventura') {
+                renderizarJuegoAventura(area);
             } else {
                 area.innerHTML = '<p>Tipo de juego no soportado.</p>';
             }
@@ -634,6 +824,325 @@
                 var porcentaje = Math.round((correctos / total) * 100);
                 document.getElementById('mensajeJuego').innerHTML = 'Resultado: ' + correctos + '/' + total + ' (' + porcentaje + '%)' + (porcentaje === 100 ? ' 🎉' : '');
             }
+        }
+
+        // ==================== JUEGO NAVES ARCADE ====================
+        var navesEstado = {
+            oleadaActual: 0,
+            score: 0,
+            vidas: 3,
+            naveX: 50,
+            respuestasActivas: [],
+            intervaloRespuestas: null,
+            juegoActivo: false
+        };
+
+        function renderizarJuegoNaves(area) {
+            navesEstado = {
+                oleadaActual: 0,
+                score: 0,
+                vidas: 3,
+                naveX: 50,
+                respuestasActivas: [],
+                intervaloRespuestas: null,
+                juegoActivo: true
+            };
+
+            area.innerHTML = '<div class="naves-container" id="navesCanvas" onclick="dispararNave(event)">' +
+                '<div class="naves-pregunta" id="navesPregunta"></div>' +
+                '<div class="naves-vidas" id="navesVidas">❤️❤️❤️</div>' +
+                '<div class="naves-score" id="navesScore">Score: 0</div>' +
+                '<div class="naves-nave" id="navesNave">🚀</div>' +
+                '</div>';
+
+            document.getElementById('btnComprobarJuego').style.display = 'none';
+            document.addEventListener('mousemove', moverNave);
+            document.addEventListener('touchmove', moverNaveTactil);
+
+            iniciarOleada();
+        }
+
+        function moverNave(e) {
+            if (!navesEstado.juegoActivo) return;
+            var canvas = document.getElementById('navesCanvas');
+            if (!canvas) return;
+            var rect = canvas.getBoundingClientRect();
+            var x = ((e.clientX - rect.left) / rect.width) * 100;
+            x = Math.max(10, Math.min(90, x));
+            navesEstado.naveX = x;
+            var nave = document.getElementById('navesNave');
+            if (nave) nave.style.left = x + '%';
+        }
+
+        function moverNaveTactil(e) {
+            if (!navesEstado.juegoActivo) return;
+            var canvas = document.getElementById('navesCanvas');
+            if (!canvas) return;
+            var rect = canvas.getBoundingClientRect();
+            var touch = e.touches[0];
+            var x = ((touch.clientX - rect.left) / rect.width) * 100;
+            x = Math.max(10, Math.min(90, x));
+            navesEstado.naveX = x;
+            var nave = document.getElementById('navesNave');
+            if (nave) nave.style.left = x + '%';
+        }
+
+        function iniciarOleada() {
+            if (navesEstado.oleadaActual >= juegoActual.oleadas.length) {
+                finalizarJuegoNaves(true);
+                return;
+            }
+
+            var oleada = juegoActual.oleadas[navesEstado.oleadaActual];
+            document.getElementById('navesPregunta').textContent = oleada.pregunta;
+
+            // Limpiar respuestas anteriores
+            navesEstado.respuestasActivas = [];
+            document.querySelectorAll('.naves-respuesta').forEach(function(r) { r.remove(); });
+
+            // Lanzar respuestas con delay
+            var delay = 0;
+            oleada.respuestas.forEach(function(resp, i) {
+                setTimeout(function() {
+                    if (navesEstado.juegoActivo) crearRespuestaNave(resp, i);
+                }, delay);
+                delay += 1500;
+            });
+        }
+
+        function crearRespuestaNave(resp, idx) {
+            var canvas = document.getElementById('navesCanvas');
+            if (!canvas) return;
+
+            var div = document.createElement('div');
+            div.className = 'naves-respuesta' + (resp.correcta ? ' correcta-resp' : '');
+            div.textContent = resp.texto;
+            div.dataset.correcta = resp.correcta;
+            div.dataset.idx = idx;
+            div.style.left = (15 + Math.random() * 60) + '%';
+
+            div.onclick = function(e) {
+                e.stopPropagation();
+                dispararARespuesta(div);
+            };
+
+            canvas.appendChild(div);
+            navesEstado.respuestasActivas.push(div);
+
+            // Detectar cuando llega abajo
+            div.addEventListener('animationend', function() {
+                if (!div.classList.contains('destruida')) {
+                    if (div.dataset.correcta === 'false') {
+                        // Respuesta incorrecta llego abajo = perdemos vida
+                        perderVida();
+                    }
+                    div.remove();
+                    verificarFinOleada();
+                }
+            });
+        }
+
+        function dispararNave(e) {
+            if (!navesEstado.juegoActivo) return;
+            var canvas = document.getElementById('navesCanvas');
+            var rect = canvas.getBoundingClientRect();
+
+            // Crear disparo visual
+            var disparo = document.createElement('div');
+            disparo.className = 'naves-disparo';
+            disparo.style.left = navesEstado.naveX + '%';
+            canvas.appendChild(disparo);
+            setTimeout(function() { disparo.remove(); }, 500);
+        }
+
+        function dispararARespuesta(div) {
+            if (!navesEstado.juegoActivo || div.classList.contains('destruida')) return;
+
+            var esCorrecta = div.dataset.correcta === 'true';
+
+            if (esCorrecta) {
+                // Disparar a respuesta correcta = error
+                div.classList.add('destruida');
+                perderVida();
+            } else {
+                // Disparar a respuesta incorrecta = bien!
+                div.classList.add('destruida');
+                navesEstado.score += 10;
+                document.getElementById('navesScore').textContent = 'Score: ' + navesEstado.score;
+            }
+
+            setTimeout(function() {
+                div.remove();
+                verificarFinOleada();
+            }, 300);
+        }
+
+        function perderVida() {
+            navesEstado.vidas--;
+            var vidasHTML = '';
+            for (var i = 0; i < navesEstado.vidas; i++) vidasHTML += '❤️';
+            for (var i = navesEstado.vidas; i < 3; i++) vidasHTML += '🖤';
+            document.getElementById('navesVidas').innerHTML = vidasHTML;
+
+            if (navesEstado.vidas <= 0) {
+                finalizarJuegoNaves(false);
+            }
+        }
+
+        function verificarFinOleada() {
+            var activas = document.querySelectorAll('.naves-respuesta:not(.destruida)');
+            if (activas.length === 0 && navesEstado.juegoActivo) {
+                navesEstado.oleadaActual++;
+                setTimeout(iniciarOleada, 1000);
+            }
+        }
+
+        function finalizarJuegoNaves(victoria) {
+            navesEstado.juegoActivo = false;
+            document.removeEventListener('mousemove', moverNave);
+            document.removeEventListener('touchmove', moverNaveTactil);
+
+            var mensaje = victoria ? '🎉 ¡Victoria! ' : '💥 Game Over ';
+            mensaje += 'Score: ' + navesEstado.score;
+            document.getElementById('mensajeJuego').textContent = mensaje;
+
+            document.getElementById('btnComprobarJuego').textContent = '🔄 Reiniciar';
+            document.getElementById('btnComprobarJuego').style.display = 'inline-block';
+            document.getElementById('btnComprobarJuego').onclick = function() { iniciarJuego(); };
+        }
+
+        // ==================== JUEGO AVENTURA GRAFICA ====================
+        var aventuraEstado = {
+            escenaActual: 0,
+            puntos: 0,
+            historial: []
+        };
+
+        var escenarioImagenes = {
+            biblioteca: '📚',
+            laboratorio: '🔬',
+            bosque: '🌲',
+            castillo: '🏰',
+            espacio: '🚀',
+            oceano: '🌊',
+            montaña: '⛰️',
+            ciudad: '🏙️',
+            cueva: '🕳️',
+            jardin: '🌺'
+        };
+
+        function renderizarJuegoAventura(area) {
+            aventuraEstado = {
+                escenaActual: 0,
+                puntos: 0,
+                historial: []
+            };
+
+            mostrarEscenaAventura(area);
+            document.getElementById('btnComprobarJuego').style.display = 'none';
+        }
+
+        function mostrarEscenaAventura(area) {
+            var escenas = juegoActual.escenas;
+            if (!escenas || aventuraEstado.escenaActual >= escenas.length) {
+                finalizarAventura(area);
+                return;
+            }
+
+            var escena = escenas[aventuraEstado.escenaActual];
+            var imgKey = escena.imagen || 'biblioteca';
+            var emoji = escenarioImagenes[imgKey] || '📖';
+
+            var bgColors = {
+                biblioteca: 'linear-gradient(135deg, #4a3728 0%, #2d1f14 100%)',
+                laboratorio: 'linear-gradient(135deg, #1a3a4a 0%, #0d1f2a 100%)',
+                bosque: 'linear-gradient(135deg, #2d5a3d 0%, #1a3a28 100%)',
+                castillo: 'linear-gradient(135deg, #4a4a5a 0%, #2d2d3a 100%)',
+                espacio: 'linear-gradient(135deg, #0a0a2e 0%, #1a1a4e 100%)',
+                oceano: 'linear-gradient(135deg, #1a4a6a 0%, #0d2a3a 100%)',
+                montaña: 'linear-gradient(135deg, #5a5a6a 0%, #3a3a4a 100%)',
+                ciudad: 'linear-gradient(135deg, #3a3a4a 0%, #2a2a3a 100%)',
+                cueva: 'linear-gradient(135deg, #2a2a3a 0%, #1a1a2a 100%)',
+                jardin: 'linear-gradient(135deg, #3d5a2d 0%, #2a3d1a 100%)'
+            };
+
+            var progreso = '';
+            for (var i = 0; i < escenas.length; i++) {
+                var clase = i < aventuraEstado.escenaActual ? 'completado' : (i === aventuraEstado.escenaActual ? 'actual' : '');
+                progreso += '<div class="aventura-punto ' + clase + '"></div>';
+            }
+
+            area.innerHTML = '<div class="aventura-container">' +
+                '<div class="aventura-progreso">' + progreso + '</div>' +
+                '<div class="aventura-escena">' +
+                    '<div class="aventura-imagen" style="background:' + (bgColors[imgKey] || bgColors.biblioteca) + '">' + emoji + '</div>' +
+                    '<div class="aventura-texto">' + escena.descripcion + '</div>' +
+                    '<div class="aventura-pregunta">' + escena.pregunta + '</div>' +
+                    '<div class="aventura-opciones" id="aventuraOpciones">' +
+                        escena.opciones.map(function(op, i) {
+                            return '<div class="aventura-opcion" onclick="seleccionarAventura(' + i + ')">' + op.texto + '</div>';
+                        }).join('') +
+                    '</div>' +
+                    '<div class="aventura-feedback" id="aventuraFeedback"></div>' +
+                '</div>' +
+                '</div>';
+        }
+
+        function seleccionarAventura(idx) {
+            var escena = juegoActual.escenas[aventuraEstado.escenaActual];
+            var opcion = escena.opciones[idx];
+            var opciones = document.querySelectorAll('.aventura-opcion');
+
+            opciones.forEach(function(op, i) {
+                op.onclick = null;
+                if (escena.opciones[i].correcta) {
+                    op.classList.add('correcta');
+                } else if (i === idx) {
+                    op.classList.add('incorrecta');
+                }
+            });
+
+            var feedback = document.getElementById('aventuraFeedback');
+            if (opcion.correcta) {
+                aventuraEstado.puntos += 10;
+                feedback.innerHTML = '✅ ' + (opcion.feedback || '¡Correcto!');
+                feedback.style.color = '#90EE90';
+            } else {
+                feedback.innerHTML = '❌ ' + (opcion.feedback || 'Incorrecto');
+                feedback.style.color = '#ff6666';
+            }
+
+            aventuraEstado.historial.push({
+                escena: aventuraEstado.escenaActual,
+                correcta: opcion.correcta
+            });
+
+            setTimeout(function() {
+                aventuraEstado.escenaActual++;
+                mostrarEscenaAventura(document.getElementById('juegoArea'));
+            }, 2000);
+        }
+
+        function finalizarAventura(area) {
+            var correctas = aventuraEstado.historial.filter(function(h) { return h.correcta; }).length;
+            var total = aventuraEstado.historial.length;
+            var porcentaje = Math.round((correctas / total) * 100);
+
+            var emoji = porcentaje >= 80 ? '🏆' : porcentaje >= 60 ? '⭐' : '📚';
+            var mensaje = porcentaje >= 80 ? '¡Aventura completada con exito!' :
+                         porcentaje >= 60 ? '¡Buen intento!' : '¡Sigue explorando!';
+
+            area.innerHTML = '<div style="text-align:center; padding:30px;">' +
+                '<div style="font-size:4em; margin-bottom:20px;">' + emoji + '</div>' +
+                '<div style="font-size:1.5em; margin-bottom:10px;">Aventura Finalizada</div>' +
+                '<div style="font-size:1.2em; margin-bottom:15px;">' + correctas + '/' + total + ' decisiones correctas</div>' +
+                '<div style="margin-bottom:20px;">' + mensaje + '</div>' +
+                '<div style="font-size:1.3em; color:#e8954a;">Puntos: ' + aventuraEstado.puntos + '</div>' +
+                '</div>';
+
+            document.getElementById('btnComprobarJuego').textContent = '🔄 Reiniciar';
+            document.getElementById('btnComprobarJuego').style.display = 'inline-block';
+            document.getElementById('btnComprobarJuego').onclick = function() { iniciarJuego(); };
         }
 
         // Inicializacion
